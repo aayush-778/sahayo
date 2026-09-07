@@ -8,6 +8,9 @@
       ],
       "@sahakar/shared": [
         "../../packages/shared/src/index.ts"
+      ],
+      "@sahakar/ui-native": [
+        "../../packages/ui-native/src/index.ts"
       ]
     }
   },

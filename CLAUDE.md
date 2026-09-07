@@ -5,8 +5,54 @@ package scope `@sahakar/*`.
 
 - `apps/admin-web` — Next.js 15 (App Router), Tailwind, shadcn/ui
 - `apps/backend` — Node.js, Express, Socket.io, TypeScript
-- `apps/mobile` — React Native via Expo Router, NativeWind
+- `apps/customer` — Expo Router + NativeWind, customer-facing app
+- `apps/worker` — Expo Router + NativeWind, worker-facing app
 - `packages/shared` — TypeScript types, zod schemas, socket event contract
+- `packages/ui-native` — shared React Native primitives for both mobile apps
+
+## Two mobile apps, not one
+
+There is no single mobile app and no role picker. `apps/customer` and
+`apps/worker` are independent Expo apps with independent `app.json` files.
+
+The reason is **permissions**. The worker app needs background location and
+push notifications; the customer app must not ask for either. Separate Expo
+configs mean separate native permission manifests, so the customer app can
+never request a permission it has no business requesting. It also matches the
+demo: two phones, two distinct apps, nothing to fumble on stage.
+
+Permissions are **declared** in each `app.json` and nothing requests them yet.
+`expo-location` and `expo-notifications` are deliberately not installed — their
+config plugins modify native manifest generation at prebuild, and we do not
+want that running for libraries we will not touch until Phase 5. Install them
+in the phase that uses them.
+
+| | customer | worker |
+| --- | --- | --- |
+| Metro port | **8081** | **8082** |
+| package | `@sahakar/customer` | `@sahakar/worker` |
+| android package id | `in.sahakar.customer` | `in.sahakar.worker` |
+| location | foreground only | foreground **and** background |
+| notifications | no | `POST_NOTIFICATIONS` |
+
+### apps/worker is a clone of apps/customer
+
+`apps/worker` was produced by copying `apps/customer`, not by running
+`create-expo-app`. A fresh scaffold would not carry the Metro `blockList` fix,
+the React 19.2.3 pin, or the NativeWind babel wiring that Phase 1 established.
+
+**Consequence: `metro.config.js`, `babel.config.js`, `tailwind.config.js`,
+`global.css` and `nativewind-env.d.ts` are byte-identical between the two apps
+and must stay that way.** Any change to one must be applied to the other.
+Verify with:
+
+```bash
+diff apps/customer/metro.config.js apps/worker/metro.config.js
+diff apps/customer/babel.config.js apps/worker/babel.config.js
+```
+
+Both must print nothing. Only `package.json` and `app.json` may differ, and
+only in app identity, port, and permissions.
 
 ## Pinned versions — do not upgrade
 
@@ -41,13 +87,35 @@ pnpm 12 blocks postinstall scripts unless listed under `allowBuilds` in
 `pnpm-workspace.yaml`. Currently allowed: `esbuild` (tsx needs its binary),
 `sharp` (Next image optimization), `unrs-resolver` (eslint-config-next).
 
+## Known and accepted
+
+- **The mobile apps are Android/iOS only, by design.** `app.json` declares
+  `"platforms": ["android", "ios"]`. Expo Router will fail a web bundle with
+  `Unable to resolve module react-native-web/dist/index`. That is expected.
+  **Do not install `react-native-web`, `react-dom`, or `@expo/metro-runtime`
+  to silence it.** Adding `react-dom` to a React Native app reopens the
+  duplicate-React failure that broke admin-web's prerender
+  (`Cannot read properties of null (reading 'useRef')`). If web support is ever
+  genuinely wanted, discuss the React version implications first — it is not a
+  change to make in passing. The demo runs on physical Android phones mirrored
+  via scrcpy.
+- `typescript` stays on 5.x although Expo SDK 57 asks for `~6.0.3`.
+  `expo install --check` will keep reporting it. Accepted, not an oversight.
+- `@react-native/metro-config` resolves to 0.87.1 where 0.86.3 is wanted. No
+  observed effect on bundling, typecheck or export.
+
 ## Scripts
 
 | Command | Effect |
 | --- | --- |
-| `pnpm dev` | backend + admin-web (mobile is separate; Metro owns its TTY) |
+| `pnpm dev` | backend + admin-web + both mobile apps. Interactive Metro keystrokes (`a`, `i`, `r`) are unreliable under turbo's multiplexed output — see below. |
 | `pnpm dev:backend` | Express + Socket.io on `:4000` |
 | `pnpm dev:admin` | Next.js on `:3000` |
-| `pnpm dev:mobile` | Expo / Metro on `:8081` |
+| **`pnpm dev:customer`** | **Expo / Metro on `:8081` — use this for customer-app work** |
+| **`pnpm dev:worker`** | **Expo / Metro on `:8082` — use this for worker-app work** |
 | `pnpm typecheck` | `tsc --noEmit` across all packages |
 | `pnpm lint` | eslint across all packages |
+
+For day-to-day mobile work run `pnpm dev:customer` and `pnpm dev:worker` in
+separate terminals. `pnpm dev` is for bringing the whole stack up at once;
+Metro's interactive keystrokes do not survive turbo's output multiplexing.

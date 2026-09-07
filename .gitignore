@@ -42,3 +42,6 @@ yarn-error.log*
 
 # Claude Code personal (non-shared) settings
 .claude/settings.local.json
+
+# export scratch dirs (expo export --output-dir)
+dist-*/

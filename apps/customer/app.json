@@ -1,14 +1,21 @@
 {
   "expo": {
     "name": "Sahakar",
-    "slug": "sahakar",
+    "slug": "sahakar-customer",
     "version": "0.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "sahakar",
+    "scheme": "sahakarcustomer",
     "userInterfaceStyle": "automatic",
+    "platforms": [
+      "android",
+      "ios"
+    ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Sahakar uses your location to set the service address for a booking."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -17,12 +24,12 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "package": "in.sahakar.app",
-      "predictiveBackGestureEnabled": false
-    },
-    "web": {
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "package": "in.sahakar.customer",
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
     },
     "plugins": [
       "expo-router"

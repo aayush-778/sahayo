@@ -4,10 +4,11 @@
   "private": true,
   "packageManager": "pnpm@12.3.4",
   "scripts": {
-    "dev": "turbo run dev --filter=@sahakar/backend --filter=@sahakar/admin-web",
+    "dev": "turbo run dev --filter=@sahakar/backend --filter=@sahakar/admin-web --filter=@sahakar/customer --filter=@sahakar/worker",
     "dev:backend": "pnpm --filter @sahakar/backend dev",
     "dev:admin": "pnpm --filter @sahakar/admin-web dev",
-    "dev:mobile": "pnpm --filter @sahakar/mobile dev",
+    "dev:customer": "pnpm --filter @sahakar/customer dev",
+    "dev:worker": "pnpm --filter @sahakar/worker dev",
     "typecheck": "turbo run typecheck",
     "lint": "turbo run lint",
     "format": "prettier --write ."

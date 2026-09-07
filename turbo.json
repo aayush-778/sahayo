@@ -2,6 +2,9 @@
   "$schema": "https://turbo.build/schema.json",
   "ui": "stream",
   "tasks": {
+    // Runs backend + admin-web + BOTH mobile apps. Interactive Metro
+    // keystrokes (a, i, r, m) are unreliable under turbo's multiplexed
+    // output — use pnpm dev:customer / dev:worker for mobile work.
     "dev": {
       "cache": false,
       "persistent": true

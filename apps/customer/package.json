@@ -1,20 +1,20 @@
 {
-  "name": "@sahakar/mobile",
+  "name": "@sahakar/customer",
   "version": "0.1.0",
   "private": true,
   "main": "expo-router/entry",
   "scripts": {
-    "dev": "expo start",
-    "start": "expo start",
+    "dev": "expo start --port 8081",
+    "start": "expo start --port 8081",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web",
     "export:android": "expo export --platform android",
     "typecheck": "tsc --noEmit",
     "lint": "expo lint"
   },
   "dependencies": {
     "@sahakar/shared": "workspace:*",
+    "@sahakar/ui-native": "workspace:*",
     "expo": "~57.0.20",
     "expo-constants": "~57.0.17",
     "expo-linking": "~57.0.9",
