@@ -1,0 +1,24 @@
+{
+  "name": "sahakar",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@12.3.4",
+  "scripts": {
+    "dev": "turbo run dev --filter=@sahakar/backend --filter=@sahakar/admin-web",
+    "dev:backend": "pnpm --filter @sahakar/backend dev",
+    "dev:admin": "pnpm --filter @sahakar/admin-web dev",
+    "dev:mobile": "pnpm --filter @sahakar/mobile dev",
+    "typecheck": "turbo run typecheck",
+    "lint": "turbo run lint",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "eslint": "^9.17.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.4.2",
+    "turbo": "^2.3.3",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.18.1"
+  }
+}

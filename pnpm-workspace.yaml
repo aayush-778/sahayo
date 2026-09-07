@@ -1,0 +1,25 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+# CRITICAL — see also .npmrc.
+# Metro (React Native bundler) cannot reliably resolve modules through pnpm's
+# default symlinked node_modules layout. Hoisting is mandatory for apps/mobile.
+#
+# NOTE: pnpm 10+ reads these from pnpm-workspace.yaml, NOT from .npmrc.
+# The .npmrc copy is kept for documentation and for older pnpm, but THIS is the
+# line that actually takes effect. Verify with `pnpm config get node-linker`.
+nodeLinker: hoisted
+
+# RN/Expo peer dependency graphs are noisy; do not let them block installs.
+autoInstallPeers: true
+strictPeerDependencies: false
+# pnpm 12 blocks postinstall scripts unless explicitly allowed.
+# esbuild's postinstall links its native binary; tsx (backend dev server)
+# will not run without it.
+allowBuilds:
+  esbuild: true
+  # Next.js image optimization native binary.
+  sharp: true
+  # Native module resolver used by eslint-config-next.
+  unrs-resolver: true
