@@ -20,6 +20,8 @@ are mutually dependent — moving any one of them breaks at least one other.
 | `shadcn` **2.10.0** | Last Radix-based, Tailwind-v3-native CLI. shadcn 3.x and 4.x emit Tailwind v4 only (`@import "shadcn/tailwind.css"`, `ring-3`, `not-aria-[…]`, `color-mix(in oklch, …)`) and hard-fail the build on Tailwind 3.4. |
 | `next` **15.5.4** | Pairs with shadcn 2.10, which predates Next 16 entirely. Next 15 + shadcn 2.10 + Tailwind 3.4 + React 19 is a heavily travelled combination; Next 16 + a two-major-old shadcn CLI is not. |
 | pnpm `nodeLinker: hoisted` | Lives in **`pnpm-workspace.yaml`, NOT `.npmrc`** — since pnpm 10+, `.npmrc` is **silently ignored** for this setting. Metro cannot resolve through pnpm's symlinked layout. Verify with `pnpm config get node-linker`, which must print `hoisted`. |
+| `react` / `react-dom` **19.2.3** | Forced workspace-wide via `overrides` in `pnpm-workspace.yaml`. Expo SDK 57 pins 19.2.3; admin-web was on 19.1.0 and the hoisted linker produced two React copies bound to different `react-dom` instances, failing prerender with "Cannot read properties of null (reading 'useRef')". React must be a single instance. |
+| `typescript` **5.x** | Expo SDK 57 asks for `~6.0.3`; we stay on 5.9.3 deliberately. Next 15 and `eslint-config-next` target TS 5. `expo install --check` will keep reporting this — it is accepted, not an oversight. |
 
 `create-next-app@latest` now scaffolds Next 16 + Tailwind v4. Both must be
 downgraded immediately after scaffolding. Do not "fix" this by upgrading.

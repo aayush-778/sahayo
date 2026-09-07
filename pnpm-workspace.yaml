@@ -23,3 +23,11 @@ allowBuilds:
   sharp: true
   # Native module resolver used by eslint-config-next.
   unrs-resolver: true
+
+# React must be a SINGLE instance across the workspace. Expo SDK 57 pins
+# react 19.2.3; admin-web was on 19.1.0, and under the hoisted linker that
+# produced two React copies bound to different react-dom instances, which
+# fails at prerender with "Cannot read properties of null (reading 'useRef')".
+overrides:
+  react: 19.2.3
+  react-dom: 19.2.3
