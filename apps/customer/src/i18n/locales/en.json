@@ -1,0 +1,71 @@
+{
+  "common": {
+    "back": "Back",
+    "next": "Next",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "loading": "Please wait…",
+    "retry": "Retry",
+    "logout": "Log out",
+    "changeLanguage": "Change language",
+    "switchToLanguage": "Switch to {{language}}",
+    "currencySymbol": "₹",
+    "tabs": {
+      "home": "Home",
+      "categories": "Categories",
+      "bookings": "Bookings",
+      "support": "Support",
+      "profile": "Profile"
+    },
+    "languages": {
+      "en": "English",
+      "hi": "हिन्दी"
+    }
+  },
+  "auth": {
+    "nameLabel": "Name",
+    "namePlaceholder": "Aarav Kumar",
+    "nameError": "Please enter your name.",
+    "phoneLabel": "Phone number",
+    "phonePlaceholder": "98765 43210",
+    "phoneError": "Enter a valid 10-digit mobile number.",
+    "continue": "Continue",
+    "termsAgree": "Agree with ",
+    "termsLink": "Terms & Conditions",
+    "signup": {
+      "headerTitle": "Signup",
+      "heading": "Create Account",
+      "subtitle": "Fill your information below to get started",
+      "footerPrompt": "Already have account? ",
+      "footerAction": "Signin"
+    },
+    "login": {
+      "headerTitle": "Login",
+      "heading": "Welcome Back",
+      "subtitle": "Enter your details to continue",
+      "footerPrompt": "Don’t have an account? ",
+      "footerAction": "Signup"
+    }
+  },
+  "home": {
+    "greeting": "Hey, {{name}} 👋",
+    "greetingAnonymous": "Hey there 👋",
+    "notifications": "Notifications",
+    "searchPlaceholder": "Search",
+    "searchFilters": "Filters",
+    "allCategories": "All categories",
+    "viewAll": "View all",
+    "bestServices": "Best services",
+    "percentOff": "{{percent}}% OFF",
+    "liveOrder": "Live order",
+    "liveOrderSubtitle": "{{status}} · {{eta}}",
+    "addToFavourites": "Add to favourites",
+    "removeFromFavourites": "Remove from favourites",
+    "status": {
+      "ACCEPTED": "{{worker}} accepted your booking",
+      "EN_ROUTE": "{{worker}} is on the way",
+      "ARRIVED": "{{worker}} has arrived",
+      "IN_PROGRESS": "{{worker}} is working now"
+    }
+  }
+}

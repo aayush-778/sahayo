@@ -1,0 +1,71 @@
+{
+  "common": {
+    "back": "वापस",
+    "next": "आगे",
+    "cancel": "रद्द करें",
+    "confirm": "पुष्टि करें",
+    "loading": "कृपया प्रतीक्षा करें…",
+    "retry": "पुनः प्रयास करें",
+    "logout": "लॉग आउट",
+    "changeLanguage": "भाषा बदलें",
+    "switchToLanguage": "{{language}} में बदलें",
+    "currencySymbol": "₹",
+    "tabs": {
+      "home": "होम",
+      "categories": "श्रेणियाँ",
+      "bookings": "बुकिंग",
+      "support": "सहायता",
+      "profile": "प्रोफ़ाइल"
+    },
+    "languages": {
+      "en": "English",
+      "hi": "हिन्दी"
+    }
+  },
+  "auth": {
+    "nameLabel": "नाम",
+    "namePlaceholder": "आरव कुमार",
+    "nameError": "कृपया अपना नाम दर्ज करें।",
+    "phoneLabel": "मोबाइल नंबर",
+    "phonePlaceholder": "98765 43210",
+    "phoneError": "मान्य 10 अंकों का मोबाइल नंबर दर्ज करें।",
+    "continue": "जारी रखें",
+    "termsAgree": "सहमत हूँ ",
+    "termsLink": "नियम एवं शर्तें",
+    "signup": {
+      "headerTitle": "साइन अप",
+      "heading": "खाता बनाएँ",
+      "subtitle": "शुरू करने के लिए नीचे अपनी जानकारी भरें",
+      "footerPrompt": "पहले से खाता है? ",
+      "footerAction": "साइन इन"
+    },
+    "login": {
+      "headerTitle": "लॉग इन",
+      "heading": "वापस स्वागत है",
+      "subtitle": "जारी रखने के लिए अपना विवरण दर्ज करें",
+      "footerPrompt": "खाता नहीं है? ",
+      "footerAction": "साइन अप"
+    }
+  },
+  "home": {
+    "greeting": "नमस्ते, {{name}} 👋",
+    "greetingAnonymous": "नमस्ते 👋",
+    "notifications": "सूचनाएँ",
+    "searchPlaceholder": "खोजें",
+    "searchFilters": "फ़िल्टर",
+    "allCategories": "सभी श्रेणियाँ",
+    "viewAll": "सभी देखें",
+    "bestServices": "बेहतरीन सेवाएँ",
+    "percentOff": "{{percent}}% छूट",
+    "liveOrder": "लाइव ऑर्डर",
+    "liveOrderSubtitle": "{{status}} · {{eta}}",
+    "addToFavourites": "पसंदीदा में जोड़ें",
+    "removeFromFavourites": "पसंदीदा से हटाएँ",
+    "status": {
+      "ACCEPTED": "{{worker}} ने आपकी बुकिंग स्वीकार की",
+      "EN_ROUTE": "{{worker}} रास्ते में हैं",
+      "ARRIVED": "{{worker}} पहुँच गए हैं",
+      "IN_PROGRESS": "{{worker}} अभी काम कर रहे हैं"
+    }
+  }
+}

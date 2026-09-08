@@ -1,0 +1,62 @@
+import { useTranslation } from 'react-i18next';
+import { View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Avatar, brandColors, Text } from '@sahayo/ui-native';
+
+import { localized, mockServiceLocation } from '../../mocks';
+import { useAuthStore } from '../../store/auth';
+
+/**
+ * Avatar, greeting, service area, notification bell.
+ *
+ * The name is the one typed at signup — it is the single thread tying the
+ * dummy auth store to the rest of the app, and the reason signup is the entry
+ * point rather than login.
+ *
+ * The bell and the location chevron are deliberately inert. There is no
+ * notifications screen and no address picker in the route tree, and a control
+ * that navigates somewhere unbuilt is worse in a demo than one that visibly
+ * waits its turn.
+ */
+export function HomeHeader() {
+  const { t } = useTranslation();
+  const name = useAuthStore((state) => state.name);
+  const locale = useAuthStore((state) => state.language);
+
+  const greeting = name
+    ? t('home.greeting', { name: name.split(/\s+/)[0] })
+    : t('home.greetingAnonymous');
+
+  return (
+    <View className="flex-row items-center">
+      <Avatar name={name || '?'} size="md" />
+
+      <View className="ml-3 flex-1">
+        <Text weight="bold" className="text-lg text-brand-navy" numberOfLines={1}>
+          {greeting}
+        </Text>
+
+        <View className="mt-0.5 flex-row items-center">
+          <Ionicons name="location-outline" size={13} color={brandColors.muted} />
+          <Text className="ml-1 text-xs text-brand-muted" numberOfLines={1}>
+            {localized(
+              mockServiceLocation.label,
+              mockServiceLocation.labelLocalized,
+              locale,
+            )}
+          </Text>
+          <Ionicons name="chevron-down" size={13} color={brandColors.muted} />
+        </View>
+      </View>
+
+      <View
+        className="h-11 w-11 items-center justify-center rounded-full border border-brand-border bg-brand-surface"
+        accessibilityLabel={t('home.notifications')}
+      >
+        <Ionicons name="notifications-outline" size={20} color={brandColors.navy} />
+        {/* Unread marker. Sits proud of the circle's edge, hence absolute. */}
+        <View className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-brand-danger" />
+      </View>
+    </View>
+  );
+}
