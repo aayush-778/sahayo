@@ -1,7 +1,7 @@
-# Sahakar — Cooperative Gig Services Platform
+# Sahayo — Cooperative Gig Services Platform
 
 SIH26089 (Ministry of Cooperation). pnpm workspaces + Turborepo monorepo,
-package scope `@sahakar/*`.
+package scope `@sahayo/*`.
 
 - `apps/admin-web` — Next.js 15 (App Router), Tailwind, shadcn/ui
 - `apps/backend` — Node.js, Express, Socket.io, TypeScript
@@ -30,8 +30,8 @@ in the phase that uses them.
 | | customer | worker |
 | --- | --- | --- |
 | Metro port | **8081** | **8082** |
-| package | `@sahakar/customer` | `@sahakar/worker` |
-| android package id | `in.sahakar.customer` | `in.sahakar.worker` |
+| package | `@sahayo/customer` | `@sahayo/worker` |
+| android package id | `in.sahayo.customer` | `in.sahayo.worker` |
 | location | foreground only | foreground **and** background |
 | notifications | no | `POST_NOTIFICATIONS` |
 
@@ -103,6 +103,48 @@ pnpm 12 blocks postinstall scripts unless listed under `allowBuilds` in
   `expo install --check` will keep reporting it. Accepted, not an oversight.
 - `@react-native/metro-config` resolves to 0.87.1 where 0.86.3 is wanted. No
   observed effect on bundling, typecheck or export.
+
+## Brand assets
+
+Source of truth lives in `brand/`:
+
+- `sahayo-logo.jpeg` — the original supplied artwork (1318×1391)
+- `sahayo-emblem.png` — the same emblem trimmed, squared, and with the cream
+  knocked out to transparency at 5% fuzz. **Every icon is generated from this
+  file.** 5% is deliberate: at 8% the knockout starts eating the pale leaf
+  highlights (`#EFFFD2`), which sit only ~8% away from the paper cream.
+
+The emblem carries no wordmark — "SAHAYO" is illegible at launcher size and
+Android renders the app name under the icon anyway.
+
+### The two apps are colour-coded on purpose
+
+Both phones are on the table during the demo, so the icons must be
+distinguishable at a glance. Same emblem, different ground:
+
+| | ground | derivation |
+| --- | --- | --- |
+| customer (`Sahayo`) | `#FBF9F3` | the artwork's own paper cream — the dominant colour in its histogram by ~10× |
+| worker (`Sahayo Partner`) | `#A9CBD8` | the interlocked hands `#4B8C96`, lightened ~52% |
+
+Separation is by **hue (warm vs cool), not lightness**. A dark ground was
+rejected: the trunk and roots are navy `#113B5E` and would disappear into it.
+Navy holds 11.0:1 on the cream and 6.75:1 on the teal.
+
+Display names follow the Urban Company / Swiggy convention — `Sahayo` and
+`Sahayo Partner`, not two builds of the same name.
+
+### Regenerating icons
+
+Four files per app, all 1024×1024, from `brand/sahayo-emblem.png`:
+`icon.png` (emblem at 800px on the ground), `android-icon-foreground.png`
+(620px on transparency, inside the 66% adaptive safe zone),
+`android-icon-background.png` (flat ground), `android-icon-monochrome.png`
+(black silhouette, written as `PNG32:` with `-strip` — otherwise ImageMagick
+emits a grayscale PNG carrying an RGB ICC profile and every build warns).
+
+Changing a ground colour means changing `android-icon-background.png` **and**
+`android.adaptiveIcon.backgroundColor` in that app's `app.json`.
 
 ## Scripts
 

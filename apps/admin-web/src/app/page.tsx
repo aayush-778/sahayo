@@ -1,3 +1,3 @@
 export default function HomePage() {
-  return <h1>Sahakar Admin</h1>;
+  return <h1>Sahayo Admin</h1>;
 }

@@ -1,5 +1,5 @@
 {
-  "name": "@sahakar/admin-web",
+  "name": "@sahayo/admin-web",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.3.3",
-    "@sahakar/shared": "workspace:*",
+    "@sahayo/shared": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.41.0",

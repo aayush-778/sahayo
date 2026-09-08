@@ -5,7 +5,7 @@ import type {
   InterServerEvents,
   ServerToClientEvents,
   SocketData,
-} from '@sahakar/shared';
+} from '@sahayo/shared';
 import { env } from '../config/env';
 
 /**
@@ -13,7 +13,7 @@ import { env } from '../config/env';
  * contract means Phase 2's handlers cannot emit an event or payload the
  * clients do not know about.
  */
-export type SahakarSocketServer = Server<
+export type SahayoSocketServer = Server<
   ClientToServerEvents,
   ServerToClientEvents,
   InterServerEvents,
@@ -24,8 +24,8 @@ export type SahakarSocketServer = Server<
  * Phase 1: connection lifecycle only. No gig dispatch, no rooms, no handlers
  * for the domain events — those arrive with the dispatch phase.
  */
-export function createSocketGateway(httpServer: HttpServer): SahakarSocketServer {
-  const io: SahakarSocketServer = new Server(httpServer, {
+export function createSocketGateway(httpServer: HttpServer): SahayoSocketServer {
+  const io: SahayoSocketServer = new Server(httpServer, {
     cors: {
       origin: env.corsOrigins,
       credentials: true,

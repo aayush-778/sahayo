@@ -5,18 +5,18 @@
 services:
   postgres:
     image: postgis/postgis:16-3.4
-    container_name: sahakar-postgres
+    container_name: sahayo-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-sahakar}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sahakar}
-      POSTGRES_DB: ${POSTGRES_DB:-sahakar}
+      POSTGRES_USER: ${POSTGRES_USER:-sahayo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sahayo}
+      POSTGRES_DB: ${POSTGRES_DB:-sahayo}
     ports:
       - '${POSTGRES_PORT:-5432}:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-sahakar} -d ${POSTGRES_DB:-sahakar}']
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-sahayo} -d ${POSTGRES_DB:-sahayo}']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -24,7 +24,7 @@ services:
 
   redis:
     image: redis:7
-    container_name: sahakar-redis
+    container_name: sahayo-redis
     restart: unless-stopped
     command: ['redis-server', '--appendonly', 'yes']
     ports:
@@ -40,6 +40,6 @@ services:
 
 volumes:
   postgres_data:
-    name: sahakar_postgres_data
+    name: sahayo_postgres_data
   redis_data:
-    name: sahakar_redis_data
+    name: sahayo_redis_data

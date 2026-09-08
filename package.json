@@ -1,14 +1,14 @@
 {
-  "name": "sahakar",
+  "name": "sahayo",
   "version": "0.1.0",
   "private": true,
   "packageManager": "pnpm@12.3.4",
   "scripts": {
-    "dev": "turbo run dev --filter=@sahakar/backend --filter=@sahakar/admin-web --filter=@sahakar/customer --filter=@sahakar/worker",
-    "dev:backend": "pnpm --filter @sahakar/backend dev",
-    "dev:admin": "pnpm --filter @sahakar/admin-web dev",
-    "dev:customer": "pnpm --filter @sahakar/customer dev",
-    "dev:worker": "pnpm --filter @sahakar/worker dev",
+    "dev": "turbo run dev --filter=@sahayo/backend --filter=@sahayo/admin-web --filter=@sahayo/customer --filter=@sahayo/worker",
+    "dev:backend": "pnpm --filter @sahayo/backend dev",
+    "dev:admin": "pnpm --filter @sahayo/admin-web dev",
+    "dev:customer": "pnpm --filter @sahayo/customer dev",
+    "dev:worker": "pnpm --filter @sahayo/worker dev",
     "typecheck": "turbo run typecheck",
     "lint": "turbo run lint",
     "format": "prettier --write ."

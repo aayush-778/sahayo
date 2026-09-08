@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Sahakar",
-    "slug": "sahakar-customer",
+    "name": "Sahayo",
+    "slug": "sahayo-customer",
     "version": "0.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "sahakarcustomer",
+    "scheme": "sahayocustomer",
     "userInterfaceStyle": "automatic",
     "platforms": [
       "android",
@@ -14,17 +14,17 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Sahakar uses your location to set the service address for a booking."
+        "NSLocationWhenInUseUsageDescription": "Sahayo uses your location to set the service address for a booking."
       }
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#FBF9F3",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "package": "in.sahakar.customer",
+      "package": "in.sahayo.customer",
       "predictiveBackGestureEnabled": false,
       "permissions": [
         "android.permission.ACCESS_COARSE_LOCATION",

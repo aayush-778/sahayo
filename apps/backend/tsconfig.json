@@ -3,10 +3,10 @@
   "compilerOptions": {
     "lib": ["ES2022"],
     "types": ["node"],
-    // No rootDir: we consume @sahakar/shared as TypeScript source from outside
+    // No rootDir: we consume @sahayo/shared as TypeScript source from outside
     // this directory, and rootDir is meaningless under noEmit anyway.
     "paths": {
-      "@sahakar/shared": ["../../packages/shared/src/index.ts"]
+      "@sahayo/shared": ["../../packages/shared/src/index.ts"]
     }
   },
   "include": ["src/**/*.ts"]

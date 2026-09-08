@@ -1,6 +1,6 @@
 import { Text } from 'react-native';
-import { Screen } from '@sahakar/ui-native';
-import { DEFAULT_RADIUS_M } from '@sahakar/shared';
+import { Screen } from '@sahayo/ui-native';
+import { DEFAULT_RADIUS_M } from '@sahayo/shared';
 
 export default function CustomerHome() {
   return (

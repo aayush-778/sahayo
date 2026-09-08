@@ -1,5 +1,5 @@
 {
-  "name": "@sahakar/worker",
+  "name": "@sahayo/worker",
   "version": "0.1.0",
   "private": true,
   "main": "expo-router/entry",
@@ -13,8 +13,8 @@
     "lint": "expo lint"
   },
   "dependencies": {
-    "@sahakar/shared": "workspace:*",
-    "@sahakar/ui-native": "workspace:*",
+    "@sahayo/shared": "workspace:*",
+    "@sahayo/ui-native": "workspace:*",
     "expo": "~57.0.20",
     "expo-constants": "~57.0.17",
     "expo-linking": "~57.0.9",

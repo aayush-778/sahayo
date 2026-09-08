@@ -6,10 +6,10 @@
       "@/*": [
         "./*"
       ],
-      "@sahakar/shared": [
+      "@sahayo/shared": [
         "../../packages/shared/src/index.ts"
       ],
-      "@sahakar/ui-native": [
+      "@sahayo/ui-native": [
         "../../packages/ui-native/src/index.ts"
       ]
     }
