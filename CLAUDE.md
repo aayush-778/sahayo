@@ -161,3 +161,5 @@ Changing a ground colour means changing `android-icon-background.png` **and**
 For day-to-day mobile work run `pnpm dev:customer` and `pnpm dev:worker` in
 separate terminals. `pnpm dev` is for bringing the whole stack up at once;
 Metro's interactive keystrokes do not survive turbo's output multiplexing.
+
+- **No Co-Authors:** Never append `Co-authored-by` or any AI attribution metadata to commit messages.
