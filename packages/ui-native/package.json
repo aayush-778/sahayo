@@ -6,7 +6,9 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./tailwind-preset": "./tailwind-preset.js",
+    "./tokens": "./tokens.js"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

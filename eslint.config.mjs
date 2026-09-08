@@ -18,6 +18,24 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
   prettier,
   {
+    // CommonJS files that Node loads directly rather than a bundler: Tailwind
+    // presets and the token source they share. `/* eslint-env node */` no
+    // longer registers globals under flat config, so they are declared here.
+    files: ['**/*.js', '**/*.cjs'],
+    languageOptions: {
+      sourceType: 'commonjs',
+      globals: {
+        module: 'writable',
+        require: 'readonly',
+        __dirname: 'readonly',
+        process: 'readonly',
+      },
+    },
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+    },
+  },
+  {
     rules: {
       '@typescript-eslint/no-unused-vars': [
         'warn',
