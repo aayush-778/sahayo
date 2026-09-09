@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Avatar, brandColors, Text } from '@sahayo/ui-native';
 
+import { LanguageSwitcher } from '../LanguageSwitcher';
 import { localized, mockServiceLocation } from '../../mocks';
 import { useAuthStore } from '../../store/auth';
 
@@ -17,6 +18,11 @@ import { useAuthStore } from '../../store/auth';
  * notifications screen and no address picker in the route tree, and a control
  * that navigates somewhere unbuilt is worse in a demo than one that visibly
  * waits its turn.
+ *
+ * The language switcher sits immediately left of the bell. It replaced a
+ * floating debug pill: language is a first-class control on this product, not
+ * a setting buried three taps deep in Profile, and a Hindi-first user should
+ * meet it on the first screen after signing in.
  */
 export function HomeHeader() {
   const { t } = useTranslation();
@@ -49,8 +55,10 @@ export function HomeHeader() {
         </View>
       </View>
 
+      <LanguageSwitcher />
+
       <View
-        className="h-11 w-11 items-center justify-center rounded-full border border-brand-border bg-brand-surface"
+        className="ml-3 h-11 w-11 items-center justify-center rounded-full border border-brand-border bg-brand-surface"
         accessibilityLabel={t('home.notifications')}
       >
         <Ionicons name="notifications-outline" size={20} color={brandColors.navy} />

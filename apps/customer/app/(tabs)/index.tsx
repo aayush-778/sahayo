@@ -1,15 +1,16 @@
 import { useTranslation } from 'react-i18next';
 import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { brandColors, SearchField } from '@sahayo/ui-native';
 
 import { BestServices } from '../../src/components/home/BestServices';
 import { CategoryChips } from '../../src/components/home/CategoryChips';
 import { HomeHeader } from '../../src/components/home/HomeHeader';
-import { HomeSearchBar } from '../../src/components/home/HomeSearchBar';
 import { LiveOrderCard } from '../../src/components/home/LiveOrderCard';
-import { PromoCarousel } from '../../src/components/home/PromoCarousel';
+import { PromoCarousel } from '../../src/components/PromoCarousel';
 import { SectionHeader } from '../../src/components/home/SectionHeader';
-import { getLiveOrders } from '../../src/mocks';
+import { getLiveOrders, homeCategories } from '../../src/mocks';
 
 /**
  * Home.
@@ -46,9 +47,17 @@ export default function HomeScreen() {
       <View className="px-6">
         <HomeHeader />
 
-        <View className="mt-5">
-          <HomeSearchBar />
-        </View>
+        {/* Presentational for now: search behaviour is not in this screen's
+            brief, and the All Categories tab is where a live search exists.
+            Shares one component with that screen so the two cannot drift. */}
+        <SearchField
+          className="mt-5"
+          readOnly
+          placeholder={t('home.searchPlaceholder')}
+          accessibilityLabel={t('home.searchPlaceholder')}
+          leadingIcon={<Ionicons name="search-outline" size={18} color={brandColors.muted} />}
+          trailingIcon={<Ionicons name="options-outline" size={18} color={brandColors.navy} />}
+        />
 
         <SectionHeader
           className="mt-7"
@@ -57,7 +66,7 @@ export default function HomeScreen() {
           actionHref="/categories"
         />
         <View className="mt-3">
-          <CategoryChips />
+          <CategoryChips categories={homeCategories()} />
         </View>
 
         <View className="mt-7">

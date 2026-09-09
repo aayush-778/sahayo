@@ -67,5 +67,18 @@
       "ARRIVED": "{{worker}} has arrived",
       "IN_PROGRESS": "{{worker}} is working now"
     }
+  },
+  "categories": {
+    "title": "All Categories",
+    "searchPlaceholder": "Search categories",
+    "clearSearch": "Clear search",
+    "noResults": "No categories match “{{query}}”",
+    "noResultsHint": "Try a different word, in English or Hindi.",
+    "groups": {
+      "all": "All",
+      "repairs": "Repairs",
+      "upkeep": "Upkeep",
+      "home_support": "Home Support"
+    }
   }
 }

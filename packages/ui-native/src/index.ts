@@ -2,6 +2,7 @@ export * from './Screen';
 export * from './Text';
 export * from './Avatar';
 export * from './FormField';
+export * from './SearchField';
 export * from './PrimaryButton';
 export * from './Checkbox';
 export * from './format';

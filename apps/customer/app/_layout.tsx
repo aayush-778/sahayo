@@ -18,7 +18,6 @@ import { NotoSansDevanagari_700Bold } from '@expo-google-fonts/noto-sans-devanag
 import { brandColors, FontScriptProvider, SCRIPT_FOR_LOCALE } from '@sahayo/ui-native';
 
 import '../global.css';
-import { DebugLanguageToggle } from '../src/components/DebugLanguageToggle';
 import { initI18n } from '../src/i18n';
 import { useAuthStore } from '../src/store/auth';
 
@@ -140,11 +139,6 @@ export default function RootLayout() {
               contentStyle: { backgroundColor: brandColors.cream },
             }}
           />
-          {/* The auth screens carry their own language switcher in the
-              header, so the temporary debug pill stands down there rather
-              than putting two language controls on the same screen. It stays
-              everywhere else until profile/language.tsx is built. */}
-          {segments[0] === '(auth)' ? null : <DebugLanguageToggle />}
         </View>
       </FontScriptProvider>
     </SafeAreaProvider>
