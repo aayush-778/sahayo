@@ -1,14 +1,108 @@
-import { PlaceholderScreen } from '../../src/components/PlaceholderScreen';
+import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Pressable, ScrollView, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { brandColors, SearchField, Text } from '@sahayo/ui-native';
 
-/** TEMPORARY scaffold for the All Categories tab. */
+import {
+  CategoryFilterChips,
+  type GroupFilter,
+} from '../../src/components/categories/CategoryFilterChips';
+import { CategoryGrid } from '../../src/components/categories/CategoryGrid';
+import { LanguageSwitcher } from '../../src/components/LanguageSwitcher';
+import { PromoCarousel } from '../../src/components/PromoCarousel';
+import { categoriesInGroup, categoryMatchesQuery, serviceCategories } from '../../src/mocks';
+
+/**
+ * All Categories.
+ *
+ * Two independent filters compose: the chip narrows to a group, the query
+ * narrows by name. Applying the chip first is deliberate — searching inside
+ * the group you are looking at is what the chip being lit implies, and the
+ * empty state can then say honestly that nothing in THIS group matched.
+ *
+ * Search matches every language a category has, not just the one on screen,
+ * so "carp" finds बढ़ई and "बढ़" finds Carpenters regardless of which
+ * language the UI is in. See `normalizeForSearch` for why Devanagari needs
+ * more than a `toLowerCase`.
+ */
 export default function CategoriesScreen() {
+  const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
+
+  const [group, setGroup] = useState<GroupFilter>(null);
+  const [query, setQuery] = useState('');
+
+  const visible = useMemo(() => {
+    const inGroup = group === null ? serviceCategories : categoriesInGroup(group);
+    return inGroup.filter((category) => categoryMatchesQuery(category, query));
+  }, [group, query]);
+
   return (
-    <PlaceholderScreen
-      links={[
-        { href: '/category/cat_cleaning', label: '/category/cat_cleaning' },
-        { href: '/category/cat_plumbing', label: '/category/cat_plumbing' },
-        { href: '/category/cat_electrical', label: '/category/cat_electrical' },
-      ]}
-    />
+    <ScrollView
+      className="flex-1 bg-brand-cream"
+      contentContainerStyle={{
+        paddingTop: insets.top + 12,
+        paddingBottom: insets.bottom + 24,
+      }}
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="on-drag"
+      showsVerticalScrollIndicator={false}
+    >
+      <View className="px-6">
+        <View className="flex-row items-center justify-between">
+          <Text weight="bold" className="text-2xl text-brand-navy">
+            {t('categories.title')}
+          </Text>
+          <LanguageSwitcher />
+        </View>
+
+        <SearchField
+          className="mt-4"
+          placeholder={t('categories.searchPlaceholder')}
+          value={query}
+          onChangeText={setQuery}
+          accessibilityLabel={t('categories.searchPlaceholder')}
+          leadingIcon={<Ionicons name="search-outline" size={18} color={brandColors.muted} />}
+          trailingIcon={
+            query.length > 0 ? (
+              <Pressable
+                onPress={() => setQuery('')}
+                accessibilityRole="button"
+                accessibilityLabel={t('categories.clearSearch')}
+                hitSlop={10}
+              >
+                <Ionicons name="close-circle" size={18} color={brandColors.muted} />
+              </Pressable>
+            ) : null
+          }
+        />
+
+        <View className="mt-4">
+          <CategoryFilterChips selected={group} onSelect={setGroup} />
+        </View>
+
+        <View className="mt-5">
+          <PromoCarousel compact />
+        </View>
+
+        <View className="mt-6">
+          {visible.length > 0 ? (
+            <CategoryGrid categories={visible} />
+          ) : (
+            <View className="items-center rounded-2xl border border-brand-border bg-brand-surface px-6 py-10">
+              <Ionicons name="search-outline" size={28} color={brandColors.muted} />
+              <Text weight="semibold" className="mt-3 text-center text-base text-brand-navy">
+                {t('categories.noResults', { query })}
+              </Text>
+              <Text className="mt-1 text-center text-sm text-brand-muted">
+                {t('categories.noResultsHint')}
+              </Text>
+            </View>
+          )}
+        </View>
+      </View>
+    </ScrollView>
   );
 }

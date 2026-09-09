@@ -67,5 +67,18 @@
       "ARRIVED": "{{worker}} पहुँच गए हैं",
       "IN_PROGRESS": "{{worker}} अभी काम कर रहे हैं"
     }
+  },
+  "categories": {
+    "title": "सभी श्रेणियाँ",
+    "searchPlaceholder": "श्रेणियाँ खोजें",
+    "clearSearch": "खोज साफ़ करें",
+    "noResults": "“{{query}}” से मेल खाती कोई श्रेणी नहीं",
+    "noResultsHint": "कोई दूसरा शब्द आज़माएँ, अंग्रेज़ी या हिन्दी में।",
+    "groups": {
+      "all": "सभी",
+      "repairs": "मरम्मत",
+      "upkeep": "रखरखाव",
+      "home_support": "घरेलू सहयोग"
+    }
   }
 }

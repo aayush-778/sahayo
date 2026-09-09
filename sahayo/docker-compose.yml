@@ -1,0 +1,45 @@
+# Phase 1: this file exists but nothing here is started. The database is not
+# touched until Phase 5. Bring it up with `docker compose up -d` when that
+# phase begins.
+
+services:
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: sahayo-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sahayo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sahayo}
+      POSTGRES_DB: ${POSTGRES_DB:-sahayo}
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-sahayo} -d ${POSTGRES_DB:-sahayo}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  redis:
+    image: redis:7
+    container_name: sahayo-redis
+    restart: unless-stopped
+    command: ['redis-server', '--appendonly', 'yes']
+    ports:
+      - '${REDIS_PORT:-6379}:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  postgres_data:
+    name: sahayo_postgres_data
+  redis_data:
+    name: sahayo_redis_data

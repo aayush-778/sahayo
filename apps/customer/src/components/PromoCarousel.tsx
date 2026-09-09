@@ -12,8 +12,8 @@ import {
 import { useRouter } from 'expo-router';
 import { Text } from '@sahayo/ui-native';
 
-import { bannerPromotions, localized, type Promotion } from '../../mocks';
-import { useAuthStore } from '../../store/auth';
+import { bannerPromotions, localized, type Promotion } from '../mocks';
+import { useAuthStore } from '../store/auth';
 
 /** Matches the screen's px-6 so the first card lines up with the headings. */
 const SCREEN_PADDING = 24;
@@ -34,7 +34,16 @@ const ADVANCE_MS = 4000;
  * text rather than a hole — the scrim the text sits on is the same colour
  * either way, so the type never becomes unreadable mid-load.
  */
-export function PromoCarousel() {
+export interface PromoCarouselProps {
+  /**
+   * A shorter card for screens where the carousel is a garnish rather than
+   * the main event. All Categories uses it: the grid is what people came for,
+   * and a full-height banner above it would push the third row off the fold.
+   */
+  compact?: boolean;
+}
+
+export function PromoCarousel({ compact = false }: PromoCarouselProps) {
   const { t } = useTranslation();
   const router = useRouter();
   const locale = useAuthStore((state) => state.language);
@@ -109,7 +118,7 @@ export function PromoCarousel() {
           return (
             <Pressable
               style={{ width: cardWidth }}
-              className="h-44 overflow-hidden rounded-2xl bg-brand-navy"
+              className={`overflow-hidden rounded-2xl bg-brand-navy ${compact ? 'h-32' : 'h-44'}`}
               onPress={() => router.push(`/category/${item.categoryId}`)}
               accessibilityRole="button"
               accessibilityLabel={`${title}. ${t('home.percentOff', {
@@ -126,9 +135,12 @@ export function PromoCarousel() {
                   whatever the image happens to be. */}
               <View className="absolute inset-0 bg-brand-navy/60" />
 
-              <View className="flex-1 justify-center p-5">
+              <View className={`flex-1 justify-center ${compact ? 'p-4' : 'p-5'}`}>
                 <Text className="text-xs uppercase tracking-widest text-white/80">{title}</Text>
-                <Text weight="bold" className="mt-1 text-3xl text-white">
+                <Text
+                  weight="bold"
+                  className={compact ? 'mt-1 text-2xl text-white' : 'mt-1 text-3xl text-white'}
+                >
                   {t('home.percentOff', { percent: item.discountPercent })}
                 </Text>
                 <Text className="mt-1 text-sm text-white/90">{subtitle}</Text>
