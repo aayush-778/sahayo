@@ -1,28 +1,45 @@
-import type { Booking, Id, Paise, ServiceCategory } from '@sahayo/shared';
+import { DEFAULT_RADIUS_M, WorkerAvailability } from '@sahayo/shared';
+import type { Booking, GeoPoint, Id, Paise, ServiceCategory } from '@sahayo/shared';
 import type { AppLocale } from '@sahayo/ui-native';
 
 import {
   CATEGORY_GROUPS,
   categoryIdsByGroup,
+  chipBySubCategoryId,
+  descriptionLocalizedBySubCategoryId,
   homeCategoryIds,
   serviceCategories,
   subCategoriesByCategoryId,
+  subCategoryChipsByCategoryId,
   type CategoryGroup,
+  type SubCategoryChip,
 } from './categories';
-import { servicesBySubCategoryId, type ServiceItem } from './services';
+import { servicesBySubCategoryId, type ServiceSku } from './services';
 import { etaMinutesByBookingId, liveBookings, mockBookings, pastBookings } from './bookings';
 import { findWorkerById, mockWorkers, type MockWorker } from './workers';
+import { mockServiceLocation } from './location';
 import { bannerPromotions, discountedPaise, featuredServices } from './promotions';
 
 export {
   CategoryGroup,
   CATEGORY_GROUPS,
   categoryIdsByGroup,
+  chipBySubCategoryId,
+  descriptionLocalizedBySubCategoryId,
   homeCategoryIds,
   serviceCategories,
   subCategoriesByCategoryId,
+  subCategoryChipsByCategoryId,
+  type SubCategoryChip,
 } from './categories';
-export { servicesBySubCategoryId, type ServiceItem } from './services';
+export { servicesBySubCategoryId, type ServiceSku } from './services';
+export {
+  DEMO_SEASON,
+  SERVICE_ITEM_COUNT,
+  findServiceItem,
+  serviceItemsBySubCategoryId,
+  serviceItemsFor,
+} from './serviceItems';
 export { etaMinutesByBookingId, liveBookings, mockBookings, pastBookings } from './bookings';
 export { findWorkerById, mockWorkers, type MockWorker } from './workers';
 export { mockServiceLocation, type ServiceLocation } from './location';
@@ -68,14 +85,29 @@ export function findParentCategory(subCategoryId: Id): ServiceCategory | undefin
   return undefined;
 }
 
-export function servicesFor(subCategoryId: Id): ServiceItem[] {
+export function servicesFor(subCategoryId: Id): ServiceSku[] {
   return servicesBySubCategoryId[subCategoryId as keyof typeof servicesBySubCategoryId] ?? [];
 }
 
-export function findServiceItemById(serviceItemId: Id): ServiceItem | undefined {
+export function findServiceSkuById(serviceItemId: Id): ServiceSku | undefined {
   for (const group of Object.values(servicesBySubCategoryId)) {
     const found = group.find((item) => item.id === serviceItemId);
     if (found) return found;
+  }
+  return undefined;
+}
+
+/**
+ * The sub-category a legacy SKU hangs off.
+ *
+ * `findServiceSkuById` walks the same table but returns the row, not the key
+ * it was found under, and "book this again" needs the key: it routes to the
+ * item list, not to a price. Seed items carry `subCategoryId` on the record
+ * and need none of this.
+ */
+export function findSubCategoryIdForSku(serviceItemId: Id): Id | undefined {
+  for (const [subCategoryId, group] of Object.entries(servicesBySubCategoryId)) {
+    if (group.some((item) => item.id === serviceItemId)) return subCategoryId;
   }
   return undefined;
 }
@@ -124,8 +156,95 @@ export function categoryMatchesQuery(category: ServiceCategory, query: string): 
   return haystack.some((label) => normalizeForSearch(label).includes(needle));
 }
 
+/** The chip row for a worker type. Always opens with `all`. */
+export function chipsFor(categoryId: Id): SubCategoryChip[] {
+  return subCategoryChipsByCategoryId[categoryId] ?? [];
+}
+
+/** Which chip a sub-category answers to. */
+export function chipOf(subCategoryId: Id): string | undefined {
+  return chipBySubCategoryId[subCategoryId];
+}
+
+/**
+ * The muted second line on a sub-category card.
+ *
+ * `ServiceCategory` has `description` but no `descriptionLocalized`, so the
+ * Hindi lives in an index beside the tree. Same fallback rule as `name`.
+ */
+export function localizedDescription(node: ServiceCategory, locale: AppLocale): string {
+  const english = node.description ?? '';
+  if (locale === 'en') return english;
+  return descriptionLocalizedBySubCategoryId[node.id]?.[locale] ?? english;
+}
+
+/**
+ * Matches a query against a sub-category's name in every language it has.
+ *
+ * Descriptions are deliberately NOT searched: they are keyword-dense lists
+ * ("Tap, basin, sink, WC, shower"), so including them would make almost any
+ * short query match almost everything and the result list would stop telling
+ * you anything.
+ */
+export function subCategoryMatchesQuery(sub: ServiceCategory, query: string): boolean {
+  const needle = normalizeForSearch(query);
+  if (!needle) return true;
+
+  const haystack = [sub.name, ...Object.values(sub.nameLocalized ?? {})];
+  return haystack.some((label) => normalizeForSearch(label).includes(needle));
+}
+
+/** A sub-category paired with the worker type it belongs to, for search results. */
+export interface SubCategoryHit {
+  sub: ServiceCategory;
+  category: ServiceCategory;
+}
+
+/** Every sub-category matching a query, with its parent, in catalogue order. */
+export function searchSubCategories(query: string): SubCategoryHit[] {
+  const hits: SubCategoryHit[] = [];
+
+  for (const category of serviceCategories) {
+    for (const sub of subCategoriesFor(category.id)) {
+      if (subCategoryMatchesQuery(sub, query)) hits.push({ sub, category });
+    }
+  }
+
+  return hits;
+}
+
 export function findBookingById(bookingId: Id): Booking | undefined {
   return mockBookings.find((booking) => booking.id === bookingId);
+}
+
+/**
+ * Straight-line metres between two points.
+ *
+ * Equirectangular rather than haversine: over the 10 km this screen covers,
+ * the two agree to well under a metre, and this one is legible.
+ */
+export function metresBetween(a: GeoPoint, b: GeoPoint): number {
+  const metresPerDegLat = 111_000;
+  const metresPerDegLng = 111_320 * Math.cos((a.lat * Math.PI) / 180);
+  return Math.hypot((a.lat - b.lat) * metresPerDegLat, (a.lng - b.lng) * metresPerDegLng);
+}
+
+/**
+ * Workers who could actually take this job, nearest first.
+ *
+ * Three filters, and all three matter on the map. OFFLINE workers are not
+ * reachable, so drawing them would promise capacity that is not there. A
+ * worker approved for a different service is not a candidate for this one —
+ * a plumbing broadcast showing carpenters would be a lie the customer can
+ * see. And the radius is the broadcast radius: `DEFAULT_RADIUS_M`, from
+ * @sahayo/shared, not a number typed into a screen.
+ */
+export function workersNear(categoryId: Id, radiusM: number = DEFAULT_RADIUS_M): MockWorker[] {
+  return mockWorkers
+    .filter((worker) => worker.profile.availability !== WorkerAvailability.OFFLINE)
+    .filter((worker) => worker.profile.serviceCategoryIds.includes(categoryId))
+    .filter((worker) => worker.distanceM <= radiusM)
+    .sort((a, b) => a.distanceM - b.distanceM);
 }
 
 /** The worker assigned to a booking, if one has accepted it yet. */
@@ -143,7 +262,7 @@ export function workerForBooking(bookingId: Id): MockWorker | undefined {
 export interface LiveOrder {
   booking: Booking;
   worker?: MockWorker;
-  service?: ServiceItem;
+  service?: ServiceSku;
   etaMinutes?: number;
 }
 
@@ -151,7 +270,7 @@ export function getLiveOrders(): LiveOrder[] {
   return liveBookings.map((booking) => ({
     booking,
     worker: booking.workerId ? findWorkerById(booking.workerId) : undefined,
-    service: findServiceItemById(booking.serviceCategoryId),
+    service: findServiceSkuById(booking.serviceCategoryId),
     etaMinutes: etaMinutesByBookingId[booking.id],
   }));
 }
@@ -159,7 +278,7 @@ export function getLiveOrders(): LiveOrder[] {
 /** A featured service resolved against the catalogue, with its fares worked out. */
 export interface FeaturedServiceView {
   id: Id;
-  item: ServiceItem;
+  item: ServiceSku;
   discountPercent: number;
   imageUrl: string;
   /** The catalogue fare, struck through in the UI. */
@@ -172,7 +291,7 @@ export function getFeaturedServices(): FeaturedServiceView[] {
   const views: FeaturedServiceView[] = [];
 
   for (const featured of featuredServices) {
-    const item = findServiceItemById(featured.serviceItemId);
+    const item = findServiceSkuById(featured.serviceItemId);
     // A featured id that no longer matches a catalogue row is a data bug, not
     // a reason to crash Home. Skipping it loses one card and nothing else.
     if (!item) continue;
@@ -256,10 +375,16 @@ export const bookingCounts = {
     }
   }
 
-  for (const subCategoryId of subCategoryIds) {
-    if (servicesFor(subCategoryId).length === 0) {
-      problems.push(`sub-category has no priced items: ${subCategoryId}`);
-    }
+  // Gaps in the LEGACY SKU catalogue (`services.ts`), which still feeds
+  // Home's live-order card and the featured carousel. It is not the item
+  // list: `serviceItems.ts` covers all 49 sub-categories and throws rather
+  // than warns if one is ever empty. Warn so the gap stays visible, but do
+  // not refuse to boot — nothing on screen depends on these.
+  const unpriced = [...subCategoryIds].filter((id) => servicesFor(id).length === 0);
+  if (unpriced.length > 0) {
+    console.warn(
+      `[mocks] ${unpriced.length} sub-categories have no legacy SKU (item list is unaffected): ${unpriced.join(', ')}`,
+    );
   }
 
   for (const group of CATEGORY_GROUPS) {
@@ -280,6 +405,28 @@ export const bookingCounts = {
     }
   }
 
+  for (const category of serviceCategories) {
+    const chips = chipsFor(category.id);
+    if (chips.length === 0) {
+      problems.push(`category has no chip row: ${category.id}`);
+      continue;
+    }
+    if (chips[0]?.key !== 'all') {
+      problems.push(`chip row must open with "all": ${category.id}`);
+    }
+    const keys = new Set(chips.map((chip) => chip.key));
+    for (const sub of subCategoriesFor(category.id)) {
+      const chip = chipOf(sub.id);
+      if (!chip) {
+        problems.push(`sub-category has no chip: ${sub.id}`);
+      } else if (!keys.has(chip)) {
+        problems.push(`sub-category "${sub.id}" uses chip "${chip}" absent from ${category.id}`);
+      } else if (chip === 'all') {
+        problems.push(`sub-category must not be assigned the "all" chip: ${sub.id}`);
+      }
+    }
+  }
+
   for (const categoryId of homeCategoryIds) {
     if (!categoryIds.has(categoryId)) {
       problems.push(`homeCategoryIds references missing category: ${categoryId}`);
@@ -291,6 +438,38 @@ export const bookingCounts = {
       if (!categoryIds.has(categoryId)) {
         problems.push(`worker ${worker.profile.id} references missing category: ${categoryId}`);
       }
+    }
+  }
+
+  // `distanceM` must agree with `lastLocation`, because the booking map draws
+  // pins from the coordinates and filters candidates by the distance. When
+  // they disagreed — and four of the original eight did — a worker could be
+  // inside the broadcast radius and outside the drawn circle at the same
+  // time, which is a bug the eye catches before any test does.
+  for (const worker of mockWorkers) {
+    const point = worker.profile.lastLocation;
+    if (!point) {
+      problems.push(`worker ${worker.profile.id} has no lastLocation`);
+      continue;
+    }
+    const actual = metresBetween(mockServiceLocation.point, point);
+    if (Math.abs(actual - worker.distanceM) > 2) {
+      problems.push(
+        `worker ${worker.profile.id}: distanceM is ${worker.distanceM} but its coordinates are ` +
+          `${Math.round(actual)} m from the customer`,
+      );
+    }
+    if (actual < 1) {
+      problems.push(`worker ${worker.profile.id} sits exactly on the customer's pin`);
+    }
+  }
+
+  // The booking map needs a plausible field of pins for every worker type,
+  // not just the ones the first eight mock workers happened to cover.
+  for (const category of serviceCategories) {
+    const nearby = workersNear(category.id).length;
+    if (nearby < 4) {
+      problems.push(`only ${nearby} available workers within range for ${category.id}`);
     }
   }
 

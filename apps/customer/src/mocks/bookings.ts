@@ -15,14 +15,17 @@ import {
  * not send. A live booking shows an estimate derived from the service item's
  * `baseFare` instead.
  *
- * Every split below is exact integer paise: worker 85%, platform 10%,
+ * Every split below is exact integer paise: worker 90%, platform 5%,
  * cooperative fund 5%, summing to `total` with nothing lost to rounding. The
  * assertion at the bottom of this file enforces that.
  */
 
-const CUSTOMER_ID = 'usr_cust_demo';
+/** The signed-in demo customer. Exported so a booking created at payment
+ *  time carries the same identity as the seeded history. */
+export const CUSTOMER_ID = 'usr_cust_demo';
 
-const RAJENDRA_NAGAR = {
+/** The customer's default service address, matching `mocks/location.ts`. */
+export const RAJENDRA_NAGAR = {
   line1: 'Flat 3B, Shivam Apartment',
   line2: 'Road No. 4, Rajendra Nagar',
   city: 'Patna',
@@ -39,6 +42,20 @@ const KANKARBAGH = {
   pincode: '800020',
   point: { lat: 25.5905, lng: 85.159 },
 };
+
+/**
+ * An instant relative to now, so the demo never shows a stale calendar.
+ *
+ * The seeded history keeps its fixed dates — those are the past and the past
+ * does not move. Only the scheduled booking is relative, because a booking
+ * "upcoming" in August is not upcoming any more.
+ */
+function daysFromNow(days: number, hour: number): string {
+  const at = new Date();
+  at.setDate(at.getDate() + days);
+  at.setHours(hour, 0, 0, 0);
+  return at.toISOString();
+}
 
 /** In flight right now — these are what `track/[bookingId]` renders. */
 export const liveBookings = [
@@ -76,8 +93,8 @@ export const pastBookings = [
     address: RAJENDRA_NAGAR,
     fare: {
       total: 19900,
-      workerShare: 16915,
-      platformShare: 1990,
+      workerShare: 17910,
+      platformShare: 995,
       coopFundShare: 995,
     },
     createdAt: '2026-08-24T05:20:00.000Z',
@@ -93,8 +110,8 @@ export const pastBookings = [
     notes: 'Bedroom fan making noise at high speed.',
     fare: {
       total: 34900,
-      workerShare: 29665,
-      platformShare: 3490,
+      workerShare: 31410,
+      platformShare: 1745,
       coopFundShare: 1745,
     },
     createdAt: '2026-08-11T10:15:00.000Z',
@@ -110,8 +127,8 @@ export const pastBookings = [
     scheduledFor: '2026-09-02T04:30:00.000Z',
     fare: {
       total: 129900,
-      workerShare: 110415,
-      platformShare: 12990,
+      workerShare: 116910,
+      platformShare: 6495,
       coopFundShare: 6495,
     },
     createdAt: '2026-08-30T14:05:00.000Z',
@@ -119,7 +136,47 @@ export const pastBookings = [
   },
 ] satisfies Booking[];
 
-export const mockBookings = [...liveBookings, ...pastBookings] satisfies Booking[];
+/**
+ * Accepted, but not today. These fill the Upcoming tab.
+ *
+ * `scheduledFor` is what separates upcoming from active: a booking can be
+ * ACCEPTED and still be three days away, and showing it beside a worker who
+ * is on their way right now would be wrong.
+ */
+export const scheduledBookings = [
+  {
+    id: 'bkg_soon_painting',
+    customerId: CUSTOMER_ID,
+    workerId: 'wrk_bipin',
+    serviceCategoryId: 'svc_paint_room',
+    status: BookingStatus.ACCEPTED,
+    address: RAJENDRA_NAGAR,
+    scheduledFor: daysFromNow(3, 11),
+    createdAt: daysFromNow(-1, 18),
+    updatedAt: daysFromNow(-1, 18),
+  },
+] satisfies Booking[];
+
+/** Called off. One row, so the Past tab has a status chip worth reading. */
+export const cancelledBookings = [
+  {
+    id: 'bkg_cancelled_carpentry',
+    customerId: CUSTOMER_ID,
+    serviceCategoryId: 'svc_door_align',
+    status: BookingStatus.CANCELLED_BY_WORKER,
+    address: RAJENDRA_NAGAR,
+    cancellationReason: 'worker_unavailable',
+    createdAt: '2026-08-19T07:20:00.000Z',
+    updatedAt: '2026-08-19T08:05:00.000Z',
+  },
+] satisfies Booking[];
+
+export const mockBookings = [
+  ...liveBookings,
+  ...scheduledBookings,
+  ...pastBookings,
+  ...cancelledBookings,
+] satisfies Booking[];
 
 /**
  * Minutes until the worker arrives, or until the job is done.
@@ -134,6 +191,37 @@ export const etaMinutesByBookingId: Record<string, number> = {
   bkg_live_ac: 12,
   bkg_live_bathroom: 35,
 };
+
+/**
+ * How each seeded booking was paid for.
+ *
+ * An index rather than a field on `Booking`, for the same reason every other
+ * relationship in this mock layer is an index: `Booking` comes from
+ * @sahayo/shared and `satisfies Booking[]` rejects any property the contract
+ * does not define. Adding one here to make a demo easier would be exactly the
+ * drift the `satisfies` guard exists to catch.
+ *
+ * `bkg_live_bathroom` is the cash row. It is IN_PROGRESS, so it is one status
+ * step away from COMPLETED — which is when the track screen offers to settle
+ * it. That is the shortest path to demonstrating the pay-on-completion flow
+ * without booking something first.
+ */
+export interface BookingPayment {
+  method: 'upi' | 'card' | 'wallet' | 'cash';
+  /** False while the money has not moved — cash before the job is finished. */
+  paid: boolean;
+  transactionId?: string;
+}
+
+export const paymentByBookingId: Record<string, BookingPayment> = {
+  bkg_live_ac: { method: 'upi', paid: true, transactionId: 'SHYK41P2QX7' },
+  bkg_live_bathroom: { method: 'cash', paid: false },
+  bkg_soon_painting: { method: 'upi', paid: true, transactionId: 'SHYK3ZM8V2B' },
+  bkg_past_tap: { method: 'upi', paid: true, transactionId: 'SHYJ92LT4KD' },
+  bkg_past_fan: { method: 'wallet', paid: true, transactionId: 'SHYJ71RB6NP' },
+  bkg_past_kitchen: { method: 'cash', paid: false },
+};
+
 
 /**
  * Guards the hand-written splits above.

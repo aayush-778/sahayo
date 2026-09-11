@@ -4,6 +4,8 @@ export * from './Avatar';
 export * from './FormField';
 export * from './SearchField';
 export * from './PrimaryButton';
+export * from './FarePanel';
+export * from './Skeleton';
 export * from './Checkbox';
 export * from './format';
 export * from './tokens';

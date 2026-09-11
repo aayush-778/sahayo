@@ -1,34 +1,57 @@
 import type { Id, ServiceCategory } from '@sahayo/shared';
 
 /**
- * Priced, bookable line items, keyed by the sub-category they sit under.
+ * Priced SKUs, keyed by the sub-category they sit under.
  *
- * A line item is structurally a leaf `ServiceCategory` — a name, a fare and a
+ * A SKU is structurally a leaf `ServiceCategory` — a name, a fare and a
  * nominal duration — so it reuses that type rather than inventing one in
- * @sahayo/shared. `ServiceItem` is an alias, not a new shape: it exists so
- * call sites read as what they are.
+ * @sahayo/shared. `ServiceSku` is an alias, not a new shape.
+ *
+ * NAMED `ServiceSku`, NOT `ServiceItem`, since sub-phase 2.5. The item list
+ * screen is driven by `src/data/serviceItems.json` through
+ * `src/mocks/serviceItems.ts`, whose rows carry six pricing modes and cannot
+ * be `ServiceCategory` at all — a quote item has no fare and a unit item has
+ * a rate rather than a total. Two types called `ServiceItem` in one app is a
+ * trap, so this one took the more specific name. The data below is unchanged.
+ *
+ * THE TWO CATALOGUES OVERLAP AND BOTH ARE LIVE. These 123 SKUs still feed
+ * Home's live-order card and the featured carousel; the 289 seed items feed
+ * the item list. Where they describe the same job the prices differ — a
+ * kitchen deep clean is ₹1,299 here and ₹1,799 in the seed. Retiring this
+ * file is the right end state and only seven ids are referenced outside it,
+ * but doing it would change screens built in 2.2 and 2.4 that have not been
+ * signed off yet, so it is left for its own sub-phase.
  *
  * ALL fares are integer paise. 19900 is ₹199, 149900 is ₹1,499. Nothing here
  * is rendered without going through `formatPaise`.
  *
- * Item ids are stable and are referenced from `bookings.ts` and
- * `promotions.ts`. The 2.3 remap onto ten worker types renamed sub-category
- * ids but deliberately left every ITEM id alone, so those two files did not
- * have to move in step.
+ * SKU ids are stable and are referenced from `bookings.ts` and
+ * `promotions.ts`. The 2.4 re-parent moved every SKU under the new
+ * worker-type tree WITHOUT renaming a single one, which is why those two
+ * files needed no edits — the same trick that kept them still during 2.3.
  *
- * Long engagements — a monthly driver, live-in help, a night attendant — are
- * priced PER SHIFT OR PER DAY, not per month. A real monthly driver costs far
- * more than the ₹199–₹1,499 band these mocks live in, and inflating one item
- * past the band would make every price column on every screen lay out around
- * a number that only appears once.
+ * A few SKUs changed worker type as well as sub-category, because the new
+ * tree draws the lines differently: pump and motor work moved from Plumbers
+ * to Electricians (Motors & Pumps), RO purifier work moved from Technicians
+ * to Plumbers (Water Systems), and door and furniture polishing moved from
+ * Painters to Carpenters (Polishing & Finishing).
+ *
+ * Twelve sub-categories have no SKUs yet — Commercial & 3-Phase, Drainage &
+ * Sewer, One-time & Occasional, Mother & Newborn, Commercial & Goods,
+ * Two-wheeler Rider, Tree Work, Campus & Society, Pest Control, Commercial
+ * Cleaning, Small Appliances and IT/Network/CCTV. They are real categories
+ * with nothing priced under them until sub-phase 2.5, and the integrity check
+ * warns rather than throws for exactly this reason.
+ *
+ * Long engagements are priced PER SHIFT OR PER DAY, not per month.
  */
-export type ServiceItem = ServiceCategory;
+export type ServiceSku = ServiceCategory;
 
 export const servicesBySubCategoryId = {
   // ===================================================================
   // Electricians
   // ===================================================================
-  sub_switches_sockets: [
+  sub_basic_electrical: [
     {
       id: 'svc_switch_replace',
       slug: 'switch-replace',
@@ -40,28 +63,6 @@ export const servicesBySubCategoryId = {
       active: true,
     },
     {
-      id: 'svc_socket_new',
-      slug: 'socket-new',
-      name: 'New Socket Point',
-      nameLocalized: { hi: 'नया सॉकेट पॉइंट' },
-      description: 'Add one 6A or 16A socket from an existing line.',
-      baseFare: 34900,
-      estimatedDurationMin: 60,
-      active: true,
-    },
-    {
-      id: 'svc_board_replace',
-      slug: 'board-replace',
-      name: 'Switchboard Replacement',
-      nameLocalized: { hi: 'स्विचबोर्ड बदलना' },
-      description: 'Full board swap with new modular plate.',
-      baseFare: 69900,
-      estimatedDurationMin: 90,
-      active: true,
-    },
-  ],
-  sub_fans_lights: [
-    {
       id: 'svc_fan_install',
       slug: 'fan-install',
       name: 'Ceiling Fan Installation',
@@ -69,6 +70,16 @@ export const servicesBySubCategoryId = {
       description: 'Mount and wire one ceiling fan with regulator check.',
       baseFare: 24900,
       estimatedDurationMin: 45,
+      active: true,
+    },
+    {
+      id: 'svc_socket_new',
+      slug: 'socket-new',
+      name: 'New Socket Point',
+      nameLocalized: { hi: 'नया सॉकेट पॉइंट' },
+      description: 'Add one 6A or 16A socket from an existing line.',
+      baseFare: 34900,
+      estimatedDurationMin: 60,
       active: true,
     },
     {
@@ -91,8 +102,18 @@ export const servicesBySubCategoryId = {
       estimatedDurationMin: 75,
       active: true,
     },
+    {
+      id: 'svc_board_replace',
+      slug: 'board-replace',
+      name: 'Switchboard Replacement',
+      nameLocalized: { hi: 'स्विचबोर्ड बदलना' },
+      description: 'Full board swap with new modular plate.',
+      baseFare: 69900,
+      estimatedDurationMin: 90,
+      active: true,
+    },
   ],
-  sub_wiring_mcb: [
+  sub_wiring_installation: [
     {
       id: 'svc_mcb_replace',
       slug: 'mcb-replace',
@@ -124,7 +145,7 @@ export const servicesBySubCategoryId = {
       active: true,
     },
   ],
-  sub_inverter_battery: [
+  sub_power_backup_solar: [
     {
       id: 'svc_inverter_service',
       slug: 'inverter-service',
@@ -156,85 +177,7 @@ export const servicesBySubCategoryId = {
       active: true,
     },
   ],
-
-  // ===================================================================
-  // Plumbers
-  // ===================================================================
-  sub_taps_mixers: [
-    {
-      id: 'svc_tap_repair',
-      slug: 'tap-repair',
-      name: 'Tap Leak Repair',
-      nameLocalized: { hi: 'नल रिसाव मरम्मत' },
-      description: 'Washer or cartridge replacement on one tap.',
-      baseFare: 19900,
-      estimatedDurationMin: 45,
-      active: true,
-    },
-    {
-      id: 'svc_tap_install',
-      slug: 'tap-install',
-      name: 'Tap Installation',
-      nameLocalized: { hi: 'नल लगवाना' },
-      description: 'Fit a customer-supplied tap, including sealing.',
-      baseFare: 29900,
-      estimatedDurationMin: 45,
-      active: true,
-    },
-    {
-      id: 'svc_mixer_install',
-      slug: 'mixer-install',
-      name: 'Mixer Unit Installation',
-      nameLocalized: { hi: 'मिक्सर यूनिट लगवाना' },
-      description: 'Wall-mounted mixer fitting with pipe alignment.',
-      baseFare: 49900,
-      estimatedDurationMin: 90,
-      active: true,
-    },
-  ],
-  sub_toilet_drainage: [
-    {
-      id: 'svc_drain_unblock',
-      slug: 'drain-unblock',
-      name: 'Drain Unblocking',
-      nameLocalized: { hi: 'नाली की रुकावट' },
-      description: 'Mechanical clearing of one blocked drain or trap.',
-      baseFare: 29900,
-      estimatedDurationMin: 60,
-      active: true,
-    },
-    {
-      id: 'svc_flush_repair',
-      slug: 'flush-repair',
-      name: 'Flush Tank Repair',
-      nameLocalized: { hi: 'फ़्लश टंकी मरम्मत' },
-      description: 'Float, valve or seal replacement in a cistern.',
-      baseFare: 39900,
-      estimatedDurationMin: 60,
-      active: true,
-    },
-    {
-      id: 'svc_toilet_install',
-      slug: 'toilet-install',
-      name: 'Toilet Seat Installation',
-      nameLocalized: { hi: 'शौचालय सीट लगवाना' },
-      description: 'Removal of the old unit and fitting of a new one.',
-      baseFare: 89900,
-      estimatedDurationMin: 150,
-      active: true,
-    },
-  ],
-  sub_water_tank_motor: [
-    {
-      id: 'svc_tank_clean',
-      slug: 'tank-clean',
-      name: 'Water Tank Cleaning',
-      nameLocalized: { hi: 'पानी की टंकी सफ़ाई' },
-      description: 'Drain, scrub and sanitise a tank up to 1000 litres.',
-      baseFare: 49900,
-      estimatedDurationMin: 120,
-      active: true,
-    },
+  sub_motors_pumps: [
     {
       id: 'svc_motor_repair',
       slug: 'motor-repair',
@@ -256,7 +199,74 @@ export const servicesBySubCategoryId = {
       active: true,
     },
   ],
-  sub_pipeline_leakage: [
+  // sub_commercial_electrical: no SKUs until 2.5
+  sub_commercial_electrical: [],
+  // ===================================================================
+  // Plumbers
+  // ===================================================================
+  sub_taps_fittings: [
+    {
+      id: 'svc_tap_repair',
+      slug: 'tap-repair',
+      name: 'Tap Leak Repair',
+      nameLocalized: { hi: 'नल रिसाव मरम्मत' },
+      description: 'Washer or cartridge replacement on one tap.',
+      baseFare: 19900,
+      estimatedDurationMin: 45,
+      active: true,
+    },
+    {
+      id: 'svc_tap_install',
+      slug: 'tap-install',
+      name: 'Tap Installation',
+      nameLocalized: { hi: 'नल लगवाना' },
+      description: 'Fit a customer-supplied tap, including sealing.',
+      baseFare: 29900,
+      estimatedDurationMin: 45,
+      active: true,
+    },
+    {
+      id: 'svc_flush_repair',
+      slug: 'flush-repair',
+      name: 'Flush Tank Repair',
+      nameLocalized: { hi: 'फ़्लश टंकी मरम्मत' },
+      description: 'Float, valve or seal replacement in a cistern.',
+      baseFare: 39900,
+      estimatedDurationMin: 60,
+      active: true,
+    },
+    {
+      id: 'svc_mixer_install',
+      slug: 'mixer-install',
+      name: 'Mixer Unit Installation',
+      nameLocalized: { hi: 'मिक्सर यूनिट लगवाना' },
+      description: 'Wall-mounted mixer fitting with pipe alignment.',
+      baseFare: 49900,
+      estimatedDurationMin: 90,
+      active: true,
+    },
+    {
+      id: 'svc_toilet_install',
+      slug: 'toilet-install',
+      name: 'Toilet Seat Installation',
+      nameLocalized: { hi: 'शौचालय सीट लगवाना' },
+      description: 'Removal of the old unit and fitting of a new one.',
+      baseFare: 89900,
+      estimatedDurationMin: 150,
+      active: true,
+    },
+  ],
+  sub_leakage_blockage: [
+    {
+      id: 'svc_drain_unblock',
+      slug: 'drain-unblock',
+      name: 'Drain Unblocking',
+      nameLocalized: { hi: 'नाली की रुकावट' },
+      description: 'Mechanical clearing of one blocked drain or trap.',
+      baseFare: 29900,
+      estimatedDurationMin: 60,
+      active: true,
+    },
     {
       id: 'svc_leak_trace',
       slug: 'leak-trace',
@@ -267,6 +277,8 @@ export const servicesBySubCategoryId = {
       estimatedDurationMin: 90,
       active: true,
     },
+  ],
+  sub_pipeline_installation: [
     {
       id: 'svc_pipe_replace',
       slug: 'pipe-replace',
@@ -288,43 +300,54 @@ export const servicesBySubCategoryId = {
       active: true,
     },
   ],
-
-  // ===================================================================
-  // Carpenters
-  // ===================================================================
-  sub_doors_windows: [
+  sub_water_systems: [
     {
-      id: 'svc_door_align',
-      slug: 'door-align',
-      name: 'Door Alignment',
-      nameLocalized: { hi: 'दरवाज़ा संरेखण' },
-      description: 'Hinge adjustment and edge planing on one door.',
+      id: 'svc_ro_service',
+      slug: 'ro-service',
+      name: 'RO Service',
+      nameLocalized: { hi: 'आरओ सर्विस' },
+      description: 'Sanitise the tank and check TDS and flow rate.',
       baseFare: 29900,
       estimatedDurationMin: 60,
       active: true,
     },
     {
-      id: 'svc_lock_install',
-      slug: 'lock-install',
-      name: 'Lock Installation',
-      nameLocalized: { hi: 'ताला लगवाना' },
-      description: 'Fit a mortise or cylindrical lock on one door.',
-      baseFare: 44900,
-      estimatedDurationMin: 75,
-      active: true,
-    },
-    {
-      id: 'svc_window_mesh',
-      slug: 'window-mesh',
-      name: 'Window Mesh Fitting',
-      nameLocalized: { hi: 'खिड़की जाली लगवाना' },
-      description: 'Mosquito mesh frame for up to two windows.',
-      baseFare: 79900,
+      id: 'svc_tank_clean',
+      slug: 'tank-clean',
+      name: 'Water Tank Cleaning',
+      nameLocalized: { hi: 'पानी की टंकी सफ़ाई' },
+      description: 'Drain, scrub and sanitise a tank up to 1000 litres.',
+      baseFare: 49900,
       estimatedDurationMin: 120,
       active: true,
     },
+    {
+      id: 'svc_ro_install',
+      slug: 'ro-install',
+      name: 'RO Installation',
+      nameLocalized: { hi: 'आरओ इंस्टॉलेशन' },
+      description: 'Wall mount, plumb and commission a new RO unit.',
+      baseFare: 59900,
+      estimatedDurationMin: 90,
+      active: true,
+    },
+    {
+      id: 'svc_ro_filter',
+      slug: 'ro-filter',
+      name: 'Filter Replacement',
+      nameLocalized: { hi: 'फ़िल्टर बदलना' },
+      description: 'Replace sediment, carbon and membrane filters.',
+      baseFare: 79900,
+      estimatedDurationMin: 60,
+      active: true,
+    },
   ],
-  sub_furniture_repair: [
+  // sub_drainage_sewer: no SKUs until 2.5
+  sub_drainage_sewer: [],
+  // ===================================================================
+  // Carpenters
+  // ===================================================================
+  sub_repairs_fixing: [
     {
       id: 'svc_furniture_fix',
       slug: 'furniture-fix',
@@ -346,6 +369,48 @@ export const servicesBySubCategoryId = {
       active: true,
     },
     {
+      id: 'svc_lock_install',
+      slug: 'lock-install',
+      name: 'Lock Installation',
+      nameLocalized: { hi: 'ताला लगवाना' },
+      description: 'Fit a mortise or cylindrical lock on one door.',
+      baseFare: 44900,
+      estimatedDurationMin: 75,
+      active: true,
+    },
+  ],
+  sub_assembly_mounting: [
+    {
+      id: 'svc_curtain_rod',
+      slug: 'curtain-rod',
+      name: 'Curtain Rod Fitting',
+      nameLocalized: { hi: 'पर्दा रॉड फ़िटिंग' },
+      description: 'Drill and fit rods for up to three windows.',
+      baseFare: 19900,
+      estimatedDurationMin: 45,
+      active: true,
+    },
+    {
+      id: 'svc_wall_shelf',
+      slug: 'wall-shelf',
+      name: 'Wall Shelf Mounting',
+      nameLocalized: { hi: 'दीवार शेल्फ़ लगवाना' },
+      description: 'Mount up to three shelves with anchors.',
+      baseFare: 39900,
+      estimatedDurationMin: 60,
+      active: true,
+    },
+    {
+      id: 'svc_tv_mount',
+      slug: 'tv-mount',
+      name: 'TV Wall Mounting',
+      nameLocalized: { hi: 'टीवी वॉल माउंटिंग' },
+      description: 'Bracket fitting and cable routing for one television.',
+      baseFare: 59900,
+      estimatedDurationMin: 90,
+      active: true,
+    },
+    {
       id: 'svc_bed_assemble',
       slug: 'bed-assemble',
       name: 'Bed Assembly',
@@ -356,7 +421,29 @@ export const servicesBySubCategoryId = {
       active: true,
     },
   ],
-  sub_wardrobes_storage: [
+  sub_doors_windows: [
+    {
+      id: 'svc_door_align',
+      slug: 'door-align',
+      name: 'Door Alignment',
+      nameLocalized: { hi: 'दरवाज़ा संरेखण' },
+      description: 'Hinge adjustment and edge planing on one door.',
+      baseFare: 29900,
+      estimatedDurationMin: 60,
+      active: true,
+    },
+    {
+      id: 'svc_window_mesh',
+      slug: 'window-mesh',
+      name: 'Window Mesh Fitting',
+      nameLocalized: { hi: 'खिड़की जाली लगवाना' },
+      description: 'Mosquito mesh frame for up to two windows.',
+      baseFare: 79900,
+      estimatedDurationMin: 120,
+      active: true,
+    },
+  ],
+  sub_custom_modular: [
     {
       id: 'svc_shelf_unit',
       slug: 'shelf-unit',
@@ -388,43 +475,32 @@ export const servicesBySubCategoryId = {
       active: true,
     },
   ],
-  sub_fittings_mounting: [
+  sub_polishing_finishing: [
     {
-      id: 'svc_curtain_rod',
-      slug: 'curtain-rod',
-      name: 'Curtain Rod Fitting',
-      nameLocalized: { hi: 'पर्दा रॉड फ़िटिंग' },
-      description: 'Drill and fit rods for up to three windows.',
-      baseFare: 19900,
-      estimatedDurationMin: 45,
+      id: 'svc_polish_door',
+      slug: 'polish-door',
+      name: 'Door Polishing',
+      nameLocalized: { hi: 'दरवाज़ा पॉलिश' },
+      description: 'Sand and melamine polish for up to two doors.',
+      baseFare: 69900,
+      estimatedDurationMin: 180,
       active: true,
     },
     {
-      id: 'svc_wall_shelf',
-      slug: 'wall-shelf',
-      name: 'Wall Shelf Mounting',
-      nameLocalized: { hi: 'दीवार शेल्फ़ लगवाना' },
-      description: 'Mount up to three shelves with anchors.',
-      baseFare: 39900,
-      estimatedDurationMin: 60,
-      active: true,
-    },
-    {
-      id: 'svc_tv_mount',
-      slug: 'tv-mount',
-      name: 'TV Wall Mounting',
-      nameLocalized: { hi: 'टीवी वॉल माउंटिंग' },
-      description: 'Bracket fitting and cable routing for one television.',
-      baseFare: 59900,
-      estimatedDurationMin: 90,
+      id: 'svc_polish_furniture',
+      slug: 'polish-furniture',
+      name: 'Furniture Polishing',
+      nameLocalized: { hi: 'फ़र्नीचर पॉलिश' },
+      description: 'Polish restoration for a dining set or wardrobe.',
+      baseFare: 109900,
+      estimatedDurationMin: 240,
       active: true,
     },
   ],
-
   // ===================================================================
   // Painters
   // ===================================================================
-  sub_wall_painting: [
+  sub_touchups_patchwork: [
     {
       id: 'svc_paint_touchup',
       slug: 'paint-touchup',
@@ -435,6 +511,8 @@ export const servicesBySubCategoryId = {
       estimatedDurationMin: 180,
       active: true,
     },
+  ],
+  sub_interior_painting: [
     {
       id: 'svc_paint_room',
       slug: 'paint-room',
@@ -456,39 +534,7 @@ export const servicesBySubCategoryId = {
       active: true,
     },
   ],
-  sub_wood_polish: [
-    {
-      id: 'svc_polish_door',
-      slug: 'polish-door',
-      name: 'Door Polishing',
-      nameLocalized: { hi: 'दरवाज़ा पॉलिश' },
-      description: 'Sand and melamine polish for up to two doors.',
-      baseFare: 69900,
-      estimatedDurationMin: 180,
-      active: true,
-    },
-    {
-      id: 'svc_polish_furniture',
-      slug: 'polish-furniture',
-      name: 'Furniture Polishing',
-      nameLocalized: { hi: 'फ़र्नीचर पॉलिश' },
-      description: 'Polish restoration for a dining set or wardrobe.',
-      baseFare: 109900,
-      estimatedDurationMin: 240,
-      active: true,
-    },
-    {
-      id: 'svc_polish_railing',
-      slug: 'polish-railing',
-      name: 'Railing Polishing',
-      nameLocalized: { hi: 'रेलिंग पॉलिश' },
-      description: 'Staircase or balcony wooden railing refinish.',
-      baseFare: 129900,
-      estimatedDurationMin: 300,
-      active: true,
-    },
-  ],
-  sub_waterproofing: [
+  sub_exterior_waterproofing: [
     {
       id: 'svc_wp_seepage',
       slug: 'wp-seepage',
@@ -520,7 +566,19 @@ export const servicesBySubCategoryId = {
       active: true,
     },
   ],
-  sub_texture_stencil: [
+  sub_wood_metal_finishing: [
+    {
+      id: 'svc_polish_railing',
+      slug: 'polish-railing',
+      name: 'Railing Polishing',
+      nameLocalized: { hi: 'रेलिंग पॉलिश' },
+      description: 'Staircase or balcony wooden railing refinish.',
+      baseFare: 129900,
+      estimatedDurationMin: 300,
+      active: true,
+    },
+  ],
+  sub_texture_designer: [
     {
       id: 'svc_stencil_design',
       slug: 'stencil-design',
@@ -552,10 +610,71 @@ export const servicesBySubCategoryId = {
       active: true,
     },
   ],
-
   // ===================================================================
   // Domestic Helpers
   // ===================================================================
+  sub_part_time_help: [
+    {
+      id: 'svc_dish_daily',
+      slug: 'dish-daily',
+      name: 'Daily Utensils',
+      nameLocalized: { hi: 'रोज़ के बर्तन' },
+      description: 'One round of utensils a day, per day.',
+      baseFare: 19900,
+      estimatedDurationMin: 45,
+      active: true,
+    },
+    {
+      id: 'svc_ironing',
+      slug: 'ironing',
+      name: 'Ironing Only',
+      nameLocalized: { hi: 'केवल इस्त्री' },
+      description: 'Ironing for a household of up to four, per day.',
+      baseFare: 24900,
+      estimatedDurationMin: 45,
+      active: true,
+    },
+    {
+      id: 'svc_dish_twice',
+      slug: 'dish-twice',
+      name: 'Twice a Day Utensils',
+      nameLocalized: { hi: 'दिन में दो बार बर्तन' },
+      description: 'Morning and evening utensils, per day.',
+      baseFare: 29900,
+      estimatedDurationMin: 90,
+      active: true,
+    },
+    {
+      id: 'svc_laundry_wash',
+      slug: 'laundry-wash',
+      name: 'Wash & Dry',
+      nameLocalized: { hi: 'धुलाई और सुखाना' },
+      description: 'Machine wash, line dry and fold, per day.',
+      baseFare: 29900,
+      estimatedDurationMin: 60,
+      active: true,
+    },
+    {
+      id: 'svc_dish_deep',
+      slug: 'dish-deep',
+      name: 'Deep Utensil Scrub',
+      nameLocalized: { hi: 'बर्तनों की गहरी सफ़ाई' },
+      description: 'Descaling and polishing of steel and brassware.',
+      baseFare: 39900,
+      estimatedDurationMin: 120,
+      active: true,
+    },
+    {
+      id: 'svc_laundry_full',
+      slug: 'laundry-full',
+      name: 'Wash, Dry & Iron',
+      nameLocalized: { hi: 'धुलाई, सुखाना और इस्त्री' },
+      description: 'The full laundry round including ironing, per day.',
+      baseFare: 44900,
+      estimatedDurationMin: 120,
+      active: true,
+    },
+  ],
   sub_cooking: [
     {
       id: 'svc_cook_one_meal',
@@ -588,71 +707,7 @@ export const servicesBySubCategoryId = {
       active: true,
     },
   ],
-  sub_dishwashing: [
-    {
-      id: 'svc_dish_daily',
-      slug: 'dish-daily',
-      name: 'Daily Utensils',
-      nameLocalized: { hi: 'रोज़ के बर्तन' },
-      description: 'One round of utensils a day, per day.',
-      baseFare: 19900,
-      estimatedDurationMin: 45,
-      active: true,
-    },
-    {
-      id: 'svc_dish_twice',
-      slug: 'dish-twice',
-      name: 'Twice a Day Utensils',
-      nameLocalized: { hi: 'दिन में दो बार बर्तन' },
-      description: 'Morning and evening utensils, per day.',
-      baseFare: 29900,
-      estimatedDurationMin: 90,
-      active: true,
-    },
-    {
-      id: 'svc_dish_deep',
-      slug: 'dish-deep',
-      name: 'Deep Utensil Scrub',
-      nameLocalized: { hi: 'बर्तनों की गहरी सफ़ाई' },
-      description: 'Descaling and polishing of steel and brassware.',
-      baseFare: 39900,
-      estimatedDurationMin: 120,
-      active: true,
-    },
-  ],
-  sub_laundry_ironing: [
-    {
-      id: 'svc_ironing',
-      slug: 'ironing',
-      name: 'Ironing Only',
-      nameLocalized: { hi: 'केवल इस्त्री' },
-      description: 'Ironing for a household of up to four, per day.',
-      baseFare: 24900,
-      estimatedDurationMin: 45,
-      active: true,
-    },
-    {
-      id: 'svc_laundry_wash',
-      slug: 'laundry-wash',
-      name: 'Wash & Dry',
-      nameLocalized: { hi: 'धुलाई और सुखाना' },
-      description: 'Machine wash, line dry and fold, per day.',
-      baseFare: 29900,
-      estimatedDurationMin: 60,
-      active: true,
-    },
-    {
-      id: 'svc_laundry_full',
-      slug: 'laundry-full',
-      name: 'Wash, Dry & Iron',
-      nameLocalized: { hi: 'धुलाई, सुखाना और इस्त्री' },
-      description: 'The full laundry round including ironing, per day.',
-      baseFare: 44900,
-      estimatedDurationMin: 120,
-      active: true,
-    },
-  ],
-  sub_full_day_help: [
+  sub_full_time_live_in: [
     {
       id: 'svc_help_full_day',
       slug: 'help-full-day',
@@ -684,74 +739,11 @@ export const servicesBySubCategoryId = {
       active: true,
     },
   ],
-
+  // sub_one_time_help: no SKUs until 2.5
+  sub_one_time_help: [],
   // ===================================================================
   // Caregivers
   // ===================================================================
-  sub_elder_care: [
-    {
-      id: 'svc_elder_day',
-      slug: 'elder-day',
-      name: 'Elder Care (day shift)',
-      nameLocalized: { hi: 'बुज़ुर्ग देखभाल (दिन की पाली)' },
-      description: 'Companionship, meals and medication reminders.',
-      baseFare: 79900,
-      estimatedDurationMin: 240,
-      active: true,
-    },
-    {
-      id: 'svc_elder_night',
-      slug: 'elder-night',
-      name: 'Elder Care (night shift)',
-      nameLocalized: { hi: 'बुज़ुर्ग देखभाल (रात की पाली)' },
-      description: 'Overnight presence and assistance, per night.',
-      baseFare: 99900,
-      estimatedDurationMin: 480,
-      active: true,
-    },
-    {
-      id: 'svc_elder_full',
-      slug: 'elder-full',
-      name: 'Elder Care (24 hours)',
-      nameLocalized: { hi: 'बुज़ुर्ग देखभाल (24 घंटे)' },
-      description: 'Round-the-clock cover, charged per day.',
-      baseFare: 139900,
-      estimatedDurationMin: 720,
-      active: true,
-    },
-  ],
-  sub_patient_attendant: [
-    {
-      id: 'svc_attendant_day',
-      slug: 'attendant-day',
-      name: 'Attendant (12-hour day)',
-      nameLocalized: { hi: 'अटेंडेंट (12 घंटे दिन)' },
-      description: 'Bedside assistance and mobility support at home.',
-      baseFare: 99900,
-      estimatedDurationMin: 480,
-      active: true,
-    },
-    {
-      id: 'svc_attendant_night',
-      slug: 'attendant-night',
-      name: 'Attendant (12-hour night)',
-      nameLocalized: { hi: 'अटेंडेंट (12 घंटे रात)' },
-      description: 'Overnight bedside cover, per night.',
-      baseFare: 119900,
-      estimatedDurationMin: 480,
-      active: true,
-    },
-    {
-      id: 'svc_attendant_hospital',
-      slug: 'attendant-hospital',
-      name: 'Hospital Attendant',
-      nameLocalized: { hi: 'अस्पताल अटेंडेंट' },
-      description: 'Attendant to stay with a patient in hospital, per day.',
-      baseFare: 129900,
-      estimatedDurationMin: 480,
-      active: true,
-    },
-  ],
   sub_child_care: [
     {
       id: 'svc_child_after_school',
@@ -784,7 +776,59 @@ export const servicesBySubCategoryId = {
       active: true,
     },
   ],
-  sub_post_surgery: [
+  sub_elder_care: [
+    {
+      id: 'svc_elder_day',
+      slug: 'elder-day',
+      name: 'Elder Care (day shift)',
+      nameLocalized: { hi: 'बुज़ुर्ग देखभाल (दिन की पाली)' },
+      description: 'Companionship, meals and medication reminders.',
+      baseFare: 79900,
+      estimatedDurationMin: 240,
+      active: true,
+    },
+    {
+      id: 'svc_elder_night',
+      slug: 'elder-night',
+      name: 'Elder Care (night shift)',
+      nameLocalized: { hi: 'बुज़ुर्ग देखभाल (रात की पाली)' },
+      description: 'Overnight presence and assistance, per night.',
+      baseFare: 99900,
+      estimatedDurationMin: 480,
+      active: true,
+    },
+    {
+      id: 'svc_elder_full',
+      slug: 'elder-full',
+      name: 'Elder Care (24 hours)',
+      nameLocalized: { hi: 'बुज़ुर्ग देखभाल (24 घंटे)' },
+      description: 'Round-the-clock cover, charged per day.',
+      baseFare: 139900,
+      estimatedDurationMin: 720,
+      active: true,
+    },
+  ],
+  sub_patient_care: [
+    {
+      id: 'svc_attendant_day',
+      slug: 'attendant-day',
+      name: 'Attendant (12-hour day)',
+      nameLocalized: { hi: 'अटेंडेंट (12 घंटे दिन)' },
+      description: 'Bedside assistance and mobility support at home.',
+      baseFare: 99900,
+      estimatedDurationMin: 480,
+      active: true,
+    },
+    {
+      id: 'svc_attendant_night',
+      slug: 'attendant-night',
+      name: 'Attendant (12-hour night)',
+      nameLocalized: { hi: 'अटेंडेंट (12 घंटे रात)' },
+      description: 'Overnight bedside cover, per night.',
+      baseFare: 119900,
+      estimatedDurationMin: 480,
+      active: true,
+    },
     {
       id: 'svc_post_op_day',
       slug: 'post-op-day',
@@ -796,13 +840,13 @@ export const servicesBySubCategoryId = {
       active: true,
     },
     {
-      id: 'svc_physio_assist',
-      slug: 'physio-assist',
-      name: 'Physiotherapy Assistance',
-      nameLocalized: { hi: 'फ़िज़ियोथेरेपी सहायता' },
-      description: 'Assisting a prescribed exercise routine at home.',
+      id: 'svc_attendant_hospital',
+      slug: 'attendant-hospital',
+      name: 'Hospital Attendant',
+      nameLocalized: { hi: 'अस्पताल अटेंडेंट' },
+      description: 'Attendant to stay with a patient in hospital, per day.',
       baseFare: 129900,
-      estimatedDurationMin: 240,
+      estimatedDurationMin: 480,
       active: true,
     },
     {
@@ -816,7 +860,20 @@ export const servicesBySubCategoryId = {
       active: true,
     },
   ],
-
+  // sub_mother_newborn: no SKUs until 2.5
+  sub_mother_newborn: [],
+  sub_home_nursing: [
+    {
+      id: 'svc_physio_assist',
+      slug: 'physio-assist',
+      name: 'Physiotherapy Assistance',
+      nameLocalized: { hi: 'फ़िज़ियोथेरेपी सहायता' },
+      description: 'Assisting a prescribed exercise routine at home.',
+      baseFare: 129900,
+      estimatedDurationMin: 240,
+      active: true,
+    },
+  ],
   // ===================================================================
   // Drivers
   // ===================================================================
@@ -842,6 +899,26 @@ export const servicesBySubCategoryId = {
       active: true,
     },
     {
+      id: 'svc_airport_pickup',
+      slug: 'airport-pickup',
+      name: 'Airport Pickup',
+      nameLocalized: { hi: 'एयरपोर्ट पिकअप' },
+      description: 'Driver to collect you from Patna airport.',
+      baseFare: 49900,
+      estimatedDurationMin: 90,
+      active: true,
+    },
+    {
+      id: 'svc_airport_drop',
+      slug: 'airport-drop',
+      name: 'Airport Drop',
+      nameLocalized: { hi: 'एयरपोर्ट ड्रॉप' },
+      description: 'Driver to take you to Patna airport.',
+      baseFare: 49900,
+      estimatedDurationMin: 90,
+      active: true,
+    },
+    {
       id: 'svc_driver_8h',
       slug: 'driver-8h',
       name: 'Driver (8 hours)',
@@ -851,36 +928,14 @@ export const servicesBySubCategoryId = {
       estimatedDurationMin: 480,
       active: true,
     },
-  ],
-  sub_outstation_trip: [
     {
-      id: 'svc_outstation_half',
-      slug: 'outstation-half',
-      name: 'Outstation (half day)',
-      nameLocalized: { hi: 'आउटस्टेशन (आधा दिन)' },
-      description: 'Driver for a short outstation run and return.',
-      baseFare: 99900,
-      estimatedDurationMin: 300,
-      active: true,
-    },
-    {
-      id: 'svc_outstation_day',
-      slug: 'outstation-day',
-      name: 'Outstation (full day)',
-      nameLocalized: { hi: 'आउटस्टेशन (पूरा दिन)' },
-      description: 'Driver for a full day of outstation travel.',
-      baseFare: 139900,
-      estimatedDurationMin: 600,
-      active: true,
-    },
-    {
-      id: 'svc_outstation_round',
-      slug: 'outstation-round',
-      name: 'Outstation Round Trip',
-      nameLocalized: { hi: 'आउटस्टेशन आना-जाना' },
-      description: 'Multi-day round trip, charged per day.',
-      baseFare: 149900,
-      estimatedDurationMin: 720,
+      id: 'svc_airport_round',
+      slug: 'airport-round',
+      name: 'Airport Return Trip',
+      nameLocalized: { hi: 'एयरपोर्ट वापसी यात्रा' },
+      description: 'Drop and collection on the same booking.',
+      baseFare: 89900,
+      estimatedDurationMin: 180,
       active: true,
     },
   ],
@@ -916,43 +971,46 @@ export const servicesBySubCategoryId = {
       active: true,
     },
   ],
-  sub_airport_transfer: [
+  sub_outstation_driver: [
     {
-      id: 'svc_airport_pickup',
-      slug: 'airport-pickup',
-      name: 'Airport Pickup',
-      nameLocalized: { hi: 'एयरपोर्ट पिकअप' },
-      description: 'Driver to collect you from Patna airport.',
-      baseFare: 49900,
-      estimatedDurationMin: 90,
+      id: 'svc_outstation_half',
+      slug: 'outstation-half',
+      name: 'Outstation (half day)',
+      nameLocalized: { hi: 'आउटस्टेशन (आधा दिन)' },
+      description: 'Driver for a short outstation run and return.',
+      baseFare: 99900,
+      estimatedDurationMin: 300,
       active: true,
     },
     {
-      id: 'svc_airport_drop',
-      slug: 'airport-drop',
-      name: 'Airport Drop',
-      nameLocalized: { hi: 'एयरपोर्ट ड्रॉप' },
-      description: 'Driver to take you to Patna airport.',
-      baseFare: 49900,
-      estimatedDurationMin: 90,
+      id: 'svc_outstation_day',
+      slug: 'outstation-day',
+      name: 'Outstation (full day)',
+      nameLocalized: { hi: 'आउटस्टेशन (पूरा दिन)' },
+      description: 'Driver for a full day of outstation travel.',
+      baseFare: 139900,
+      estimatedDurationMin: 600,
       active: true,
     },
     {
-      id: 'svc_airport_round',
-      slug: 'airport-round',
-      name: 'Airport Return Trip',
-      nameLocalized: { hi: 'एयरपोर्ट वापसी यात्रा' },
-      description: 'Drop and collection on the same booking.',
-      baseFare: 89900,
-      estimatedDurationMin: 180,
+      id: 'svc_outstation_round',
+      slug: 'outstation-round',
+      name: 'Outstation Round Trip',
+      nameLocalized: { hi: 'आउटस्टेशन आना-जाना' },
+      description: 'Multi-day round trip, charged per day.',
+      baseFare: 149900,
+      estimatedDurationMin: 720,
       active: true,
     },
   ],
-
+  // sub_commercial_goods: no SKUs until 2.5
+  sub_commercial_goods: [],
+  // sub_two_wheeler_rider: no SKUs until 2.5
+  sub_two_wheeler_rider: [],
   // ===================================================================
   // Gardeners
   // ===================================================================
-  sub_lawn_mowing: [
+  sub_regular_maintenance: [
     {
       id: 'svc_lawn_small',
       slug: 'lawn-small',
@@ -984,7 +1042,7 @@ export const servicesBySubCategoryId = {
       active: true,
     },
   ],
-  sub_plant_care: [
+  sub_one_time_cleanup: [
     {
       id: 'svc_plant_pruning',
       slug: 'plant-pruning',
@@ -1016,7 +1074,37 @@ export const servicesBySubCategoryId = {
       active: true,
     },
   ],
-  sub_terrace_garden: [
+  sub_garden_setup: [
+    {
+      id: 'svc_season_flower',
+      slug: 'season-flower',
+      name: 'Seasonal Flower Planting',
+      nameLocalized: { hi: 'मौसमी फूल रोपाई' },
+      description: 'Plant a seasonal flower bed, plants not included.',
+      baseFare: 39900,
+      estimatedDurationMin: 120,
+      active: true,
+    },
+    {
+      id: 'svc_season_veg',
+      slug: 'season-veg',
+      name: 'Kitchen Garden Planting',
+      nameLocalized: { hi: 'किचन गार्डन रोपाई' },
+      description: 'Set up a vegetable patch or grow bags.',
+      baseFare: 59900,
+      estimatedDurationMin: 180,
+      active: true,
+    },
+    {
+      id: 'svc_season_lawn',
+      slug: 'season-lawn',
+      name: 'Lawn Re-seeding',
+      nameLocalized: { hi: 'लॉन दोबारा बुआई' },
+      description: 'Scarify, level and re-seed a patchy lawn.',
+      baseFare: 79900,
+      estimatedDurationMin: 240,
+      active: true,
+    },
     {
       id: 'svc_terrace_setup',
       slug: 'terrace-setup',
@@ -1048,107 +1136,14 @@ export const servicesBySubCategoryId = {
       active: true,
     },
   ],
-  sub_seasonal_planting: [
-    {
-      id: 'svc_season_flower',
-      slug: 'season-flower',
-      name: 'Seasonal Flower Planting',
-      nameLocalized: { hi: 'मौसमी फूल रोपाई' },
-      description: 'Plant a seasonal flower bed, plants not included.',
-      baseFare: 39900,
-      estimatedDurationMin: 120,
-      active: true,
-    },
-    {
-      id: 'svc_season_veg',
-      slug: 'season-veg',
-      name: 'Kitchen Garden Planting',
-      nameLocalized: { hi: 'किचन गार्डन रोपाई' },
-      description: 'Set up a vegetable patch or grow bags.',
-      baseFare: 59900,
-      estimatedDurationMin: 180,
-      active: true,
-    },
-    {
-      id: 'svc_season_lawn',
-      slug: 'season-lawn',
-      name: 'Lawn Re-seeding',
-      nameLocalized: { hi: 'लॉन दोबारा बुआई' },
-      description: 'Scarify, level and re-seed a patchy lawn.',
-      baseFare: 79900,
-      estimatedDurationMin: 240,
-      active: true,
-    },
-  ],
-
+  // sub_tree_work: no SKUs until 2.5
+  sub_tree_work: [],
+  // sub_campus_contract: no SKUs until 2.5
+  sub_campus_contract: [],
   // ===================================================================
   // Cleaners
   // ===================================================================
-  sub_bathroom_cleaning: [
-    {
-      id: 'svc_bathroom_standard',
-      slug: 'bathroom-standard',
-      name: 'Standard Bathroom Clean',
-      nameLocalized: { hi: 'सामान्य बाथरूम सफ़ाई' },
-      description: 'Floor, tiles, fittings and sanitary ware. One bathroom.',
-      baseFare: 39900,
-      estimatedDurationMin: 60,
-      active: true,
-    },
-    {
-      id: 'svc_bathroom_deep',
-      slug: 'bathroom-deep',
-      name: 'Deep Bathroom Clean',
-      nameLocalized: { hi: 'गहरी बाथरूम सफ़ाई' },
-      description: 'Standard clean plus hard-water stain and grout treatment.',
-      baseFare: 64900,
-      estimatedDurationMin: 90,
-      active: true,
-    },
-    {
-      id: 'svc_bathroom_two_pack',
-      slug: 'bathroom-two-pack',
-      name: 'Two Bathrooms Package',
-      nameLocalized: { hi: 'दो बाथरूम पैकेज' },
-      description: 'Deep clean for two bathrooms in one visit.',
-      baseFare: 119900,
-      estimatedDurationMin: 150,
-      active: true,
-    },
-  ],
-  sub_kitchen_cleaning: [
-    {
-      id: 'svc_kitchen_standard',
-      slug: 'kitchen-standard',
-      name: 'Standard Kitchen Clean',
-      nameLocalized: { hi: 'सामान्य रसोई सफ़ाई' },
-      description: 'Platform, sink, tiles and cabinet fronts.',
-      baseFare: 49900,
-      estimatedDurationMin: 90,
-      active: true,
-    },
-    {
-      id: 'svc_kitchen_degrease',
-      slug: 'kitchen-degrease',
-      name: 'Chimney & Degreasing',
-      nameLocalized: { hi: 'चिमनी और ग्रीस सफ़ाई' },
-      description: 'Chimney filter, hob and back-wall degreasing.',
-      baseFare: 79900,
-      estimatedDurationMin: 120,
-      active: true,
-    },
-    {
-      id: 'svc_kitchen_deep',
-      slug: 'kitchen-deep',
-      name: 'Deep Kitchen Clean',
-      nameLocalized: { hi: 'गहरी रसोई सफ़ाई' },
-      description: 'Full kitchen including inside cabinets and appliances.',
-      baseFare: 129900,
-      estimatedDurationMin: 180,
-      active: true,
-    },
-  ],
-  sub_full_home_cleaning: [
+  sub_home_deep_cleaning: [
     {
       id: 'svc_home_1bhk',
       slug: 'home-1bhk',
@@ -1180,7 +1175,69 @@ export const servicesBySubCategoryId = {
       active: true,
     },
   ],
-  sub_sofa_carpet: [
+  sub_room_wise_cleaning: [
+    {
+      id: 'svc_bathroom_standard',
+      slug: 'bathroom-standard',
+      name: 'Standard Bathroom Clean',
+      nameLocalized: { hi: 'सामान्य बाथरूम सफ़ाई' },
+      description: 'Floor, tiles, fittings and sanitary ware. One bathroom.',
+      baseFare: 39900,
+      estimatedDurationMin: 60,
+      active: true,
+    },
+    {
+      id: 'svc_kitchen_standard',
+      slug: 'kitchen-standard',
+      name: 'Standard Kitchen Clean',
+      nameLocalized: { hi: 'सामान्य रसोई सफ़ाई' },
+      description: 'Platform, sink, tiles and cabinet fronts.',
+      baseFare: 49900,
+      estimatedDurationMin: 90,
+      active: true,
+    },
+    {
+      id: 'svc_bathroom_deep',
+      slug: 'bathroom-deep',
+      name: 'Deep Bathroom Clean',
+      nameLocalized: { hi: 'गहरी बाथरूम सफ़ाई' },
+      description: 'Standard clean plus hard-water stain and grout treatment.',
+      baseFare: 64900,
+      estimatedDurationMin: 90,
+      active: true,
+    },
+    {
+      id: 'svc_kitchen_degrease',
+      slug: 'kitchen-degrease',
+      name: 'Chimney & Degreasing',
+      nameLocalized: { hi: 'चिमनी और ग्रीस सफ़ाई' },
+      description: 'Chimney filter, hob and back-wall degreasing.',
+      baseFare: 79900,
+      estimatedDurationMin: 120,
+      active: true,
+    },
+    {
+      id: 'svc_bathroom_two_pack',
+      slug: 'bathroom-two-pack',
+      name: 'Two Bathrooms Package',
+      nameLocalized: { hi: 'दो बाथरूम पैकेज' },
+      description: 'Deep clean for two bathrooms in one visit.',
+      baseFare: 119900,
+      estimatedDurationMin: 150,
+      active: true,
+    },
+    {
+      id: 'svc_kitchen_deep',
+      slug: 'kitchen-deep',
+      name: 'Deep Kitchen Clean',
+      nameLocalized: { hi: 'गहरी रसोई सफ़ाई' },
+      description: 'Full kitchen including inside cabinets and appliances.',
+      baseFare: 129900,
+      estimatedDurationMin: 180,
+      active: true,
+    },
+  ],
+  sub_specialised_cleaning: [
     {
       id: 'svc_sofa_clean',
       slug: 'sofa-clean',
@@ -1212,11 +1269,24 @@ export const servicesBySubCategoryId = {
       active: true,
     },
   ],
-
+  // sub_pest_control: no SKUs until 2.5
+  sub_pest_control: [],
+  // sub_commercial_cleaning: no SKUs until 2.5
+  sub_commercial_cleaning: [],
   // ===================================================================
   // Technicians
   // ===================================================================
-  sub_ac_service: [
+  sub_ac_refrigeration: [
+    {
+      id: 'svc_fridge_service',
+      slug: 'fridge-service',
+      name: 'Refrigerator Service',
+      nameLocalized: { hi: 'रेफ़्रिजरेटर सर्विस' },
+      description: 'Coil clean, defrost check and door seal inspection.',
+      baseFare: 44900,
+      estimatedDurationMin: 60,
+      active: true,
+    },
     {
       id: 'svc_ac_service',
       slug: 'ac-basic-service',
@@ -1225,6 +1295,16 @@ export const servicesBySubCategoryId = {
       description: 'Filter, coil and drain cleaning for one split unit.',
       baseFare: 59900,
       estimatedDurationMin: 75,
+      active: true,
+    },
+    {
+      id: 'svc_fridge_gas',
+      slug: 'fridge-gas',
+      name: 'Cooling Gas Refill',
+      nameLocalized: { hi: 'कूलिंग गैस रीफ़िल' },
+      description: 'Leak repair and gas charging for a single-door unit.',
+      baseFare: 109900,
+      estimatedDurationMin: 150,
       active: true,
     },
     {
@@ -1247,8 +1327,18 @@ export const servicesBySubCategoryId = {
       estimatedDurationMin: 180,
       active: true,
     },
+    {
+      id: 'svc_fridge_compressor',
+      slug: 'fridge-compressor',
+      name: 'Compressor Replacement',
+      nameLocalized: { hi: 'कंप्रेसर बदलना' },
+      description: 'Replace a failed compressor, labour only.',
+      baseFare: 149900,
+      estimatedDurationMin: 240,
+      active: true,
+    },
   ],
-  sub_washing_machine: [
+  sub_large_appliances: [
     {
       id: 'svc_wm_service',
       slug: 'wm-service',
@@ -1257,6 +1347,16 @@ export const servicesBySubCategoryId = {
       description: 'Drum clean, filter clean and performance check.',
       baseFare: 39900,
       estimatedDurationMin: 60,
+      active: true,
+    },
+    {
+      id: 'svc_microwave_repair',
+      slug: 'microwave-repair',
+      name: 'Microwave Repair',
+      nameLocalized: { hi: 'माइक्रोवेव मरम्मत' },
+      description: 'Magnetron, fuse or panel fault on one microwave.',
+      baseFare: 49900,
+      estimatedDurationMin: 90,
       active: true,
     },
     {
@@ -1280,71 +1380,9 @@ export const servicesBySubCategoryId = {
       active: true,
     },
   ],
-  sub_refrigerator: [
-    {
-      id: 'svc_fridge_service',
-      slug: 'fridge-service',
-      name: 'Refrigerator Service',
-      nameLocalized: { hi: 'रेफ़्रिजरेटर सर्विस' },
-      description: 'Coil clean, defrost check and door seal inspection.',
-      baseFare: 44900,
-      estimatedDurationMin: 60,
-      active: true,
-    },
-    {
-      id: 'svc_fridge_gas',
-      slug: 'fridge-gas',
-      name: 'Cooling Gas Refill',
-      nameLocalized: { hi: 'कूलिंग गैस रीफ़िल' },
-      description: 'Leak repair and gas charging for a single-door unit.',
-      baseFare: 109900,
-      estimatedDurationMin: 150,
-      active: true,
-    },
-    {
-      id: 'svc_fridge_compressor',
-      slug: 'fridge-compressor',
-      name: 'Compressor Replacement',
-      nameLocalized: { hi: 'कंप्रेसर बदलना' },
-      description: 'Replace a failed compressor, labour only.',
-      baseFare: 149900,
-      estimatedDurationMin: 240,
-      active: true,
-    },
-  ],
-  sub_water_purifier: [
-    {
-      id: 'svc_ro_service',
-      slug: 'ro-service',
-      name: 'RO Service',
-      nameLocalized: { hi: 'आरओ सर्विस' },
-      description: 'Sanitise the tank and check TDS and flow rate.',
-      baseFare: 29900,
-      estimatedDurationMin: 60,
-      active: true,
-    },
-    {
-      id: 'svc_ro_install',
-      slug: 'ro-install',
-      name: 'RO Installation',
-      nameLocalized: { hi: 'आरओ इंस्टॉलेशन' },
-      description: 'Wall mount, plumb and commission a new RO unit.',
-      baseFare: 59900,
-      estimatedDurationMin: 90,
-      active: true,
-    },
-    {
-      id: 'svc_ro_filter',
-      slug: 'ro-filter',
-      name: 'Filter Replacement',
-      nameLocalized: { hi: 'फ़िल्टर बदलना' },
-      description: 'Replace sediment, carbon and membrane filters.',
-      baseFare: 79900,
-      estimatedDurationMin: 60,
-      active: true,
-    },
-  ],
-  sub_tv_electronics: [
+  // sub_small_appliances: no SKUs until 2.5
+  sub_small_appliances: [],
+  sub_electronics: [
     {
       id: 'svc_tv_repair',
       slug: 'tv-repair',
@@ -1365,15 +1403,7 @@ export const servicesBySubCategoryId = {
       estimatedDurationMin: 60,
       active: true,
     },
-    {
-      id: 'svc_microwave_repair',
-      slug: 'microwave-repair',
-      name: 'Microwave Repair',
-      nameLocalized: { hi: 'माइक्रोवेव मरम्मत' },
-      description: 'Magnetron, fuse or panel fault on one microwave.',
-      baseFare: 49900,
-      estimatedDurationMin: 90,
-      active: true,
-    },
   ],
-} satisfies Record<Id, ServiceItem[]>;
+  // sub_it_network_cctv: no SKUs until 2.5
+  sub_it_network_cctv: [],
+} satisfies Record<Id, ServiceSku[]>;

@@ -1,10 +1,12 @@
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Avatar, brandColors, Text } from '@sahayo/ui-native';
 
 import { LanguageSwitcher } from '../LanguageSwitcher';
 import { localized, mockServiceLocation } from '../../mocks';
+import { mockNotifications } from '../../mocks/notifications';
 import { useAuthStore } from '../../store/auth';
 
 /**
@@ -14,10 +16,9 @@ import { useAuthStore } from '../../store/auth';
  * dummy auth store to the rest of the app, and the reason signup is the entry
  * point rather than login.
  *
- * The bell and the location chevron are deliberately inert. There is no
- * notifications screen and no address picker in the route tree, and a control
- * that navigates somewhere unbuilt is worse in a demo than one that visibly
- * waits its turn.
+ * The bell now opens /notifications. The location chevron is still inert —
+ * there is no address picker in the route tree, and a control that navigates
+ * somewhere unbuilt is worse in a demo than one that visibly waits its turn.
  *
  * The language switcher sits immediately left of the bell. It replaced a
  * floating debug pill: language is a first-class control on this product, not
@@ -26,8 +27,11 @@ import { useAuthStore } from '../../store/auth';
  */
 export function HomeHeader() {
   const { t } = useTranslation();
+  const router = useRouter();
   const name = useAuthStore((state) => state.name);
   const locale = useAuthStore((state) => state.language);
+
+  const hasUnread = mockNotifications.some((notification) => !notification.read);
 
   const greeting = name
     ? t('home.greeting', { name: name.split(/\s+/)[0] })
@@ -57,14 +61,20 @@ export function HomeHeader() {
 
       <LanguageSwitcher />
 
-      <View
+      <Pressable
         className="ml-3 h-11 w-11 items-center justify-center rounded-full border border-brand-border bg-brand-surface"
+        onPress={() => router.push('/notifications')}
+        accessibilityRole="button"
         accessibilityLabel={t('home.notifications')}
       >
         <Ionicons name="notifications-outline" size={20} color={brandColors.navy} />
-        {/* Unread marker. Sits proud of the circle's edge, hence absolute. */}
-        <View className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-brand-danger" />
-      </View>
+        {/* Unread marker. Sits proud of the circle's edge, hence absolute.
+            Read state lives on the notifications screen and is not persisted,
+            so this reflects the mock feed rather than what you last opened. */}
+        {hasUnread ? (
+          <View className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-brand-danger" />
+        ) : null}
+      </Pressable>
     </View>
   );
 }
