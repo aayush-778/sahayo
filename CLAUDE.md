@@ -42,13 +42,15 @@ in the phase that uses them.
 the React 19.2.3 pin, or the NativeWind babel wiring that Phase 1 established.
 
 **Consequence: `metro.config.js`, `babel.config.js`, `tailwind.config.js`,
-`global.css` and `nativewind-env.d.ts` are byte-identical between the two apps
-and must stay that way.** Any change to one must be applied to the other.
+`global.css`, `nativewind-env.d.ts` and `assets.d.ts` are byte-identical between
+the two apps and must stay that way.** Any change to one must be applied to the other.
 Verify with:
 
 ```bash
-diff apps/customer/metro.config.js apps/worker/metro.config.js
-diff apps/customer/babel.config.js apps/worker/babel.config.js
+for f in metro.config.js babel.config.js tailwind.config.js \
+         global.css nativewind-env.d.ts assets.d.ts; do
+  diff "apps/customer/$f" "apps/worker/$f" || echo "DRIFT: $f"
+done
 ```
 
 Both must print nothing. Only `package.json` and `app.json` may differ, and
@@ -145,6 +147,25 @@ emits a grayscale PNG carrying an RGB ICC profile and every build warns).
 
 Changing a ground colour means changing `android-icon-background.png` **and**
 `android.adaptiveIcon.backgroundColor` in that app's `app.json`.
+
+### UI palette
+
+The `brand.*` colours live in each app's `tailwind.config.js` (identical in
+both, even though only the customer app renders them yet):
+
+| token | hex | note |
+| --- | --- | --- |
+| `brand-primary` | `#4F8233` | the logo's mid green `#659A49`, darkened until white text clears WCAG AA (4.59:1). **The logo's own greens fail**: `#659A49` is 3.35:1 and `#8CB64A` is 2.36:1 against white. |
+| `brand-primary-soft` | `#E4EFDA` | disabled button ground |
+| `brand-navy` | `#113B5E` | headings and input text, 11.0:1 on cream |
+| `brand-muted` | `#5B6B7A` | labels and helper text, 5.2:1 on cream |
+| `brand-cream` | `#FBF9F3` | screen background, the artwork's paper tone |
+| `brand-border` | `#E3E0D8` | warm border that sits with the cream |
+
+`assets.d.ts` declares `*.png` and friends. Expo SDK 57 ships no such
+declaration, and the `expo-env.d.ts` that would provide one is generated at
+dev-server start **and gitignored** — so without this file `tsc --noEmit`
+passes locally and fails on a clean clone.
 
 ## Scripts
 
