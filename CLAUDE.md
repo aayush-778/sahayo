@@ -167,6 +167,91 @@ declaration, and the `expo-env.d.ts` that would provide one is generated at
 dev-server start **and gitignored** — so without this file `tsc --noEmit`
 passes locally and fails on a clean clone.
 
+## Admin portal design system
+
+`apps/admin-web` has a fixed visual language. It is written down in
+`src/styles/tokens.css` and `tailwind.config.ts` so it is enforced by the build
+rather than by asking nicely each session. The portal is English throughout.
+
+### The palette is nine tokens. There is no tenth.
+
+| Token | Hex | The only thing it is for |
+| --- | --- | --- |
+| `--ground` | `#FFFDFB` | Page background. Warm paper, never pure white. |
+| `--surface` | `#FFFFFF` | Elevated cards sitting on the ground. |
+| `--marigold` | `#F5B814` | Primary actions, active nav, the hero metric. |
+| `--marigold-tint` | `#FEF3D4` | Icon tiles, the page radial glow, active row wash. |
+| `--fund-green` | `#34C77B` | Cooperative Fund, positive deltas, verified KYC. Nothing else. |
+| `--coral` | `#FF8B72` | Chart series 2, warnings, reject actions. Never a button fill. |
+| `--lavender` | `#A78BFA` | Chart series 3. |
+| `--ink` | `#1F1B16` | Type. Pure `#000000` is forbidden. |
+| `--muted` | `#8A8279` | Secondary text, table headers, inactive states. |
+| `--hairline` | `#F0E9DD` | Every component border. Replaces heavy shadows. |
+
+Values are stored as **bare HSL triplets**, not hex and not `oklch()`, because
+Tailwind 3.4 consumes them as `hsl(var(--token))`. An `oklch()` value there
+yields `hsl(oklch(...))` — invalid CSS that browsers drop without an error, so
+the page renders colourless and nothing in the build complains.
+
+shadcn's own token names (`--primary`, `--muted-foreground`, `--border`, …) are
+aliased onto these in `globals.css`. There is no parallel neutral scale, and any
+shadcn component added later inherits the warm palette for free.
+
+### Hard constraints — permanent
+
+- Never pure `#000000` or pure `#FFFFFF` as a page background.
+- Terracotta / clay (`#D97757` and its neighbours) is banned.
+- **No dark mode.** `darkMode` is absent from `tailwind.config.ts` and there is
+  no `.dark` block in `globals.css`. Do not reintroduce either.
+- No glassmorphism, no neon, no multi-stop or decorative gradients. The one
+  gradient in the product is the fixed page glow in the `.page-glow` utility.
+- No `box-shadow` using `rgba(0,0,0,*)`. The only shadow is `shadow-card`, whose
+  two layers use warm ink — cold grey shadows fight the paper ground.
+- Never four identically sized stat cards in a row. It is the single biggest
+  slop tell. Vary the grid spans and vary `StatBlock`'s `emphasis`.
+- No tracked-out ALL-CAPS eyebrow label above a heading. Uppercase appears in
+  exactly two places: sidebar group labels and table headers.
+- No emoji. `lucide-react` only, **18px at stroke 1.5**, each in a 12px-radius
+  tinted tile whose tint follows the subject's semantic role.
+- Monospace is for tabular financial figures and chart axes. Nowhere decorative.
+- **One typeface.** Plus Jakarta Sans, loaded once on `<html>`. A second webfont
+  is a layout-shift risk and the fastest route back to a templated look; the
+  `font-mono` stack is the platform's, not a second download. Refuse requests to
+  add a family.
+- No hardcoded hex in any component. `tokens.css` is the only place a colour is
+  written. Verify with
+  `grep -rniE "#[0-9a-f]{6}" apps/admin-web/src/components`.
+- The window never scrolls. `html` and `body` are `h-full overflow-hidden`; only
+  `<main>` in `src/app/(admin)/layout.tsx` scrolls.
+
+### After every `shadcn add`, grep for oklch
+
+```bash
+grep -rn "oklch" apps/admin-web/src
+```
+
+Must print nothing. shadcn 2.10's registry serves Tailwind-v4 colour values by
+default and they fail invisibly against this app's v3 config. The portal's
+`dropdown-menu` was written by hand on top of `@radix-ui/react-dropdown-menu`
+for exactly this reason — prefer that over pulling a registry component whose
+emitted CSS then has to be converted.
+
+### Type scale
+
+36px tabular hero metric / 24px section titles / 15px body / 13px table text /
+12px pills. Exposed as `text-hero`, `text-section`, `text-body`, `text-table`,
+`text-pill`. The `.tabular` utility sets `tnum` and is required on every rupee
+figure so columns align and a live number does not jitter.
+
+### Copy
+
+Plain, warm, human. "Workers were paid ₹4,20,000 this week", never "disbursement
+volume". Banned vocabulary: *utilisation*, *fund utilisation*, *capital
+deployment*, *resource allocation*, *stakeholder value*, *leverage*, *synergy*.
+Every button label is a verb naming its effect ("Approve worker", not "Submit"),
+and the toast that follows uses the same word. Never append "→" to a label.
+Every empty state says why it is empty and what would fill it.
+
 ## Scripts
 
 | Command | Effect |

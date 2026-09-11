@@ -1,0 +1,41 @@
+/*
+ * Sahayo admin design tokens — the single source of colour for this app.
+ *
+ * Values are bare HSL triplets, NOT hex and NOT a Tailwind-v4 colour function.
+ * Tailwind 3.4 consumes them as `hsl(var(--token))`, so the variable must hold
+ * only the three components. A v4-style colour function here nests inside that
+ * wrapper and yields invalid CSS, which browsers drop silently. See the admin
+ * portal section of CLAUDE.md for the grep that catches it.
+ *
+ * No component may contain a hardcoded hex value. This file is the only place
+ * a colour is written down.
+ */
+:root {
+  /* --- Surfaces ------------------------------------------------------- */
+  /* #FFFDFB — warm paper page background. Never pure white. */
+  --ground: 30 100% 99.2%;
+  /* #FFFFFF — elevated cards sitting on the ground. */
+  --surface: 0 0% 100%;
+
+  /* --- Brand ---------------------------------------------------------- */
+  /* #F5B814 — primary actions, active nav, the hero metric. */
+  --marigold: 43.7 91.8% 52%;
+  /* #FEF3D4 — icon tiles, the page radial glow, active row wash. */
+  --marigold-tint: 44.3 95.5% 91.4%;
+
+  /* --- Semantic accents, one job each -------------------------------- */
+  /* #34C77B — cooperative fund, positive deltas, verified KYC. Nothing else. */
+  --fund-green: 149 58.6% 49.2%;
+  /* #FF8B72 — chart series 2, warnings, reject actions. Never a button fill. */
+  --coral: 10.6 100% 72.4%;
+  /* #A78BFA — chart series 3. */
+  --lavender: 255.1 91.7% 76.3%;
+
+  /* --- Type and lines ------------------------------------------------- */
+  /* #1F1B16 — primary type. Pure #000000 is forbidden. */
+  --ink: 33.3 17% 10.4%;
+  /* #8A8279 — secondary type, table headers, inactive states. */
+  --muted: 31.8 6.8% 50.8%;
+  /* #F0E9DD — every component border. Replaces heavy shadows. */
+  --hairline: 37.9 38.8% 90.4%;
+}

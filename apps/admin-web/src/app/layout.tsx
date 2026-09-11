@@ -1,19 +1,29 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
-import { BOOKING_STATUSES } from '@sahayo/shared';
+import { Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
+
+/*
+ * One family for the entire product. Do not add a second typeface, and do not
+ * add a Devanagari face — the admin portal is English throughout. Plus Jakarta
+ * Sans covers ₹ at every weight we load, including the 36px hero metric.
+ */
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-sans',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'Sahayo Admin',
-  // BOOKING_STATUSES is imported purely to prove @sahayo/shared resolves and
-  // executes through transpilePackages at runtime. Phase 1 probe only.
-  description: `Cooperative Gig Services Platform — administration (${BOOKING_STATUSES.length} booking states)`,
+  description: 'Cooperative Gig Services Platform — administration',
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
-      <body>{children}</body>
+    <html lang="en" className={plusJakartaSans.variable}>
+      <body className="font-sans text-body">{children}</body>
     </html>
   );
 }
