@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { brandColors, SearchField } from '@sahayo/ui-native';
@@ -7,6 +8,7 @@ import { brandColors, SearchField } from '@sahayo/ui-native';
 import { BestServices } from '../../src/components/home/BestServices';
 import { CategoryChips } from '../../src/components/home/CategoryChips';
 import { HomeHeader } from '../../src/components/home/HomeHeader';
+import { HomeSearchResults } from '../../src/components/home/HomeSearchResults';
 import { LiveOrderCard } from '../../src/components/home/LiveOrderCard';
 import { PromoCarousel } from '../../src/components/PromoCarousel';
 import { SectionHeader } from '../../src/components/home/SectionHeader';
@@ -28,6 +30,8 @@ import { getLiveOrders, homeCategories } from '../../src/mocks';
 export default function HomeScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const [query, setQuery] = useState('');
+  const searching = query.trim().length > 0;
 
   // Only the first one. Two stacked cards eat most of the fold on the screen
   // that has the most to say.
@@ -42,52 +46,71 @@ export default function HomeScreen() {
         // clear it as well as the home indicator.
         paddingBottom: insets.bottom + 24,
       }}
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="on-drag"
       showsVerticalScrollIndicator={false}
     >
       <View className="px-6">
         <HomeHeader />
 
-        {/* Presentational for now: search behaviour is not in this screen's
-            brief, and the All Categories tab is where a live search exists.
-            Shares one component with that screen so the two cannot drift. */}
         <SearchField
           className="mt-5"
-          readOnly
           placeholder={t('home.searchPlaceholder')}
+          value={query}
+          onChangeText={setQuery}
           accessibilityLabel={t('home.searchPlaceholder')}
           leadingIcon={<Ionicons name="search-outline" size={18} color={brandColors.muted} />}
-          trailingIcon={<Ionicons name="options-outline" size={18} color={brandColors.navy} />}
+          trailingIcon={
+            searching ? (
+              <Pressable
+                onPress={() => setQuery('')}
+                accessibilityRole="button"
+                accessibilityLabel={t('categories.clearSearch')}
+                hitSlop={10}
+              >
+                <Ionicons name="close-circle" size={18} color={brandColors.muted} />
+              </Pressable>
+            ) : (
+              <Ionicons name="options-outline" size={18} color={brandColors.navy} />
+            )
+          }
         />
 
-        <SectionHeader
-          className="mt-7"
-          title={t('home.allCategories')}
-          actionLabel={t('home.viewAll')}
-          actionHref="/categories"
-        />
-        <View className="mt-3">
-          <CategoryChips categories={homeCategories()} />
-        </View>
+        {searching ? <HomeSearchResults query={query} /> : null}
 
-        <View className="mt-7">
-          <PromoCarousel />
-        </View>
+        {searching ? null : (
+          <>
+            <SectionHeader
+              className="mt-7"
+              title={t('home.allCategories')}
+              actionLabel={t('home.viewAll')}
+              actionHref="/categories"
+            />
+            <View className="mt-3">
+              <CategoryChips categories={homeCategories()} />
+            </View>
 
-        {liveOrder ? (
-          <View className="mt-6">
-            <LiveOrderCard order={liveOrder} />
-          </View>
-        ) : null}
+            <View className="mt-7">
+              <PromoCarousel />
+            </View>
 
-        <SectionHeader
-          className="mt-7"
-          title={t('home.bestServices')}
-          actionLabel={t('home.viewAll')}
-          actionHref="/categories"
-        />
-        <View className="mt-3">
-          <BestServices />
-        </View>
+            {liveOrder ? (
+              <View className="mt-6">
+                <LiveOrderCard order={liveOrder} />
+              </View>
+            ) : null}
+
+            <SectionHeader
+              className="mt-7"
+              title={t('home.bestServices')}
+              actionLabel={t('home.viewAll')}
+              actionHref="/categories"
+            />
+            <View className="mt-3">
+              <BestServices />
+            </View>
+          </>
+        )}
       </View>
     </ScrollView>
   );

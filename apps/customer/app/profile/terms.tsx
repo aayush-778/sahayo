@@ -1,6 +1,8 @@
-import { PlaceholderScreen } from '../../src/components/PlaceholderScreen';
+import { LegalScreen } from '../../src/components/profile/LegalScreen';
 
-/** TEMPORARY scaffold for the terms of service. */
-export default function ProfileTermsScreen() {
-  return <PlaceholderScreen />;
+/** Sections, in reading order. The copy lives in the i18n catalogue. */
+const SECTIONS = ['service', 'cooperative', 'pricing', 'cancellation', 'conduct', 'liability'] as const;
+
+export default function TermsScreen() {
+  return <LegalScreen namespace="terms" sections={SECTIONS} />;
 }

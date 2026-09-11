@@ -3,16 +3,26 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { brandColors, SearchField, Text } from '@sahayo/ui-native';
+import { brandColors, SearchField, Skeleton, Text } from '@sahayo/ui-native';
 
-import {
-  CategoryFilterChips,
-  type GroupFilter,
-} from '../../src/components/categories/CategoryFilterChips';
+import { useResourceLoading } from '../../src/lib/loading';
 import { CategoryGrid } from '../../src/components/categories/CategoryGrid';
+import { FilterChips } from '../../src/components/FilterChips';
 import { LanguageSwitcher } from '../../src/components/LanguageSwitcher';
 import { PromoCarousel } from '../../src/components/PromoCarousel';
-import { categoriesInGroup, categoryMatchesQuery, serviceCategories } from '../../src/mocks';
+import {
+  CATEGORY_GROUPS,
+  categoriesInGroup,
+  categoryMatchesQuery,
+  serviceCategories,
+  type CategoryGroup,
+} from '../../src/mocks';
+
+/** Narrows a chip key back to a group. The chip row is built from
+ *  CATEGORY_GROUPS, so anything else can only be "all", i.e. no filter. */
+function asGroup(key: string | null): CategoryGroup | null {
+  return CATEGORY_GROUPS.find((group) => group === key) ?? null;
+}
 
 /**
  * All Categories.
@@ -31,11 +41,21 @@ export default function CategoriesScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
-  const [group, setGroup] = useState<GroupFilter>(null);
+  const [group, setGroup] = useState<string | null>(null);
   const [query, setQuery] = useState('');
+  const loading = useResourceLoading('categories');
+
+  const chips = [
+    { key: 'all', label: t('categories.groups.all') },
+    ...CATEGORY_GROUPS.map((entry) => ({
+      key: entry,
+      label: t(`categories.groups.${entry}`),
+    })),
+  ];
 
   const visible = useMemo(() => {
-    const inGroup = group === null ? serviceCategories : categoriesInGroup(group);
+    const selected = asGroup(group);
+    const inGroup = selected === null ? serviceCategories : categoriesInGroup(selected);
     return inGroup.filter((category) => categoryMatchesQuery(category, query));
   }, [group, query]);
 
@@ -80,7 +100,7 @@ export default function CategoriesScreen() {
         />
 
         <View className="mt-4">
-          <CategoryFilterChips selected={group} onSelect={setGroup} />
+          <FilterChips chips={chips} selected={group} onSelect={setGroup} />
         </View>
 
         <View className="mt-5">
@@ -88,7 +108,15 @@ export default function CategoriesScreen() {
         </View>
 
         <View className="mt-6">
-          {visible.length > 0 ? (
+          {loading ? (
+            <View className="-mx-1.5 flex-row flex-wrap">
+              {[0, 1, 2, 3, 4, 5].map((slot) => (
+                <View key={slot} className="w-1/3 px-1.5 pb-3">
+                  <Skeleton className="h-28 rounded-2xl" />
+                </View>
+              ))}
+            </View>
+          ) : visible.length > 0 ? (
             <CategoryGrid categories={visible} />
           ) : (
             <View className="items-center rounded-2xl border border-brand-border bg-brand-surface px-6 py-10">

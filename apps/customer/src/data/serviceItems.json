@@ -1,0 +1,464 @@
+{
+  "meta": {
+    "version": "0.1.0",
+    "currency": "INR",
+    "priceUnit": "paise",
+    "note": "Customer-facing prices, exclusive of GST. Materials and spare parts billed separately unless the description says otherwise.",
+    "assumptions": {
+      "skilledLabourRatePerHourP": 16000,
+      "semiSkilledLabourRatePerHourP": 12000,
+      "minBillableMinutes": 45,
+      "minJobChargeP": 14900,
+      "homeVisitChargeP": 29900,
+      "workshopIntakeChargeP": 9900
+    },
+    "confidence": "indicative — calibrate against the local society rate card before any real deployment. Statutory wage floor still governs; see pricing-model.md.",
+    "modes": {
+      "fixed": "priceP + stdMinutes. Price shown before booking.",
+      "fault": "visitChargeP + fromP. Diagnose on site, then select fault codes. Show as 'From ₹X'.",
+      "unit": "ratePerUnitP + unit + minQty. Show as '₹X / sq ft'.",
+      "retainer": "priceP + period. Show as '₹X / month'.",
+      "quote": "no price. CTA becomes 'Get Quote' — books a free survey.",
+      "workshop": "fromP + workshop fulfilment. Drop-off or pickup, not a home visit."
+    }
+  },
+
+  "items": {
+
+    "basic-electrical": [
+      { "id": "switch-socket-replacement", "name": "Switch / Socket Replacement", "desc": "Per point. Minimum job charge applies.", "mode": "fixed", "priceP": 14900, "stdMinutes": 15 },
+      { "id": "switchboard-repair", "name": "Switchboard Repair / Rewiring", "desc": "Per board, up to 6 points", "mode": "fixed", "priceP": 29900, "stdMinutes": 40 },
+      { "id": "ceiling-fan-installation", "name": "Ceiling Fan Installation", "desc": "Fitting, wiring and regulator", "mode": "fixed", "priceP": 34900, "stdMinutes": 45 },
+      { "id": "ceiling-fan-repair", "name": "Ceiling Fan Not Working", "desc": "Capacitor, regulator, bearing or winding fault", "mode": "fault", "visitChargeP": 19900, "fromP": 19900 },
+      { "id": "light-fixture-installation", "name": "Light / Tube Light Installation", "desc": "LED panel, tube light or wall light", "mode": "fixed", "priceP": 19900, "stdMinutes": 30 },
+      { "id": "chandelier-installation", "name": "Chandelier Installation", "desc": "Includes ceiling anchor and wiring", "mode": "fixed", "priceP": 74900, "stdMinutes": 90 },
+      { "id": "doorbell-installation", "name": "Doorbell Installation", "desc": "Wired or wireless doorbell", "mode": "fixed", "priceP": 19900, "stdMinutes": 25 },
+      { "id": "mcb-replacement", "name": "MCB Replacement", "desc": "Single MCB in existing board", "mode": "fixed", "priceP": 24900, "stdMinutes": 30 },
+      { "id": "exhaust-fan-installation", "name": "Exhaust Fan Installation", "desc": "Bathroom or kitchen exhaust", "mode": "fixed", "priceP": 29900, "stdMinutes": 40 },
+      { "id": "power-fault-callout", "name": "No Power / Short Circuit", "desc": "Emergency fault diagnosis", "mode": "fault", "visitChargeP": 29900, "fromP": 29900, "emergency": true }
+    ],
+
+    "wiring-installation": [
+      { "id": "new-wiring-per-point", "name": "New Wiring", "desc": "Open wiring, per point", "mode": "unit", "ratePerUnitP": 34900, "unit": "point", "minQty": 4 },
+      { "id": "rewiring-per-point", "name": "Rewiring", "desc": "Replace existing wiring, per point", "mode": "unit", "ratePerUnitP": 39900, "unit": "point", "minQty": 4 },
+      { "id": "concealed-conduit", "name": "Concealed Conduit Wiring", "desc": "Chasing, conduit and wiring, per point", "mode": "unit", "ratePerUnitP": 54900, "unit": "point", "minQty": 6 },
+      { "id": "db-box-installation", "name": "Distribution Box Installation", "desc": "DB box with MCBs, labour only", "mode": "fixed", "priceP": 149900, "stdMinutes": 180 },
+      { "id": "earthing-installation", "name": "Earthing Installation", "desc": "Pit earthing with copper plate", "mode": "fixed", "priceP": 249900, "stdMinutes": 300 },
+      { "id": "meter-shifting", "name": "Meter Shifting Assistance", "desc": "Site work; board approval not included", "mode": "fixed", "priceP": 129900, "stdMinutes": 150 },
+      { "id": "full-house-wiring-survey", "name": "Full House Wiring", "desc": "Free site survey and written estimate", "mode": "quote", "priceP": 0 }
+    ],
+
+    "power-backup-solar": [
+      { "id": "inverter-installation", "name": "Inverter Installation", "desc": "Mounting, wiring and battery connection", "mode": "fixed", "priceP": 89900, "stdMinutes": 120 },
+      { "id": "inverter-battery-service", "name": "Inverter & Battery Service", "desc": "Water top-up, terminal cleaning, health check", "mode": "fixed", "priceP": 39900, "stdMinutes": 60 },
+      { "id": "battery-replacement", "name": "Battery Replacement", "desc": "Labour only; battery billed separately", "mode": "fixed", "priceP": 49900, "stdMinutes": 60 },
+      { "id": "stabiliser-installation", "name": "Stabiliser Installation", "desc": "Wall mount and wiring", "mode": "fixed", "priceP": 24900, "stdMinutes": 30 },
+      { "id": "inverter-not-working", "name": "Inverter Not Working", "desc": "No backup, not charging, beeping", "mode": "fault", "visitChargeP": 29900, "fromP": 29900 },
+      { "id": "solar-panel-cleaning", "name": "Solar Panel Cleaning", "desc": "Up to 6 panels", "mode": "fixed", "priceP": 49900, "stdMinutes": 60 },
+      { "id": "solar-water-heater-repair", "name": "Solar Water Heater Repair", "desc": "Leak, no heating, tank issue", "mode": "fault", "visitChargeP": 34900, "fromP": 34900 },
+      { "id": "rooftop-solar-survey", "name": "Rooftop Solar Installation", "desc": "Free site survey and load assessment", "mode": "quote", "priceP": 0 }
+    ],
+
+    "motors-pumps": [
+      { "id": "water-motor-installation", "name": "Water Motor Installation", "desc": "Mounting, wiring and priming", "mode": "fixed", "priceP": 69900, "stdMinutes": 90 },
+      { "id": "motor-not-working", "name": "Motor / Pump Not Working", "desc": "No suction, humming, tripping", "mode": "fault", "visitChargeP": 29900, "fromP": 29900 },
+      { "id": "motor-rewinding", "name": "Motor Rewinding", "desc": "Workshop job. Pickup available.", "mode": "workshop", "fromP": 89900, "intakeChargeP": 9900 },
+      { "id": "booster-pump-installation", "name": "Booster Pump Installation", "desc": "Pressure pump fitting and wiring", "mode": "fixed", "priceP": 89900, "stdMinutes": 120 },
+      { "id": "auto-water-controller", "name": "Auto Water Level Controller", "desc": "Sensor fitting and panel wiring", "mode": "fixed", "priceP": 79900, "stdMinutes": 90 },
+      { "id": "submersible-pump-installation", "name": "Submersible Pump Installation", "desc": "Depth-dependent. Free site survey.", "mode": "quote", "priceP": 0 }
+    ],
+
+    "commercial-electrical": [
+      { "id": "shop-wiring", "name": "Shop / Office Wiring", "desc": "Per point, commercial load", "mode": "unit", "ratePerUnitP": 39900, "unit": "point", "minQty": 10 },
+      { "id": "industrial-fault-callout", "name": "Industrial Fault Call-out", "desc": "3-phase, panel or load fault", "mode": "fault", "visitChargeP": 59900, "fromP": 59900 },
+      { "id": "electrical-amc-commercial", "name": "Electrical AMC — Commercial", "desc": "Monthly inspection and priority call-out", "mode": "retainer", "priceP": 299900, "period": "month" },
+      { "id": "three-phase-connection", "name": "3-Phase Connection Work", "desc": "Free site survey and estimate", "mode": "quote", "priceP": 0 },
+      { "id": "panel-board-installation", "name": "Panel Board Installation", "desc": "Free site survey and estimate", "mode": "quote", "priceP": 0 }
+    ],
+
+    "taps-fittings": [
+      { "id": "tap-replacement", "name": "Tap / Mixer Replacement", "desc": "Per tap. Minimum job charge applies.", "mode": "fixed", "priceP": 14900, "stdMinutes": 20 },
+      { "id": "wash-basin-installation", "name": "Wash Basin Installation", "desc": "Basin, waste coupling and connections", "mode": "fixed", "priceP": 59900, "stdMinutes": 60 },
+      { "id": "kitchen-sink-installation", "name": "Kitchen Sink Installation", "desc": "Sink fitting with drain connection", "mode": "fixed", "priceP": 54900, "stdMinutes": 60 },
+      { "id": "western-toilet-installation", "name": "Western Toilet Installation", "desc": "WC seat with flush tank connection", "mode": "fixed", "priceP": 119900, "stdMinutes": 150 },
+      { "id": "indian-toilet-installation", "name": "Indian Toilet Installation", "desc": "Pan fitting with trap and connection", "mode": "fixed", "priceP": 99900, "stdMinutes": 120 },
+      { "id": "flush-tank-repair", "name": "Flush Tank Repair", "desc": "Float, washer or lever fault", "mode": "fixed", "priceP": 29900, "stdMinutes": 40 },
+      { "id": "health-faucet-fitting", "name": "Health Faucet / Jet Spray Fitting", "desc": "Fitting with angle valve", "mode": "fixed", "priceP": 19900, "stdMinutes": 25 },
+      { "id": "shower-installation", "name": "Shower / Rod Installation", "desc": "Overhead shower or shower rod", "mode": "fixed", "priceP": 34900, "stdMinutes": 45 }
+    ],
+
+    "leakage-blockage": [
+      { "id": "tap-leak-repair", "name": "Tap Leakage Repair", "desc": "Washer, cartridge or spindle", "mode": "fixed", "priceP": 19900, "stdMinutes": 25 },
+      { "id": "pipe-leak-repair", "name": "Pipe Leakage Repair", "desc": "Exposed pipe leak", "mode": "fault", "visitChargeP": 24900, "fromP": 24900 },
+      { "id": "concealed-leak-detection", "name": "Concealed Leak Detection", "desc": "Wall or floor leak tracing", "mode": "fault", "visitChargeP": 49900, "fromP": 49900 },
+      { "id": "wall-seepage-inspection", "name": "Wall Seepage / Damp Inspection", "desc": "Source tracing and remedy plan", "mode": "fault", "visitChargeP": 29900, "fromP": 29900 },
+      { "id": "sink-basin-blockage", "name": "Sink / Basin Blockage", "desc": "Mechanical clearing", "mode": "fixed", "priceP": 34900, "stdMinutes": 45 },
+      { "id": "bathroom-drain-blockage", "name": "Bathroom Drain Blockage", "desc": "Floor trap and drain clearing", "mode": "fixed", "priceP": 39900, "stdMinutes": 50 },
+      { "id": "toilet-blockage", "name": "Toilet Blockage", "desc": "WC and outlet clearing", "mode": "fixed", "priceP": 49900, "stdMinutes": 60 }
+    ],
+
+    "pipeline-installation": [
+      { "id": "cpvc-pipeline-per-point", "name": "CPVC Pipeline", "desc": "Concealed water line, per point", "mode": "unit", "ratePerUnitP": 64900, "unit": "point", "minQty": 3 },
+      { "id": "pvc-drainage-line", "name": "PVC Drainage Line", "desc": "Per running foot", "mode": "unit", "ratePerUnitP": 14900, "unit": "rft", "minQty": 10 },
+      { "id": "kitchen-plumbing-points", "name": "Kitchen Plumbing Points", "desc": "Inlet, outlet and RO point", "mode": "fixed", "priceP": 149900, "stdMinutes": 240 },
+      { "id": "water-meter-fitting", "name": "Water Meter Fitting", "desc": "Meter fitting with valves", "mode": "fixed", "priceP": 59900, "stdMinutes": 60 },
+      { "id": "new-bathroom-plumbing", "name": "New Bathroom Plumbing", "desc": "Free site survey and estimate", "mode": "quote", "priceP": 0 }
+    ],
+
+    "water-systems": [
+      { "id": "water-tank-installation", "name": "Water Tank Installation", "desc": "Placement, inlet and outlet connections", "mode": "fixed", "priceP": 89900, "stdMinutes": 120 },
+      { "id": "water-tank-cleaning-plumb", "name": "Water Tank Cleaning", "desc": "Up to 1000 L, with disinfection", "mode": "fixed", "priceP": 79900, "stdMinutes": 90 },
+      { "id": "ro-installation", "name": "RO / Water Purifier Installation", "desc": "Wall mount with inlet and drain", "mode": "fixed", "priceP": 49900, "stdMinutes": 60 },
+      { "id": "ro-filter-change", "name": "RO Filter Change", "desc": "Labour only; filters billed separately", "mode": "fixed", "priceP": 59900, "stdMinutes": 60 },
+      { "id": "ro-service", "name": "RO Service & Check-up", "desc": "TDS check, cleaning, minor adjustment", "mode": "fixed", "priceP": 39900, "stdMinutes": 45 },
+      { "id": "ro-not-working", "name": "RO Not Working", "desc": "No water, leaking, bad taste", "mode": "fault", "visitChargeP": 24900, "fromP": 24900 },
+      { "id": "booster-pump-fitting", "name": "Booster Pump Fitting", "desc": "Pressure pump with wiring", "mode": "fixed", "priceP": 89900, "stdMinutes": 120 }
+    ],
+
+    "drainage-sewer": [
+      { "id": "drain-jetting", "name": "Drain Line Jetting", "desc": "High-pressure machine jetting", "mode": "fixed", "priceP": 149900, "stdMinutes": 120, "mechanisedOnly": true },
+      { "id": "manhole-cleaning", "name": "Manhole / Chamber Cleaning", "desc": "Machine cleaning with PPE", "mode": "fixed", "priceP": 129900, "stdMinutes": 120, "mechanisedOnly": true },
+      { "id": "cctv-drain-inspection", "name": "CCTV Drain Inspection", "desc": "Camera survey with report", "mode": "fixed", "priceP": 199900, "stdMinutes": 150 },
+      { "id": "premonsoon-drain-clearing", "name": "Pre-monsoon Drain Clearing", "desc": "Storm water and terrace outlets", "mode": "fixed", "priceP": 99900, "stdMinutes": 120, "seasonal": "monsoon" },
+      { "id": "septic-tank-emptying", "name": "Septic Tank Emptying", "desc": "Suction machine. Free site survey.", "mode": "quote", "priceP": 0, "mechanisedOnly": true },
+      { "id": "soak-pit-cleaning", "name": "Soak Pit Cleaning", "desc": "Free site survey and estimate", "mode": "quote", "priceP": 0, "mechanisedOnly": true }
+    ],
+
+    "repairs-fixing": [
+      { "id": "furniture-repair-visit", "name": "Furniture Repair", "desc": "General repair, diagnosed on site", "mode": "fault", "visitChargeP": 19900, "fromP": 19900 },
+      { "id": "hinge-replacement", "name": "Hinge Replacement", "desc": "Per hinge. Minimum job charge applies.", "mode": "fixed", "priceP": 14900, "stdMinutes": 20 },
+      { "id": "drawer-channel-repair", "name": "Drawer / Channel Repair", "desc": "Per drawer", "mode": "fixed", "priceP": 19900, "stdMinutes": 30 },
+      { "id": "lock-handle-repair", "name": "Lock / Handle Repair", "desc": "Furniture lock or handle", "mode": "fixed", "priceP": 19900, "stdMinutes": 25 },
+      { "id": "bed-repair", "name": "Bed Repair", "desc": "Frame, storage or headboard", "mode": "fixed", "priceP": 49900, "stdMinutes": 75 },
+      { "id": "chair-table-repair", "name": "Chair / Table Repair", "desc": "Joint, leg or top repair", "mode": "fixed", "priceP": 34900, "stdMinutes": 50 },
+      { "id": "sofa-frame-repair", "name": "Sofa Frame Repair", "desc": "Frame, spring or base", "mode": "fixed", "priceP": 69900, "stdMinutes": 100 }
+    ],
+
+    "assembly-mounting": [
+      { "id": "flatpack-assembly", "name": "Flat-pack Furniture Assembly", "desc": "Per unit, online-purchased furniture", "mode": "fixed", "priceP": 49900, "stdMinutes": 75 },
+      { "id": "tv-wall-mount-carp", "name": "TV Wall Mounting", "desc": "Bracket fitting and levelling", "mode": "fixed", "priceP": 59900, "stdMinutes": 60 },
+      { "id": "shelf-mounting", "name": "Shelf / Rack Mounting", "desc": "Per shelf", "mode": "fixed", "priceP": 24900, "stdMinutes": 30 },
+      { "id": "mirror-frame-mounting", "name": "Mirror / Frame Mounting", "desc": "Per piece", "mode": "fixed", "priceP": 19900, "stdMinutes": 25 },
+      { "id": "curtain-rod-installation", "name": "Curtain Rod Installation", "desc": "Per rod, up to 8 ft", "mode": "fixed", "priceP": 24900, "stdMinutes": 30 },
+      { "id": "wardrobe-assembly", "name": "Wardrobe Assembly", "desc": "Knock-down wardrobe assembly", "mode": "fixed", "priceP": 89900, "stdMinutes": 150 }
+    ],
+
+    "doors-windows": [
+      { "id": "door-lock-installation", "name": "Door Lock Installation", "desc": "Mortise or cylindrical lock", "mode": "fixed", "priceP": 34900, "stdMinutes": 45 },
+      { "id": "door-fitting", "name": "Door Fitting", "desc": "Shutter fitting in existing frame", "mode": "fixed", "priceP": 89900, "stdMinutes": 120 },
+      { "id": "door-alignment-repair", "name": "Door Alignment / Jam Repair", "desc": "Sticking or misaligned door", "mode": "fixed", "priceP": 29900, "stdMinutes": 40 },
+      { "id": "window-repair", "name": "Window Repair", "desc": "Frame, shutter or channel", "mode": "fixed", "priceP": 39900, "stdMinutes": 55 },
+      { "id": "mosquito-mesh", "name": "Mosquito Mesh Fitting", "desc": "Per sq ft, openable or fixed", "mode": "unit", "ratePerUnitP": 6500, "unit": "sqft", "minQty": 10 },
+      { "id": "door-closer-installation", "name": "Door Closer Installation", "desc": "Hydraulic door closer", "mode": "fixed", "priceP": 39900, "stdMinutes": 50 }
+    ],
+
+    "custom-modular": [
+      { "id": "wardrobe-custom", "name": "Custom Wardrobe", "desc": "Per sq ft, plywood with laminate", "mode": "unit", "ratePerUnitP": 145000, "unit": "sqft", "minQty": 20 },
+      { "id": "modular-kitchen", "name": "Modular Kitchen", "desc": "Per sq ft, base and wall units", "mode": "unit", "ratePerUnitP": 165000, "unit": "sqft", "minQty": 30 },
+      { "id": "partition-work", "name": "Wooden Partition", "desc": "Per sq ft", "mode": "unit", "ratePerUnitP": 85000, "unit": "sqft", "minQty": 20 },
+      { "id": "tv-unit-custom", "name": "Custom TV Unit", "desc": "Free site measurement and design", "mode": "quote", "priceP": 0 },
+      { "id": "bed-custom", "name": "Custom Bed", "desc": "Free site measurement and design", "mode": "quote", "priceP": 0 },
+      { "id": "custom-furniture-survey", "name": "Custom Furniture", "desc": "Free site measurement visit", "mode": "quote", "priceP": 0 }
+    ],
+
+    "polishing-finishing": [
+      { "id": "door-polish", "name": "Door Polish", "desc": "Per door, both sides", "mode": "fixed", "priceP": 89900, "stdMinutes": 180 },
+      { "id": "furniture-polish", "name": "Furniture Polish", "desc": "Per sq ft, standard polish", "mode": "unit", "ratePerUnitP": 8500, "unit": "sqft", "minQty": 20 },
+      { "id": "melamine-polish", "name": "Melamine Polish", "desc": "Per sq ft", "mode": "unit", "ratePerUnitP": 9500, "unit": "sqft", "minQty": 20 },
+      { "id": "pu-polish", "name": "PU Polish", "desc": "Per sq ft, high gloss or matte", "mode": "unit", "ratePerUnitP": 14500, "unit": "sqft", "minQty": 20 },
+      { "id": "duco-paint", "name": "Duco Paint", "desc": "Per sq ft, spray finish", "mode": "unit", "ratePerUnitP": 16500, "unit": "sqft", "minQty": 20 },
+      { "id": "lamination-work", "name": "Lamination", "desc": "Per sq ft", "mode": "unit", "ratePerUnitP": 7500, "unit": "sqft", "minQty": 20 }
+    ],
+
+    "touchups-patchwork": [
+      { "id": "single-wall-painting", "name": "Single Wall Painting", "desc": "One wall, up to 120 sq ft", "mode": "fixed", "priceP": 119900, "stdMinutes": 240 },
+      { "id": "one-room-painting", "name": "One Room Painting", "desc": "Walls and ceiling, up to 10x12 ft", "mode": "fixed", "priceP": 299900, "stdMinutes": 600 },
+      { "id": "damp-patch-repair", "name": "Damp Patch Repair", "desc": "Treatment, putty and repaint", "mode": "fixed", "priceP": 89900, "stdMinutes": 180 },
+      { "id": "crack-filling", "name": "Crack Filling & Putty Patch", "desc": "Per patch, up to 20 sq ft", "mode": "fixed", "priceP": 69900, "stdMinutes": 120 },
+      { "id": "paint-touchup-visit", "name": "Paint Touch-up", "desc": "Small area, assessed on site", "mode": "fault", "visitChargeP": 24900, "fromP": 24900 }
+    ],
+
+    "interior-painting": [
+      { "id": "interior-emulsion", "name": "Interior Emulsion", "desc": "Per sq ft, 2 coats with primer", "mode": "unit", "ratePerUnitP": 1800, "unit": "sqft", "minQty": 300 },
+      { "id": "interior-distemper", "name": "Distemper", "desc": "Per sq ft, budget finish", "mode": "unit", "ratePerUnitP": 1200, "unit": "sqft", "minQty": 300 },
+      { "id": "plastic-paint", "name": "Plastic Paint", "desc": "Per sq ft, washable finish", "mode": "unit", "ratePerUnitP": 1600, "unit": "sqft", "minQty": 300 },
+      { "id": "putty-primer", "name": "Putty + Primer", "desc": "Per sq ft, wall levelling", "mode": "unit", "ratePerUnitP": 1400, "unit": "sqft", "minQty": 300 },
+      { "id": "ceiling-painting", "name": "Ceiling Painting", "desc": "Per sq ft", "mode": "unit", "ratePerUnitP": 1600, "unit": "sqft", "minQty": 100 },
+      { "id": "interior-painting-survey", "name": "Full Home Painting", "desc": "Free site survey and written estimate", "mode": "quote", "priceP": 0 }
+    ],
+
+    "exterior-waterproofing": [
+      { "id": "exterior-emulsion", "name": "Exterior Emulsion", "desc": "Per sq ft, 2 coats", "mode": "unit", "ratePerUnitP": 2200, "unit": "sqft", "minQty": 400 },
+      { "id": "weather-coat", "name": "Weather Coat", "desc": "Per sq ft, weatherproof finish", "mode": "unit", "ratePerUnitP": 2800, "unit": "sqft", "minQty": 400 },
+      { "id": "terrace-waterproofing", "name": "Terrace Waterproofing", "desc": "Per sq ft, chemical coating", "mode": "unit", "ratePerUnitP": 4500, "unit": "sqft", "minQty": 200, "seasonal": "monsoon" },
+      { "id": "bathroom-waterproofing", "name": "Bathroom Waterproofing", "desc": "Per sq ft, wet area treatment", "mode": "unit", "ratePerUnitP": 5500, "unit": "sqft", "minQty": 40 },
+      { "id": "exterior-painting-survey", "name": "Exterior Painting", "desc": "Free site survey and written estimate", "mode": "quote", "priceP": 0 }
+    ],
+
+    "wood-metal-finishing": [
+      { "id": "wood-polish-paint", "name": "Wood Polish", "desc": "Per sq ft, doors and woodwork", "mode": "unit", "ratePerUnitP": 8500, "unit": "sqft", "minQty": 20 },
+      { "id": "grill-painting", "name": "Grill / Railing Painting", "desc": "Per sq ft", "mode": "unit", "ratePerUnitP": 3200, "unit": "sqft", "minQty": 30 },
+      { "id": "gate-painting", "name": "Main Gate Painting", "desc": "Standard gate, with primer", "mode": "fixed", "priceP": 149900, "stdMinutes": 300 },
+      { "id": "anti-rust-coating", "name": "Anti-rust Coating", "desc": "Per sq ft, on metal surfaces", "mode": "unit", "ratePerUnitP": 3800, "unit": "sqft", "minQty": 30 },
+      { "id": "metal-door-painting", "name": "Metal Door Painting", "desc": "Per door, both sides", "mode": "fixed", "priceP": 89900, "stdMinutes": 180 }
+    ],
+
+    "texture-designer": [
+      { "id": "texture-wall", "name": "Texture Wall", "desc": "Per sq ft, roller or trowel texture", "mode": "unit", "ratePerUnitP": 9500, "unit": "sqft", "minQty": 50 },
+      { "id": "stencil-design", "name": "Stencil Design", "desc": "Per sq ft", "mode": "unit", "ratePerUnitP": 11000, "unit": "sqft", "minQty": 40 },
+      { "id": "accent-wall", "name": "Designer Accent Wall", "desc": "One feature wall, up to 120 sq ft", "mode": "fixed", "priceP": 499900, "stdMinutes": 720 },
+      { "id": "wallpaper-installation", "name": "Wallpaper Installation", "desc": "Per roll, labour only", "mode": "unit", "ratePerUnitP": 39900, "unit": "roll", "minQty": 2 },
+      { "id": "wallpaper-removal", "name": "Wallpaper Removal", "desc": "Per sq ft", "mode": "unit", "ratePerUnitP": 1800, "unit": "sqft", "minQty": 50 }
+    ],
+
+    "part-time-help": [
+      { "id": "cleaning-1bhk", "name": "Cleaning — 1 BHK", "desc": "Sweeping, mopping, dusting. Daily.", "mode": "retainer", "priceP": 249900, "period": "month" },
+      { "id": "cleaning-2bhk", "name": "Cleaning — 2 BHK", "desc": "Sweeping, mopping, dusting. Daily.", "mode": "retainer", "priceP": 349900, "period": "month" },
+      { "id": "cleaning-3bhk", "name": "Cleaning — 3 BHK", "desc": "Sweeping, mopping, dusting. Daily.", "mode": "retainer", "priceP": 449900, "period": "month" },
+      { "id": "utensils-only", "name": "Utensil Washing Only", "desc": "Twice a day", "mode": "retainer", "priceP": 149900, "period": "month" },
+      { "id": "laundry-only", "name": "Clothes Washing Only", "desc": "Wash, dry and fold. Daily.", "mode": "retainer", "priceP": 149900, "period": "month" },
+      { "id": "cleaning-utensils-combo", "name": "Cleaning + Utensils — 2 BHK", "desc": "Combined daily package", "mode": "retainer", "priceP": 399900, "period": "month" }
+    ],
+
+    "cooking": [
+      { "id": "cook-veg-1meal", "name": "Cook — Veg, 1 Meal/day", "desc": "Daily cooking, one meal", "mode": "retainer", "priceP": 399900, "period": "month" },
+      { "id": "cook-veg-2meals", "name": "Cook — Veg, 2 Meals/day", "desc": "Daily cooking, two meals", "mode": "retainer", "priceP": 649900, "period": "month" },
+      { "id": "cook-nonveg-1meal", "name": "Cook — Non-veg, 1 Meal/day", "desc": "Daily cooking, one meal", "mode": "retainer", "priceP": 499900, "period": "month" },
+      { "id": "cook-nonveg-2meals", "name": "Cook — Non-veg, 2 Meals/day", "desc": "Daily cooking, two meals", "mode": "retainer", "priceP": 799900, "period": "month" },
+      { "id": "cook-jain-satvik", "name": "Cook — Jain / Satvik", "desc": "No onion, no garlic. One meal.", "mode": "retainer", "priceP": 549900, "period": "month" },
+      { "id": "kitchen-helper", "name": "Kitchen Helper", "desc": "Prep, cutting and cleaning support", "mode": "retainer", "priceP": 299900, "period": "month" }
+    ],
+
+    "full-time-live-in": [
+      { "id": "fulltime-day-help", "name": "Full-day Help (8 hrs)", "desc": "All household tasks, non-residential", "mode": "retainer", "priceP": 1299900, "period": "month" },
+      { "id": "livein-help", "name": "Live-in Help", "desc": "Residential. Accommodation by customer.", "mode": "retainer", "priceP": 1799900, "period": "month" },
+      { "id": "livein-cook-help", "name": "Live-in Cook + Help", "desc": "Cooking and household work", "mode": "retainer", "priceP": 2199900, "period": "month" },
+      { "id": "fulltime-couple", "name": "Couple (Cook + Help)", "desc": "Free consultation and matching", "mode": "quote", "priceP": 0 }
+    ],
+
+    "one-time-help": [
+      { "id": "one-time-cleaning-help", "name": "One-time Cleaning Help", "desc": "4 hours", "mode": "fixed", "priceP": 69900, "stdMinutes": 240 },
+      { "id": "guest-period-help", "name": "Guest Period Help", "desc": "Per day, 6 hours", "mode": "unit", "ratePerUnitP": 59900, "unit": "day", "minQty": 2 },
+      { "id": "festival-help", "name": "Festival Help", "desc": "Per day, 6 hours", "mode": "unit", "ratePerUnitP": 79900, "unit": "day", "minQty": 1, "seasonal": "festival" },
+      { "id": "post-party-cleanup", "name": "Post-party Cleanup", "desc": "Same-day or next-morning", "mode": "fixed", "priceP": 99900, "stdMinutes": 300 }
+    ],
+
+    "child-care": [
+      { "id": "nanny-parttime", "name": "Part-time Nanny", "desc": "4 hours daily", "mode": "retainer", "priceP": 899900, "period": "month" },
+      { "id": "nanny-fulltime", "name": "Full-time Nanny", "desc": "8–10 hours daily", "mode": "retainer", "priceP": 1599900, "period": "month" },
+      { "id": "nanny-livein", "name": "Live-in Nanny", "desc": "Residential. Accommodation by customer.", "mode": "retainer", "priceP": 2299900, "period": "month" },
+      { "id": "babysitting-hourly", "name": "Babysitting", "desc": "Per hour, minimum 3 hours", "mode": "unit", "ratePerUnitP": 24900, "unit": "hour", "minQty": 3 },
+      { "id": "school-escort", "name": "School Pick-up & Drop", "desc": "Escort only, transport not included", "mode": "retainer", "priceP": 499900, "period": "month" }
+    ],
+
+    "elder-care": [
+      { "id": "elder-attendant-day", "name": "Elder Attendant — Day", "desc": "12 hour day shift", "mode": "retainer", "priceP": 1699900, "period": "month" },
+      { "id": "elder-attendant-night", "name": "Elder Attendant — Night", "desc": "12 hour night shift", "mode": "retainer", "priceP": 1899900, "period": "month" },
+      { "id": "elder-livein", "name": "Live-in Elder Care", "desc": "Residential companion and attendant", "mode": "retainer", "priceP": 2499900, "period": "month" },
+      { "id": "elder-companion-visit", "name": "Companion Visit", "desc": "4 hours, single visit", "mode": "fixed", "priceP": 59900, "stdMinutes": 240 },
+      { "id": "dementia-care", "name": "Dementia / Alzheimer's Support", "desc": "Free consultation and matching", "mode": "quote", "priceP": 0 }
+    ],
+
+    "patient-care": [
+      { "id": "bedridden-care-day", "name": "Bedridden Care — Day Shift", "desc": "12 hours, trained attendant", "mode": "retainer", "priceP": 1899900, "period": "month" },
+      { "id": "bedridden-care-night", "name": "Bedridden Care — Night Shift", "desc": "12 hours, trained attendant", "mode": "retainer", "priceP": 2099900, "period": "month" },
+      { "id": "hospital-attendant", "name": "Hospital Attendant", "desc": "Per day, 12 hour shift", "mode": "unit", "ratePerUnitP": 99900, "unit": "day", "minQty": 1 },
+      { "id": "postop-care", "name": "Post-operative Care", "desc": "Per day, 12 hour shift", "mode": "unit", "ratePerUnitP": 119900, "unit": "day", "minQty": 3 },
+      { "id": "physio-assistance", "name": "Physiotherapy Assistance", "desc": "Per visit, supports the therapist", "mode": "fixed", "priceP": 59900, "stdMinutes": 90 }
+    ],
+
+    "mother-newborn": [
+      { "id": "japa-maid-fulltime", "name": "Japa Maid — Full-time", "desc": "Mother and newborn care, live-in", "mode": "retainer", "priceP": 2199900, "period": "month" },
+      { "id": "japa-maid-parttime", "name": "Japa Maid — Part-time", "desc": "6 hours daily", "mode": "retainer", "priceP": 1399900, "period": "month" },
+      { "id": "newborn-massage", "name": "Newborn Massage", "desc": "Per visit, traditional malish", "mode": "fixed", "priceP": 49900, "stdMinutes": 45 },
+      { "id": "mother-massage", "name": "Mother Massage", "desc": "Per visit, post-natal", "mode": "fixed", "priceP": 59900, "stdMinutes": 60 }
+    ],
+
+    "home-nursing": [
+      { "id": "nursing-injection", "name": "Injection at Home", "desc": "Per visit. Prescription required.", "mode": "fixed", "priceP": 39900, "stdMinutes": 30, "requiresLicence": true },
+      { "id": "nursing-iv", "name": "IV Drip at Home", "desc": "Per visit. Prescription required.", "mode": "fixed", "priceP": 69900, "stdMinutes": 90, "requiresLicence": true },
+      { "id": "nursing-dressing", "name": "Wound Dressing", "desc": "Per visit", "mode": "fixed", "priceP": 49900, "stdMinutes": 45, "requiresLicence": true },
+      { "id": "nursing-catheter", "name": "Catheter Change", "desc": "Per visit", "mode": "fixed", "priceP": 89900, "stdMinutes": 60, "requiresLicence": true },
+      { "id": "nurse-12hr-shift", "name": "Nurse — 12 hr Shift", "desc": "Per day, GNM or ANM", "mode": "unit", "ratePerUnitP": 199900, "unit": "day", "minQty": 1, "requiresLicence": true },
+      { "id": "nurse-monthly", "name": "Nurse — Monthly", "desc": "12 hour shift, 26 days", "mode": "retainer", "priceP": 3299900, "period": "month", "requiresLicence": true }
+    ],
+
+    "hourly-driver": [
+      { "id": "driver-hourly", "name": "Hourly Driver", "desc": "Per hour, minimum 4 hours", "mode": "unit", "ratePerUnitP": 19900, "unit": "hour", "minQty": 4 },
+      { "id": "driver-airport", "name": "Airport Trip", "desc": "One way, within city", "mode": "fixed", "priceP": 89900, "stdMinutes": 180 },
+      { "id": "driver-hospital-visit", "name": "Hospital Visit", "desc": "Up to 4 hours, waiting included", "mode": "fixed", "priceP": 79900, "stdMinutes": 240 },
+      { "id": "driver-event-evening", "name": "Evening / Event Driver", "desc": "Up to 6 hours, evening slot", "mode": "fixed", "priceP": 119900, "stdMinutes": 360 },
+      { "id": "driver-vehicle-shifting", "name": "Vehicle Shifting", "desc": "Within city, one way", "mode": "fixed", "priceP": 69900, "stdMinutes": 120 }
+    ],
+
+    "monthly-driver": [
+      { "id": "driver-monthly-8hr", "name": "Monthly Driver — 8 hrs", "desc": "26 days, weekly off included", "mode": "retainer", "priceP": 1899900, "period": "month" },
+      { "id": "driver-monthly-12hr", "name": "Monthly Driver — 12 hrs", "desc": "26 days, weekly off included", "mode": "retainer", "priceP": 2499900, "period": "month" },
+      { "id": "driver-weekend", "name": "Weekend Only Driver", "desc": "Saturday and Sunday, 8 hrs", "mode": "retainer", "priceP": 799900, "period": "month" },
+      { "id": "driver-senior-citizen", "name": "Senior Citizen Driver", "desc": "Trained in elder assistance", "mode": "retainer", "priceP": 2199900, "period": "month" }
+    ],
+
+    "outstation-driver": [
+      { "id": "outstation-perday", "name": "Outstation Driver", "desc": "Per day, up to 12 hours", "mode": "unit", "ratePerUnitP": 129900, "unit": "day", "minQty": 1 },
+      { "id": "outstation-roundtrip", "name": "Round Trip — 2 Days", "desc": "Driver only, night halt included", "mode": "fixed", "priceP": 249900, "stdMinutes": 1440 },
+      { "id": "outstation-nighthalt", "name": "Night Halt Charge", "desc": "Per night, added to trip", "mode": "unit", "ratePerUnitP": 39900, "unit": "night", "minQty": 1 },
+      { "id": "outstation-perkm", "name": "Long Trip — Per Km", "desc": "Driver charge, beyond 300 km", "mode": "unit", "ratePerUnitP": 1400, "unit": "km", "minQty": 300 }
+    ],
+
+    "commercial-goods": [
+      { "id": "tempo-with-driver", "name": "Tempo with Driver", "desc": "Per trip, within city", "mode": "fixed", "priceP": 149900, "stdMinutes": 240 },
+      { "id": "minitruck-with-driver", "name": "Mini Truck with Driver", "desc": "Per trip, within city", "mode": "fixed", "priceP": 229900, "stdMinutes": 300 },
+      { "id": "truck-driver-monthly", "name": "Truck Driver — Monthly", "desc": "Commercial licence, 26 days", "mode": "retainer", "priceP": 2699900, "period": "month" },
+      { "id": "tractor-operator", "name": "Tractor Operator", "desc": "Per day, farm or transport", "mode": "unit", "ratePerUnitP": 119900, "unit": "day", "minQty": 1 }
+    ],
+
+    "two-wheeler-rider": [
+      { "id": "delivery-rider-hourly", "name": "Delivery Rider", "desc": "Per hour, minimum 4 hours", "mode": "unit", "ratePerUnitP": 14900, "unit": "hour", "minQty": 4 },
+      { "id": "document-pickup", "name": "Document Pickup & Drop", "desc": "Within 10 km", "mode": "fixed", "priceP": 14900, "stdMinutes": 60 },
+      { "id": "medicine-delivery", "name": "Medicine Delivery", "desc": "Within 5 km", "mode": "fixed", "priceP": 9900, "stdMinutes": 45 },
+      { "id": "rider-monthly", "name": "Delivery Rider — Monthly", "desc": "8 hrs, 26 days. Vehicle by customer.", "mode": "retainer", "priceP": 1599900, "period": "month" }
+    ],
+
+    "regular-maintenance": [
+      { "id": "garden-weekly-small", "name": "Weekly Maintenance — Small", "desc": "Up to 500 sq ft, 4 visits/month", "mode": "retainer", "priceP": 199900, "period": "month" },
+      { "id": "garden-weekly-large", "name": "Weekly Maintenance — Large", "desc": "500–2000 sq ft, 4 visits/month", "mode": "retainer", "priceP": 349900, "period": "month" },
+      { "id": "garden-monthly-visit", "name": "Monthly Visit", "desc": "Single visit, 3 hours", "mode": "fixed", "priceP": 79900, "stdMinutes": 180 },
+      { "id": "balcony-plant-care", "name": "Balcony Plant Care", "desc": "2 visits/month", "mode": "retainer", "priceP": 99900, "period": "month" },
+      { "id": "watering-service", "name": "Daily Watering", "desc": "Once daily, 30 minutes", "mode": "retainer", "priceP": 149900, "period": "month" }
+    ],
+
+    "one-time-cleanup": [
+      { "id": "overgrown-clearing", "name": "Overgrown Garden Clearing", "desc": "Per sq ft, includes debris removal", "mode": "unit", "ratePerUnitP": 1200, "unit": "sqft", "minQty": 200 },
+      { "id": "lawn-mowing", "name": "Lawn Mowing", "desc": "Up to 500 sq ft", "mode": "fixed", "priceP": 69900, "stdMinutes": 120 },
+      { "id": "hedge-trimming", "name": "Hedge Trimming", "desc": "Up to 50 running ft", "mode": "fixed", "priceP": 89900, "stdMinutes": 150 },
+      { "id": "seasonal-tidy", "name": "Seasonal Garden Tidy", "desc": "Pruning, weeding, clearing", "mode": "fixed", "priceP": 149900, "stdMinutes": 300 },
+      { "id": "weeding-service", "name": "Weeding", "desc": "Per sq ft", "mode": "unit", "ratePerUnitP": 800, "unit": "sqft", "minQty": 200 }
+    ],
+
+    "garden-setup": [
+      { "id": "new-lawn-laying", "name": "New Lawn Laying", "desc": "Per sq ft, includes soil prep", "mode": "unit", "ratePerUnitP": 6500, "unit": "sqft", "minQty": 100 },
+      { "id": "kitchen-garden-setup", "name": "Kitchen Garden Setup", "desc": "Beds, soil and starter plants", "mode": "fixed", "priceP": 499900, "stdMinutes": 480 },
+      { "id": "drip-irrigation", "name": "Drip Irrigation Setup", "desc": "Per sq ft, with timer", "mode": "unit", "ratePerUnitP": 4500, "unit": "sqft", "minQty": 100 },
+      { "id": "vertical-garden", "name": "Vertical Garden", "desc": "Per sq ft, frame and planting", "mode": "unit", "ratePerUnitP": 38500, "unit": "sqft", "minQty": 20 },
+      { "id": "terrace-garden-setup", "name": "Terrace Garden Setup", "desc": "Free site survey and design", "mode": "quote", "priceP": 0 },
+      { "id": "plant-supply-planting", "name": "Plant Supply & Planting", "desc": "Free consultation and quote", "mode": "quote", "priceP": 0 }
+    ],
+
+    "tree-work": [
+      { "id": "tree-trimming-small", "name": "Tree Trimming — Small", "desc": "Up to 15 ft", "mode": "fixed", "priceP": 129900, "stdMinutes": 180 },
+      { "id": "tree-trimming-large", "name": "Tree Trimming — Large", "desc": "Above 15 ft. Safety harness used.", "mode": "fixed", "priceP": 299900, "stdMinutes": 360 },
+      { "id": "coconut-tree-cleaning", "name": "Coconut Tree Cleaning", "desc": "Per tree, dry frond removal", "mode": "fixed", "priceP": 89900, "stdMinutes": 90 },
+      { "id": "tree-cutting", "name": "Tree Cutting & Removal", "desc": "Free site survey. Permissions by customer.", "mode": "quote", "priceP": 0 },
+      { "id": "stump-removal", "name": "Stump Removal", "desc": "Free site survey and estimate", "mode": "quote", "priceP": 0 }
+    ],
+
+    "campus-contract": [
+      { "id": "office-plant-maintenance", "name": "Office Plant Maintenance", "desc": "Indoor plants, 4 visits/month", "mode": "retainer", "priceP": 499900, "period": "month" },
+      { "id": "society-garden-monthly", "name": "Society Garden Contract", "desc": "Free site survey and estimate", "mode": "quote", "priceP": 0 },
+      { "id": "school-campus-monthly", "name": "School / Campus Contract", "desc": "Free site survey and estimate", "mode": "quote", "priceP": 0 },
+      { "id": "campus-garden-survey", "name": "Campus Garden Survey", "desc": "Free assessment visit", "mode": "quote", "priceP": 0 }
+    ],
+
+    "home-deep-cleaning": [
+      { "id": "deep-clean-1bhk", "name": "Deep Cleaning — 1 BHK", "desc": "Full home, 4–5 hours, 2 cleaners", "mode": "fixed", "priceP": 349900, "stdMinutes": 300 },
+      { "id": "deep-clean-2bhk", "name": "Deep Cleaning — 2 BHK", "desc": "Full home, 5–6 hours, 2 cleaners", "mode": "fixed", "priceP": 499900, "stdMinutes": 360 },
+      { "id": "deep-clean-3bhk", "name": "Deep Cleaning — 3 BHK", "desc": "Full home, 7–8 hours, 3 cleaners", "mode": "fixed", "priceP": 649900, "stdMinutes": 480 },
+      { "id": "deep-clean-4bhk", "name": "Deep Cleaning — 4 BHK / Villa", "desc": "Full home, full day, 3–4 cleaners", "mode": "fixed", "priceP": 899900, "stdMinutes": 600 },
+      { "id": "movein-moveout", "name": "Move-in / Move-out Cleaning", "desc": "Empty home, 2 BHK", "mode": "fixed", "priceP": 599900, "stdMinutes": 420 },
+      { "id": "post-renovation-clean", "name": "Post-renovation Cleaning", "desc": "Paint, dust and debris removal", "mode": "fixed", "priceP": 749900, "stdMinutes": 480 },
+      { "id": "festival-deep-clean", "name": "Festival Deep Cleaning", "desc": "2 BHK, pre-festival package", "mode": "fixed", "priceP": 449900, "stdMinutes": 360, "seasonal": "festival" }
+    ],
+
+    "room-wise-cleaning": [
+      { "id": "kitchen-deep-clean", "name": "Kitchen Deep Cleaning", "desc": "Cabinets, chimney exterior, tiles, floor", "mode": "fixed", "priceP": 179900, "stdMinutes": 180 },
+      { "id": "bathroom-deep-clean", "name": "Bathroom Deep Cleaning", "desc": "Single bathroom, descaling included", "mode": "fixed", "priceP": 89900, "stdMinutes": 90 },
+      { "id": "bathroom-deep-clean-2", "name": "Bathroom Deep Cleaning — 2", "desc": "Two bathrooms", "mode": "fixed", "priceP": 159900, "stdMinutes": 165 },
+      { "id": "single-room-clean", "name": "Single Room Cleaning", "desc": "One bedroom or living room", "mode": "fixed", "priceP": 89900, "stdMinutes": 90 },
+      { "id": "balcony-clean", "name": "Balcony Cleaning", "desc": "Up to 60 sq ft, includes grill", "mode": "fixed", "priceP": 69900, "stdMinutes": 75 },
+      { "id": "fridge-clean", "name": "Refrigerator Cleaning", "desc": "Interior and exterior, defrost included", "mode": "fixed", "priceP": 49900, "stdMinutes": 60 }
+    ],
+
+    "specialised-cleaning": [
+      { "id": "sofa-cleaning-3seat", "name": "Sofa Shampooing — 3 Seater", "desc": "Wet shampoo and vacuum", "mode": "fixed", "priceP": 89900, "stdMinutes": 90 },
+      { "id": "sofa-cleaning-5seat", "name": "Sofa Shampooing — 5 Seater", "desc": "Wet shampoo and vacuum", "mode": "fixed", "priceP": 139900, "stdMinutes": 135 },
+      { "id": "carpet-cleaning", "name": "Carpet Cleaning", "desc": "Per sq ft", "mode": "unit", "ratePerUnitP": 1800, "unit": "sqft", "minQty": 30 },
+      { "id": "mattress-cleaning", "name": "Mattress Cleaning", "desc": "Per mattress, sanitised", "mode": "fixed", "priceP": 79900, "stdMinutes": 75 },
+      { "id": "curtain-cleaning", "name": "Curtain Cleaning", "desc": "Per panel, pickup and delivery", "mode": "unit", "ratePerUnitP": 24900, "unit": "panel", "minQty": 2 },
+      { "id": "water-tank-cleaning-clean", "name": "Water Tank Cleaning", "desc": "Up to 1000 L, with disinfection", "mode": "fixed", "priceP": 79900, "stdMinutes": 90 },
+      { "id": "facade-glass-cleaning", "name": "Façade / Glass Cleaning", "desc": "Free site survey. Height access assessed.", "mode": "quote", "priceP": 0 }
+    ],
+
+    "pest-control": [
+      { "id": "general-pest-1bhk", "name": "General Pest Control — 1 BHK", "desc": "Cockroach, ant, spider. 3-month warranty.", "mode": "fixed", "priceP": 119900, "stdMinutes": 90 },
+      { "id": "general-pest-2bhk", "name": "General Pest Control — 2 BHK", "desc": "Cockroach, ant, spider. 3-month warranty.", "mode": "fixed", "priceP": 159900, "stdMinutes": 120 },
+      { "id": "general-pest-3bhk", "name": "General Pest Control — 3 BHK", "desc": "Cockroach, ant, spider. 3-month warranty.", "mode": "fixed", "priceP": 199900, "stdMinutes": 150 },
+      { "id": "cockroach-control", "name": "Cockroach Control", "desc": "Gel treatment, odourless", "mode": "fixed", "priceP": 109900, "stdMinutes": 75 },
+      { "id": "termite-treatment", "name": "Termite Treatment", "desc": "Per sq ft, drill and inject", "mode": "unit", "ratePerUnitP": 1200, "unit": "sqft", "minQty": 400 },
+      { "id": "bed-bug-treatment", "name": "Bed Bug Treatment", "desc": "2 rounds, 15 days apart", "mode": "fixed", "priceP": 189900, "stdMinutes": 150 },
+      { "id": "rodent-control", "name": "Rodent Control", "desc": "Bait and trap placement", "mode": "fixed", "priceP": 149900, "stdMinutes": 90 },
+      { "id": "mosquito-fogging", "name": "Mosquito Fogging", "desc": "Indoor and outdoor fogging", "mode": "fixed", "priceP": 129900, "stdMinutes": 90, "seasonal": "monsoon" }
+    ],
+
+    "commercial-cleaning": [
+      { "id": "shop-cleaning", "name": "Shop Cleaning", "desc": "One-time, up to 500 sq ft", "mode": "fixed", "priceP": 249900, "stdMinutes": 300 },
+      { "id": "housekeeping-staff-monthly", "name": "Housekeeping Staff — Monthly", "desc": "One person, 8 hrs, 26 days", "mode": "retainer", "priceP": 1499900, "period": "month" },
+      { "id": "office-cleaning-daily", "name": "Office Cleaning — Daily Contract", "desc": "Free site survey and estimate", "mode": "quote", "priceP": 0 },
+      { "id": "hospital-school-contract", "name": "Hospital / School Contract", "desc": "Free site survey and estimate", "mode": "quote", "priceP": 0 },
+      { "id": "commercial-cleaning-survey", "name": "Commercial Cleaning Survey", "desc": "Free assessment visit", "mode": "quote", "priceP": 0 }
+    ],
+
+    "ac-refrigeration": [
+      { "id": "ac-dry-service", "name": "AC Dry Service", "desc": "Per unit, filter and coil cleaning", "mode": "fixed", "priceP": 49900, "stdMinutes": 40, "seasonal": "summer" },
+      { "id": "ac-jet-service", "name": "AC Jet / Foam Wash", "desc": "Per unit, deep coil wash", "mode": "fixed", "priceP": 74900, "stdMinutes": 60, "seasonal": "summer" },
+      { "id": "ac-installation-split", "name": "Split AC Installation", "desc": "Up to 3 m piping, standard height", "mode": "fixed", "priceP": 159900, "stdMinutes": 180 },
+      { "id": "ac-uninstallation", "name": "AC Un-installation", "desc": "Per unit, gas recovery included", "mode": "fixed", "priceP": 79900, "stdMinutes": 90 },
+      { "id": "ac-gas-charging", "name": "AC Gas Charging — 1.5T", "desc": "R32, leak test included", "mode": "fixed", "priceP": 249900, "stdMinutes": 75 },
+      { "id": "ac-not-cooling", "name": "AC Not Cooling", "desc": "Diagnosis on site, then fixed-price repair", "mode": "fault", "visitChargeP": 29900, "fromP": 29900 },
+      { "id": "fridge-not-cooling", "name": "Refrigerator Not Cooling", "desc": "Diagnosis on site, then fixed-price repair", "mode": "fault", "visitChargeP": 29900, "fromP": 29900 },
+      { "id": "ac-amc", "name": "AC AMC", "desc": "2 services a year, priority call-out", "mode": "retainer", "priceP": 199900, "period": "year" }
+    ],
+
+    "large-appliances": [
+      { "id": "washing-machine-repair", "name": "Washing Machine Repair", "desc": "Not spinning, not draining, error code", "mode": "fault", "visitChargeP": 29900, "fromP": 29900 },
+      { "id": "washing-machine-install", "name": "Washing Machine Installation", "desc": "Inlet, drain and levelling", "mode": "fixed", "priceP": 59900, "stdMinutes": 60 },
+      { "id": "geyser-installation", "name": "Geyser Installation", "desc": "Mounting, plumbing and electrical", "mode": "fixed", "priceP": 59900, "stdMinutes": 75 },
+      { "id": "geyser-repair", "name": "Geyser Repair", "desc": "No heating, leaking, tripping", "mode": "fault", "visitChargeP": 24900, "fromP": 24900 },
+      { "id": "chimney-installation", "name": "Chimney Installation", "desc": "Mounting with duct up to 1 m", "mode": "fixed", "priceP": 129900, "stdMinutes": 150 },
+      { "id": "chimney-deep-clean", "name": "Chimney Deep Cleaning", "desc": "Filter, motor housing and body", "mode": "fixed", "priceP": 99900, "stdMinutes": 90 },
+      { "id": "microwave-repair", "name": "Microwave Repair", "desc": "Not heating, display fault", "mode": "fault", "visitChargeP": 24900, "fromP": 24900 },
+      { "id": "gas-stove-repair", "name": "Gas Stove / Hob Repair", "desc": "Burner cleaning, ignition, flow", "mode": "fixed", "priceP": 39900, "stdMinutes": 50 }
+    ],
+
+    "small-appliances": [
+      { "id": "mixer-grinder-repair", "name": "Mixer / Grinder Repair", "desc": "Workshop job. Pickup available.", "mode": "workshop", "fromP": 29900, "intakeChargeP": 9900 },
+      { "id": "iron-repair", "name": "Iron Repair", "desc": "Workshop job. Pickup available.", "mode": "workshop", "fromP": 19900, "intakeChargeP": 9900 },
+      { "id": "induction-repair", "name": "Induction Cooktop Repair", "desc": "Workshop job. Pickup available.", "mode": "workshop", "fromP": 34900, "intakeChargeP": 9900 },
+      { "id": "kettle-toaster-repair", "name": "Kettle / Toaster Repair", "desc": "Workshop job. Pickup available.", "mode": "workshop", "fromP": 24900, "intakeChargeP": 9900 },
+      { "id": "table-fan-repair", "name": "Table / Pedestal Fan Repair", "desc": "Workshop job. Pickup available.", "mode": "workshop", "fromP": 29900, "intakeChargeP": 9900 },
+      { "id": "sewing-machine-repair", "name": "Sewing Machine Repair", "desc": "Workshop job. Pickup available.", "mode": "workshop", "fromP": 39900, "intakeChargeP": 9900 },
+      { "id": "air-cooler-service", "name": "Air Cooler Service", "desc": "At home. Pump and pad check.", "mode": "fixed", "priceP": 59900, "stdMinutes": 60, "seasonal": "summer" },
+      { "id": "appliance-pickup-drop", "name": "Pickup & Drop", "desc": "Add-on for workshop repairs", "mode": "fixed", "priceP": 9900, "stdMinutes": 30 }
+    ],
+
+    "electronics": [
+      { "id": "tv-repair", "name": "TV Repair", "desc": "No display, no sound, panel issue", "mode": "fault", "visitChargeP": 34900, "fromP": 34900 },
+      { "id": "tv-wall-mount-tech", "name": "TV Wall Mount + Setup", "desc": "Bracket, mounting and source setup", "mode": "fixed", "priceP": 59900, "stdMinutes": 75 },
+      { "id": "laptop-repair", "name": "Laptop Repair", "desc": "Workshop job. Pickup available.", "mode": "workshop", "fromP": 49900, "intakeChargeP": 9900 },
+      { "id": "laptop-formatting", "name": "Laptop Formatting & Setup", "desc": "OS install, drivers, data backup", "mode": "fixed", "priceP": 59900, "stdMinutes": 120 },
+      { "id": "printer-repair", "name": "Printer Repair", "desc": "Workshop job. Pickup available.", "mode": "workshop", "fromP": 39900, "intakeChargeP": 9900 },
+      { "id": "settop-box-installation", "name": "Set-top Box / DTH Installation", "desc": "Dish alignment and connection", "mode": "fixed", "priceP": 39900, "stdMinutes": 60 },
+      { "id": "mobile-screen-replacement", "name": "Mobile Screen Replacement", "desc": "Model-dependent. Free estimate.", "mode": "quote", "priceP": 0 }
+    ],
+
+    "it-network-cctv": [
+      { "id": "cctv-installation-4cam", "name": "CCTV Installation — 4 Cameras", "desc": "Labour, cabling and DVR setup", "mode": "fixed", "priceP": 399900, "stdMinutes": 480 },
+      { "id": "cctv-installation-8cam", "name": "CCTV Installation — 8 Cameras", "desc": "Labour, cabling and DVR setup", "mode": "fixed", "priceP": 699900, "stdMinutes": 720 },
+      { "id": "cctv-repair", "name": "CCTV Repair / Reconfiguration", "desc": "Camera, DVR or app access issue", "mode": "fixed", "priceP": 79900, "stdMinutes": 90 },
+      { "id": "wifi-router-setup", "name": "Wi-Fi Router Setup", "desc": "Configuration and coverage check", "mode": "fixed", "priceP": 49900, "stdMinutes": 60 },
+      { "id": "lan-cabling", "name": "LAN Cabling", "desc": "Per point, structured cabling", "mode": "unit", "ratePerUnitP": 59900, "unit": "point", "minQty": 4 },
+      { "id": "biometric-installation", "name": "Biometric Attendance Installation", "desc": "Mounting, wiring and software setup", "mode": "fixed", "priceP": 249900, "stdMinutes": 240 },
+      { "id": "smart-lock-installation", "name": "Smart Lock Installation", "desc": "Fitting and app pairing", "mode": "fixed", "priceP": 149900, "stdMinutes": 150 },
+      { "id": "it-amc", "name": "IT AMC — Shop / Office", "desc": "Free site survey and estimate", "mode": "quote", "priceP": 0 }
+    ]
+  }
+}
