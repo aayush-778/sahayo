@@ -7,27 +7,27 @@ import { SectionHeader } from '@/components/ui-kit/SectionHeader';
 import { Skeleton } from '@/components/ui-kit/Skeleton';
 import { count } from '@/lib/format';
 import type { ZoneDemandPoint } from '@/lib/services';
-import { ZoneHexCanvas } from './ZoneHexCanvas';
+import { ZoneMapCanvas } from './ZoneMapCanvas';
 
 /**
- * The dashboard's card around the zone honeycomb, plus the thin-cover list.
+ * The dashboard's card around the Patna choropleth, plus the thin-cover list.
  *
- * The honeycomb itself lives in ZoneHexCanvas, which the dispatch page reuses as
- * its offline fallback. Keeping the card and the map separate is what lets the
- * fallback look like the map a viewer already recognises.
+ * The map itself lives in ZoneMapCanvas, which the dispatch page reuses as its
+ * offline fallback. Keeping the card and the map separate is what lets the fallback
+ * look like the map a viewer already recognises from here.
  */
-export function ZoneHexMap({ zones }: { zones?: ZoneDemandPoint[] }) {
+export function ZoneDemandMap({ zones }: { zones?: ZoneDemandPoint[] }) {
   const underserved = (zones ?? []).filter((zone) => zone.underserved).slice(0, 3);
 
   return (
     <Card className="col-span-12 flex flex-col p-6 lg:col-span-7">
       <SectionHeader
         title="Where orders are coming from"
-        subtitle="The twelve zones Sahayo covers in Patna"
+        subtitle="The twelve zones Sahayo covers, across Patna and along the Ganga"
       />
 
       <div className="mt-4">
-        {zones ? <ZoneHexCanvas zones={zones} /> : <Skeleton className="h-40 w-full" />}
+        {zones ? <ZoneMapCanvas zones={zones} /> : <Skeleton className="h-44 w-full" />}
       </div>
 
       {/* Zones where cover is thin, and a way to act on it. */}

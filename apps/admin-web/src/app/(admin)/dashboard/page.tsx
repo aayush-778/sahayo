@@ -23,7 +23,7 @@ import {
   type RevenuePoint,
   type ZoneDemandPoint,
 } from '@/lib/services';
-import { ZoneHexMap } from '@/components/dashboard/ZoneHexMap';
+import { ZoneDemandMap } from '@/components/dashboard/ZoneDemandMap';
 
 /**
  * The executive dashboard.
@@ -98,7 +98,7 @@ export default function DashboardPage() {
       <RevenueChart daily={daily} />
       <CategoryDonut slices={hiring} />
 
-      <ZoneHexMap zones={zones} />
+      <ZoneDemandMap zones={zones} />
       <ActivityFeed items={activity} now={SEED_NOW} />
 
       <JobsDistribution categories={jobs} />

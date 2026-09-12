@@ -6,7 +6,7 @@ import type { MapRef } from 'react-map-gl/maplibre';
 import { Layer, Map, NavigationControl, Source } from 'react-map-gl/maplibre';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { AdminBooking } from '@sahayo/shared';
-import { ZoneHexCanvas } from '@/components/dashboard/ZoneHexCanvas';
+import { ZoneMapCanvas } from '@/components/dashboard/ZoneMapCanvas';
 import type { HeatmapGeoJSON, MappedWorker, ZoneDemandPoint } from '@/lib/services';
 import { mapColor } from './map-colors';
 import { BASEMAP_STYLE, INITIAL_VIEW, TILE_TIMEOUT_MS } from './map-style';
@@ -59,8 +59,8 @@ function circlePolygon(
  * The live dispatch map.
  *
  * MapLibre with key-free OpenStreetMap raster tiles, and a hard rule: if nothing
- * has painted within three seconds, the SVG honeycomb from the dashboard takes the
- * same slot with an "Offline map view" label. The demo must never show a grey
+ * has painted within three seconds, the SVG choropleth of Patna from the dashboard
+ * takes the same slot with an "Offline map view" label. The demo must never show a grey
  * rectangle, and on venue wifi that is not a hypothetical.
  *
  * Every data layer uses expressions that Mapbox GL supports too, so switching to
@@ -153,7 +153,7 @@ export function DispatchMap({
           <span aria-hidden className="h-2 w-2 rounded-full bg-coral" />
           Offline map view. Zone demand is still live.
         </p>
-        <ZoneHexCanvas zones={zones} showMeasureToggle={false} />
+        <ZoneMapCanvas zones={zones} showMeasureToggle={false} />
       </div>
     );
   }

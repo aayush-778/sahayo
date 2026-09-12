@@ -67,27 +67,33 @@ export const LINE = {
 } as const;
 
 /**
- * Interpolates marigold to coral across a 0–1 demand scale.
+ * The demand ramp: pale marigold-tint through orange to coral.
  *
- * Returned as an `hsl()` string built from the two tokens' own hue, saturation
- * and lightness, so the ramp moves between exactly those two colours and
- * introduces nothing in between. Kept here rather than in the component so the
- * hex map and any later heatmap share one ramp.
+ * It starts at the TINT, not at full marigold. An earlier version began at
+ * saturated marigold, which made a zone at 20% demand look nearly as urgent as one
+ * at 100% — the whole map read as on fire and carried no information. A choropleth
+ * needs its quiet end to be genuinely quiet.
+ *
+ * Built from the marigold-tint and coral tokens' own hue, saturation and lightness,
+ * so the ramp moves between exactly those two colours and introduces no new hue.
+ * Lightness falls as demand rises, so the scale is monotonic in visual weight as
+ * well as in colour — hot zones read heavier, not merely different.
  */
 export function demandColor(index: number): string {
   const t = Math.max(0, Math.min(1, index));
-  /*
-   * Marigold is hsl(43.7 91.8% 52%) and coral is hsl(10.6 100% 72.4%). Crossing
-   * between them directly passes through orange, which is the intended reading:
-   * warm and quiet at one end, hot and urgent at the other.
-   */
-  const hue = 43.7 + (10.6 - 43.7) * t;
-  const saturation = 91.8 + (100 - 91.8) * t;
-  const lightness = 52 + (72.4 - 52) * t;
-  /*
-   * Lightness rises toward coral, which would make "high demand" read as paler
-   * than "quiet". Pulling it back keeps the ramp monotonic in perceived weight.
-   */
-  const corrected = lightness - t * 14;
-  return `hsl(${hue.toFixed(1)} ${saturation.toFixed(1)}% ${corrected.toFixed(1)}%)`;
+  /* marigold-tint hsl(44.3 95.5% 91.4%) -> coral hsl(10.6 100% 72.4%), darkened. */
+  const hue = 44.3 + (10.6 - 44.3) * t;
+  const saturation = 95.5 + (100 - 95.5) * t;
+  const lightness = 91.4 + (62 - 91.4) * t;
+  return `hsl(${hue.toFixed(1)} ${saturation.toFixed(1)}% ${lightness.toFixed(1)}%)`;
 }
+
+/**
+ * Water and land that is not a zone.
+ *
+ * The palette has no blue, and adding one for a river would be a tenth token. The
+ * Ganga is drawn in hairline instead — which also follows the dispatch map's rule
+ * that geography is muted almost to greyscale so the data reads first.
+ */
+export const WATER = 'hsl(var(--hairline))';
+export const WATER_EDGE = 'hsl(var(--muted) / 0.25)';
