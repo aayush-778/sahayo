@@ -109,14 +109,20 @@ export {
 } from './fund.service';
 
 export {
+  acceptSimulatedRequest,
   getBroadcast,
   getHeatmapGeoJSON,
   getLiveMap,
   getZoneDemand,
+  rankingExplanation,
+  reassignBooking,
+  secondsSinceRequest,
+  simulateRequest,
   type Broadcast,
   type HeatmapFeature,
   type HeatmapGeoJSON,
   type LiveMap,
+  type MappedWorker,
   type RankedCandidate,
   type ZoneDemandPoint,
 } from './dispatch.service';

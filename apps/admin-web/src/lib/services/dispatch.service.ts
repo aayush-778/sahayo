@@ -1,4 +1,5 @@
 import {
+  BookingEventKind,
   BookingStatus,
   type AdminBooking,
   type AdminWorker,
@@ -19,10 +20,16 @@ const LIVE_STATUSES: ReadonlySet<AdminBooking['status']> = new Set([
   BookingStatus.IN_PROGRESS,
 ]);
 
+/** A worker plus where they are, which is what the map needs. */
+export interface MappedWorker {
+  worker: AdminWorker;
+  position: { lat: number; lng: number };
+}
+
 export interface LiveMap {
   zones: Zone[];
   /** Every verified worker, whether online or not — the map dims the offline ones. */
-  workers: AdminWorker[];
+  workers: MappedWorker[];
   /** Bookings currently in flight, newest first. */
   liveBookings: AdminBooking[];
 }
@@ -34,11 +41,27 @@ export async function getLiveMap(): Promise<LiveMap> {
     .filter((booking) => LIVE_STATUSES.has(booking.status))
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
-  return respond({
-    zones,
-    workers: workers.filter((worker) => worker.kycStatus === 'VERIFIED'),
-    liveBookings,
+  const mapped = workers.flatMap<MappedWorker>((worker) => {
+    if (worker.kycStatus !== 'VERIFIED') return [];
+    const position = workerPosition(worker, zones);
+    return position ? [{ worker, position }] : [];
   });
+
+  return respond({ zones, workers: mapped, liveBookings });
+}
+
+/**
+ * How long a request has been waiting, in seconds.
+ *
+ * Measured from the booking's creation against the seed's fixed "now", so the
+ * queue's counters agree with the timestamps on the records rather than drifting
+ * against the wall clock. The queue ticks its own display clock on top of this.
+ */
+export function secondsSinceRequest(booking: AdminBooking): number {
+  return Math.max(
+    0,
+    Math.round((SEED_NOW.getTime() - new Date(booking.createdAt).getTime()) / 1000),
+  );
 }
 
 /** One row of the ranked list the Broadcast Inspector shows. */
@@ -269,26 +292,272 @@ export interface HeatmapGeoJSON {
  * return, so the map layer does not change when the swap happens.
  */
 export async function getHeatmapGeoJSON(): Promise<HeatmapGeoJSON> {
-  const { bookings, zones } = adminState();
+  const { zones } = adminState();
   const zoneById = new Map(zones.map((zone) => [zone.id, zone]));
 
-  const counts = new Map<string, number>();
-  for (const booking of bookings) {
-    counts.set(booking.zoneId, (counts.get(booking.zoneId) ?? 0) + 1);
-  }
-
-  const maxCount = [...counts.values()].reduce((max, count) => Math.max(max, count), 1);
+  /*
+   * Weighted by demandIndex — the same measure the dashboard's hex map colours by —
+   * and NOT by raw booking count.
+   *
+   * Those two disagree. Raw volume made Patliputra the hottest zone on this map
+   * while the dashboard, colouring by orders-per-available-worker, made Patna City
+   * hottest. Two maps both labelled "demand" pointing at different places is worse
+   * than either being slightly wrong, and unmet need is the figure a dispatcher can
+   * act on: a busy zone that is fully covered needs nothing.
+   */
+  const demand = await getZoneDemand();
 
   const features: HeatmapFeature[] = [];
-  for (const [zoneId, count] of counts) {
-    const zone = zoneById.get(zoneId);
+  for (const point of demand) {
+    const zone = zoneById.get(point.zoneId);
     if (!zone) continue;
     features.push({
       type: 'Feature',
       geometry: { type: 'Point', coordinates: [zone.centroid.lng, zone.centroid.lat] },
-      properties: { weight: Math.round((count / maxCount) * 1000) / 1000, zoneId },
+      properties: { weight: point.demandIndex, zoneId: point.zoneId },
     });
   }
 
   return respond({ type: 'FeatureCollection', features });
+}
+
+/**
+ * Seeds a new request and starts the dispatch loop.
+ *
+ * The whole point is that the loop is demonstrable on stage without a backend: the
+ * request appears on the map and in the queue, the ranking runs, workers are
+ * pinged, and `acceptSimulatedRequest` closes it a few seconds later.
+ *
+ * It writes through the store like any other mutation, so the dashboard's
+ * "jobs booked today" moves too. The booking is a real AdminBooking — nothing
+ * about it is special-cased downstream, which is what makes the demonstration
+ * honest rather than a puppet show.
+ */
+export async function simulateRequest(zoneId?: string): Promise<AdminBooking> {
+  const state = adminState();
+  const { zones, workers, bookings } = state;
+
+  /*
+   * Target the zone under most pressure when none is named. That is where a new
+   * request is most likely in reality, and it is also where the equity ranking has
+   * the most to show — a zone with one free worker and a queue.
+   */
+  const demand = await getZoneDemand();
+  const targetZoneId = zoneId ?? demand[0]?.zoneId ?? zones[0]?.id;
+  const zone = zones.find((candidate) => candidate.id === targetZoneId);
+  if (!zone) throw new Error('There are no zones configured, so a request cannot be placed.');
+
+  const eligible = workers.filter(
+    (worker) => worker.zoneId === targetZoneId && worker.kycStatus === 'VERIFIED',
+  );
+  if (eligible.length === 0) {
+    throw new Error(
+      `No verified workers cover ${zone.name}, so a request there could not be offered to anyone.`,
+    );
+  }
+
+  /*
+   * Drawn from an existing customer rather than invented, so the simulated request
+   * belongs to someone who exists elsewhere in the data.
+   */
+  const sourceBooking = bookings[Math.floor(bookings.length / 2)];
+  const at = new Date(SEED_NOW.getTime()).toISOString();
+  const id = `sim_${bookings.length + 1}_${targetZoneId}`;
+  const pinged = Math.min(eligible.length, 7);
+
+  const booking: AdminBooking = {
+    id,
+    reference: `BKG-${String(bookings.length + 1).padStart(5, '0')}`,
+    customerId: sourceBooking?.customerId ?? 'sim-customer',
+    customerName: sourceBooking?.customerName ?? 'A customer',
+    category: eligible[0].category.charAt(0) + eligible[0].category.slice(1).toLowerCase(),
+    zoneId: targetZoneId,
+    location: {
+      lat: Math.round((zone.centroid.lat + 0.004) * 1e5) / 1e5,
+      lng: Math.round((zone.centroid.lng - 0.003) * 1e5) / 1e5,
+    },
+    status: BookingStatus.BROADCAST,
+    /* A mid-range job, so the split preview shows round-ish numbers. */
+    amount: 1450 * 100,
+    createdAt: at,
+    timeline: [
+      {
+        id: `${id}_requested`,
+        kind: BookingEventKind.REQUESTED,
+        at,
+        detail: 'Customer requested this job.',
+      },
+      {
+        id: `${id}_broadcast`,
+        kind: BookingEventKind.BROADCAST,
+        at,
+        detail: 'Request sent out to available workers nearby.',
+      },
+      {
+        id: `${id}_pinged`,
+        kind: BookingEventKind.PINGED,
+        at,
+        detail: `Offered to ${pinged} workers, ranked by equity score.`,
+        workersPinged: pinged,
+      },
+    ],
+  };
+
+  state.addBooking(booking);
+  return respond(booking);
+}
+
+/**
+ * Closes a simulated request by accepting it as the top-ranked worker.
+ *
+ * Called a few seconds after `simulateRequest` so the accept is visible as an
+ * event rather than instantaneous. It accepts as whoever the ranking actually put
+ * first — not as a pre-chosen worker — because the claim being demonstrated is
+ * that the ranking decides.
+ */
+export async function acceptSimulatedRequest(bookingId: string): Promise<AdminBooking> {
+  const state = adminState();
+  const booking = state.bookings.find((candidate) => candidate.id === bookingId);
+  if (!booking) throw new Error(`No booking with id ${bookingId}`);
+
+  const broadcast = await getBroadcast(bookingId);
+  const winner = broadcast?.candidates[0];
+  if (!winner) {
+    throw new Error('Nobody was available to accept this request.');
+  }
+
+  const at = new Date(SEED_NOW.getTime() + 4000).toISOString();
+  state.updateBooking(bookingId, {
+    status: BookingStatus.ACCEPTED,
+    workerId: winner.worker.id,
+    workerName: winner.worker.name,
+    acceptedAt: at,
+    timeline: [
+      ...booking.timeline,
+      {
+        id: `${bookingId}_accepted`,
+        kind: BookingEventKind.ACCEPTED,
+        at,
+        detail: `${winner.worker.name} accepted, ranked 1 of ${broadcast.candidates.length} on equity score.`,
+        equityRank: 1,
+      },
+    ],
+  });
+
+  const updated = adminState().bookings.find((candidate) => candidate.id === bookingId);
+  return respond(updated as AdminBooking);
+}
+
+/**
+ * Hands a booking to a different worker, as an administrator override.
+ *
+ * Recorded on the timeline rather than applied silently. An override that leaves
+ * no trace is indistinguishable from the algorithm's own choice, and the point of
+ * the Broadcast Inspector is that every assignment can be accounted for.
+ */
+export async function reassignBooking(
+  bookingId: string,
+  workerId: string,
+): Promise<AdminBooking> {
+  const state = adminState();
+  const booking = state.bookings.find((candidate) => candidate.id === bookingId);
+  if (!booking) throw new Error(`No booking with id ${bookingId}`);
+
+  const worker = state.workers.find((candidate) => candidate.id === workerId);
+  if (!worker) throw new Error(`No worker with id ${workerId}`);
+  if (worker.kycStatus !== 'VERIFIED') {
+    throw new Error(
+      `${worker.name} is not verified, so this job cannot be handed to them. ` +
+        'Approve their documents in Verification first.',
+    );
+  }
+
+  const at = new Date(SEED_NOW.getTime()).toISOString();
+  state.updateBooking(bookingId, {
+    status: BookingStatus.ACCEPTED,
+    workerId: worker.id,
+    workerName: worker.name,
+    acceptedAt: at,
+    timeline: [
+      ...booking.timeline,
+      {
+        id: `${bookingId}_reassigned_${workerId}`,
+        kind: BookingEventKind.ACCEPTED,
+        at,
+        detail: `Reassigned to ${worker.name} by an administrator, overriding the ranking.`,
+      },
+    ],
+  });
+
+  const updated = adminState().bookings.find((candidate) => candidate.id === bookingId);
+  return respond(updated as AdminBooking);
+}
+
+
+/**
+ * The one-sentence reason a job went to whom it went.
+ *
+ * Computed rather than templated, because the obvious template — "ranked first
+ * because of their job count, not because they were closest" — is sometimes simply
+ * false, and asserting it in front of an evaluator would undo the credibility the
+ * whole Inspector exists to build. Two ways it can be false: the nearest worker
+ * sometimes also has the lowest job count, and the worker who ACCEPTED is not
+ * always the one ranked first, because the workers above them can decline.
+ *
+ * So there are three sentences, and which one applies is worked out from the
+ * ranking itself:
+ *
+ *   1. A nearer worker ranked lower. That is proof the ranking is not distance, and
+ *      it is named with both distances.
+ *   2. The worker is the nearest. Said plainly — distance and job count agreed.
+ *   3. The worker took it from further down the ranking. The ones above them were
+ *      offered it first and did not take it, which is also worth saying.
+ */
+export function rankingExplanation(broadcast: Broadcast, zoneName: string): string {
+  const winner = broadcast.candidates.find((c) => c.accepted) ?? broadcast.candidates[0];
+  if (!winner) return 'Nobody was available to take this job.';
+
+  const firstName = winner.worker.name.split(' ')[0];
+  const jobs = winner.worker.jobsThisWeek;
+  const jobWord = jobs === 1 ? 'job' : 'jobs';
+  const average = broadcast.zoneAverageJobs;
+  /* "the Patna City average", never "a Patna City average" — the zone is named. */
+  const against = `${jobs} ${jobWord} this week against the ${zoneName} average of ${average}`;
+  /*
+   * The causal "because they have had less work" is only true when they actually
+   * have. A worker above their zone's average can still rank mid-table, and saying
+   * their high job count is the reason would be nonsense.
+   */
+  const hadLessWork = jobs < average;
+
+  /* Someone closer who nonetheless ranked below the winner. */
+  const closerButLower = broadcast.candidates.find(
+    (c) => c.distanceKm < winner.distanceKm && c.rank > winner.rank,
+  );
+  if (closerButLower) {
+    const otherName = closerButLower.worker.name.split(' ')[0];
+    const proof =
+      `${otherName} was closer, at ${closerButLower.distanceKm}km against ` +
+      `${winner.distanceKm}km, and still ranked ${closerButLower.rank}.`;
+    return hadLessWork
+      ? `${firstName} was ranked ${winner.rank} because they have taken ${against}. ${proof}`
+      : `${firstName} was ranked ${winner.rank} on ${against}. ${proof} The ranking weighs how ` +
+          'much work each worker has already had, not only how close they are.';
+  }
+
+  const nearestDistance = broadcast.candidates.reduce(
+    (min, c) => Math.min(min, c.distanceKm),
+    Number.POSITIVE_INFINITY,
+  );
+  if (winner.distanceKm === nearestDistance) {
+    return (
+      `${firstName} was ranked ${winner.rank} on ${against}. They were also the closest, so ` +
+      'distance and job count pointed the same way here.'
+    );
+  }
+
+  return (
+    `${firstName} took this job from rank ${winner.rank}, on ${against}. The workers ranked ` +
+    'above them were offered it first and did not take it.'
+  );
 }
