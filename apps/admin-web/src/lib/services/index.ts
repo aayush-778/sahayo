@@ -132,4 +132,12 @@ export {
   type HeadlineStats,
 } from './analytics.service';
 
+export {
+  ActivityKind,
+  listRecentActivity,
+  type ActivityItem,
+} from './activity.service';
+
+export { getDashboardSummary, type DashboardSummary } from './dashboard.service';
+
 export { listZones, resetDemoData } from './platform.service';

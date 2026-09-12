@@ -158,6 +158,13 @@ export async function getRevenueSeries(
 
   for (const entry of ledger) {
     if (entry.reversalOf) continue;
+    /*
+     * Booking-derived movements only. The fund's opening balance and its
+     * historical programme spending are real ledger rows, but they are not
+     * growth from platform activity — including them drew a 36-lakh cliff in the
+     * first bucket and flattened every month after it into a straight line.
+     */
+    if (!entry.bookingId) continue;
 
     const isPlatform = entry.type === LedgerEntryType.PLATFORM_FEE;
     const isFund = entry.type === LedgerEntryType.COOP_FUND_CONTRIBUTION;

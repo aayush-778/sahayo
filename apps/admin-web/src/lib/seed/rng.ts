@@ -153,20 +153,10 @@ export const SEEDS = {
   kyc: 0x5a4a_0008,
 } as const;
 
-/**
- * The instant the dataset is anchored to.
- *
- * Every relative date in the seed is computed backwards from here rather than
- * from `Date.now()`, because a dataset that drifts with the wall clock is not
- * deterministic: "900 bookings over 90 days" would silently re-bucket itself
- * overnight and the charts would change shape between rehearsal and demo.
+/*
+ * The time anchor lives in src/lib/dates.ts, not here, because the UI needs it to
+ * render relative times against the same instant and the UI is barred from
+ * importing the seed. Re-exported so seed modules can keep importing it from the
+ * place they already do.
  */
-export const SEED_NOW = new Date('2026-09-12T10:30:00.000Z');
-
-/** Milliseconds in a day, for the date arithmetic the seed files do constantly. */
-export const DAY_MS = 24 * 60 * 60 * 1000;
-
-/** An ISO timestamp `daysAgo` days (and optional minutes) before SEED_NOW. */
-export function isoAgo(daysAgo: number, minutesOffset = 0): string {
-  return new Date(SEED_NOW.getTime() - daysAgo * DAY_MS + minutesOffset * 60_000).toISOString();
-}
+export { DAY_MS, SEED_NOW, isoAgo } from '@/lib/dates';

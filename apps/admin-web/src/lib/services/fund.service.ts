@@ -1,7 +1,6 @@
 import {
   FUND_COMMUNITY_GOAL,
   FUND_LENDING_HEADROOM_SHARE,
-  KycStatus,
   LedgerAccount,
   LedgerDirection,
   LedgerEntryType,
@@ -47,8 +46,14 @@ export async function getFundTotals(): Promise<FundTotals> {
     }
   }
 
-  /* Every verified worker holds a share. That is what membership means here. */
-  const memberCount = workers.filter((w) => w.kycStatus === KycStatus.VERIFIED).length;
+  /*
+    * Every worker who has contributed owns a share — which is all of them. A
+    * share is earned by the 5% taken from their completed jobs, so it does not
+    * lapse because a document needs re-checking. Filtering to currently-verified
+    * workers made the hero line read "owned by 92 workers" while the directory
+    * showed 140, and the smaller number is the wrong one.
+    */
+  const memberCount = workers.length;
 
   return respond({
     balance,

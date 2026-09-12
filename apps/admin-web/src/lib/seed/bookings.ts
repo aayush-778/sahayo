@@ -26,10 +26,21 @@ const STATUS_WEIGHTS: ReadonlyArray<{ status: AdminBooking['status']; weight: nu
   { status: BookingStatus.CANCELLED_BY_CUSTOMER, weight: 6 },
   { status: BookingStatus.CANCELLED_BY_WORKER, weight: 3 },
   { status: BookingStatus.EXPIRED_NO_ACCEPT, weight: 2 },
-  { status: BookingStatus.IN_PROGRESS, weight: 4 },
-  { status: BookingStatus.ACCEPTED, weight: 3 },
-  { status: BookingStatus.BROADCAST, weight: 1 },
-  { status: BookingStatus.REQUESTED, weight: 1 },
+  /*
+    * The live tail is deliberately tiny — about five open jobs.
+    *
+    * Every live booking is pinned to "now", so the tail lands entirely on today
+    * and inflates today's count against every other day. At a dozen it pushed
+    * "jobs booked today" to three times the daily average, which reads as a bug
+    * rather than as a busy morning.
+    *
+    * Five is also enough: the dispatch page has a "Simulate incoming request"
+    * action, so the queue is meant to be filled on stage rather than pre-stuffed.
+    */
+  { status: BookingStatus.IN_PROGRESS, weight: 0.18 },
+  { status: BookingStatus.ACCEPTED, weight: 0.14 },
+  { status: BookingStatus.BROADCAST, weight: 0.1 },
+  { status: BookingStatus.REQUESTED, weight: 0.1 },
 ];
 
 /** Statuses where the job ran to the end and money therefore moved. */
@@ -100,7 +111,7 @@ export function buildBookings(workers: AdminWorker[]): AdminBooking[] {
       status === BookingStatus.BROADCAST ||
       status === BookingStatus.ACCEPTED ||
       status === BookingStatus.IN_PROGRESS;
-    const daysAgo = isLive ? 0 : rng.int(1, BOOKING_WINDOW_DAYS - 1);
+    const daysAgo = isLive ? 0 : rng.int(0, BOOKING_WINDOW_DAYS - 1);
     /*
      * Negative minutes run backwards from SEED_NOW, and the timeline builder adds
      * minutes as the job progresses. Both branches keep enough headroom that the
