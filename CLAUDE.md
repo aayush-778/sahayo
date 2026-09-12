@@ -167,6 +167,104 @@ declaration, and the `expo-env.d.ts` that would provide one is generated at
 dev-server start **and gitignored** — so without this file `tsc --noEmit`
 passes locally and fails on a clean clone.
 
+## Admin portal data architecture
+
+The admin portal runs on a deterministic in-memory dataset behind a service
+layer. That layer is the seam the real backend swaps into, and the rules below
+exist to keep it a seam rather than a suggestion.
+
+### Components call services. Nothing else.
+
+```
+src/lib/seed      deterministic dataset   <- only the store reads this
+src/lib/store     zustand, the database   <- only services read this
+src/lib/services  async functions         <- the UI reads ONLY this
+```
+
+A React component imports from `@/lib/services` and never from `@/lib/store`,
+`@/lib/seed`, or `zustand` directly. This is enforced by `no-restricted-imports`
+in `apps/admin-web/eslint.config.mjs`, so a violation fails lint — the comment
+asks, the rule refuses.
+
+The reason is the swap: when the backend lands, a service function's body changes
+from "filter this array" to "fetch this endpoint" and every page keeps working. A
+component reading the store would be the one call site to rewrite, and the one
+that silently stops updating when something else changes the data.
+
+The other half: **mutating services write through the store.** That is what makes
+`approveKyc(id)` update the badge in the Workers directory, the verification
+queue's count, and the dashboard's verification stat in the same instant — all
+three read derived state from the one store.
+
+### The seed is deterministic, and must stay that way
+
+Nothing under `src/lib/seed` may call `Math.random()`, `Date.now()`, or `crypto`.
+Every figure comes from `createRng(seed)`, and every date is computed backwards
+from the fixed `SEED_NOW` constant. A dataset that drifts with the wall clock is
+not deterministic: "900 bookings over 90 days" would silently re-bucket overnight
+and the charts would change shape between the rehearsal and the room.
+
+Each collection draws from **its own seed** in `SEEDS`. With one shared stream,
+adding a worker would shift every booking, ledger entry and dispute after it.
+
+`buildSeedDataset()` is idempotent and byte-identical across calls, which is what
+the "Reset demo data" action relies on.
+
+### Money
+
+Always `Paise` — integer minor units, never a float. The three shares come from
+`WORKER_SHARE` / `PLATFORM_SHARE` / `COOP_FUND_SHARE` in
+`packages/shared/src/constants.ts` and are **never written as literals** in the
+portal, so it cannot tell a worker a different number than the mobile app does.
+They are currently **90 / 5 / 5** and are asserted to sum to 1 at module load.
+
+`splitAmount()` gives the rounding remainder to the cooperative fund rather than
+rounding all three parts independently, because "every period's three figures sum
+exactly to the gross, to the paisa" is a hard requirement of the finance page.
+Rounding each part separately loses or gains a paisa on most amounts.
+
+### The ledger is append-only
+
+There is no function that edits or deletes a ledger entry, in the store or in the
+services, and there must never be one. A correction is a **new** compensating
+entry carrying `reversalOf` — the original stays byte-identical forever. Refunds,
+released payouts and loan disbursements all arrive as new rows.
+
+In the UI this means the row menu offers View booking, Copy trace ID and Issue
+reversal, and nothing else. Not disabled, not permission-gated: absent.
+
+### UIDAI Circular 14 of 2025 — Aadhaar
+
+These five rules are absolute and override design and convenience.
+
+1. **No raw 12-digit Aadhaar number exists anywhere** — not in a type, the seed,
+   the store, React state, a URL, a log, `localStorage`, `sessionStorage`, or
+   IndexedDB. `KycSubmission.aadhaarRef` is an opaque `aref_…` handle, and
+   `kycSubmissionSchema` rejects a 12-digit value in that field outright.
+2. **Aadhaar always renders masked** as `XXXX-XXXX-4567`. The masked form is the
+   default and the only persistent representation; only the last four digits are
+   ever stored.
+3. **A reveal requires a stated purpose, and logs before it shows.**
+   `revealAadhaar(id, purpose)` writes the audit row FIRST, then returns a value
+   for a 30-second window. A reveal that cannot be logged does not happen.
+4. **Hashing an Aadhaar number is banned.** A 12-digit space is small enough to
+   enumerate, so a hash of an Aadhaar is the Aadhaar. Routes use UUIDs and
+   nothing Aadhaar-derived.
+5. **Every reveal is listed in the access log** with admin, timestamp, worker and
+   purpose. The log is append-only; there is no function that edits or removes an
+   entry.
+
+Verify with `grep -rnE "[0-9]{12}" apps/admin-web/src`, which must print nothing.
+
+### Service conventions
+
+Every function is `async` and awaits a 120–300ms delay, mutations included, so
+loading states are real and a button has somewhere to put its pending state.
+Reads return plain data; writes return the updated record. Errors carry a message
+saying what went wrong **and what to do next**, because that message is what the
+user sees. Mutations that a queue is worked fast are idempotent: `approveKyc`
+called twice does not throw and does not double-apply.
+
 ## Admin portal design system
 
 `apps/admin-web` has a fixed visual language. It is written down in

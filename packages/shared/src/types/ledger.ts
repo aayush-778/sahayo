@@ -41,5 +41,44 @@ export interface LedgerEntry {
   description?: string;
   /** Idempotency key so a retried settlement cannot double-post. */
   referenceKey?: string;
+  /**
+   * Payment-processor trace, the handle support quotes when investigating a
+   * delayed payout. Stripe-shaped (`tr_…`) because that is what the reader will
+   * be comparing against in the processor's own dashboard.
+   */
+  traceId?: string;
+  /**
+   * Set when this row exists to reverse an earlier one, and holds that row's id.
+   *
+   * THE LEDGER IS APPEND-ONLY. A mistake is corrected by appending a new
+   * compensating entry that points back here — never by editing or deleting the
+   * original, which stays byte-identical forever. There is no edit action and no
+   * delete action on a ledger row anywhere in the product: not disabled, not
+   * permission-gated, simply absent. The immutability is the feature.
+   */
+  reversalOf?: Id;
   createdAt: IsoDateTime;
+}
+
+/** Human-facing name of the party an entry touches. */
+export interface LedgerParty {
+  account: LedgerAccount;
+  /** Set when the account is per-party, e.g. a worker's name. */
+  name?: string;
+}
+
+/**
+ * The three-way split of a period's gross, derived from the ledger.
+ *
+ * The three parts sum to `gross` exactly, to the paisa. Shares come from
+ * WORKER_SHARE / PLATFORM_SHARE / COOP_FUND_SHARE in constants.ts and are never
+ * written as literals — so a change to the split is a one-line change, and the
+ * portal cannot drift from what the mobile apps tell workers.
+ */
+export interface SplitSummary {
+  gross: Paise;
+  worker: Paise;
+  platform: Paise;
+  coopFund: Paise;
+  bookingCount: number;
 }

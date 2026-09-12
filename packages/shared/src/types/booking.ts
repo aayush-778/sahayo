@@ -60,3 +60,65 @@ export interface Booking {
   createdAt: IsoDateTime;
   updatedAt: IsoDateTime;
 }
+
+/**
+ * A step in a booking's life, as the dispute queue and the Broadcast Inspector
+ * reconstruct it.
+ *
+ * `BROADCAST` and `PINGED` are separate on purpose: the first is the request
+ * going out, the second records which workers it reached and in what order, and
+ * that ordering is the evidence for why the dispatcher chose whom.
+ */
+export const BookingEventKind = {
+  REQUESTED: 'REQUESTED',
+  BROADCAST: 'BROADCAST',
+  PINGED: 'PINGED',
+  ACCEPTED: 'ACCEPTED',
+  STARTED: 'STARTED',
+  COMPLETED: 'COMPLETED',
+  PAID: 'PAID',
+  CANCELLED: 'CANCELLED',
+  DISPUTED: 'DISPUTED',
+} as const;
+export type BookingEventKind = (typeof BookingEventKind)[keyof typeof BookingEventKind];
+
+export interface BookingEvent {
+  id: Id;
+  kind: BookingEventKind;
+  at: IsoDateTime;
+  /** One plain-language line describing what happened. */
+  detail: string;
+  /** Set on PINGED: how many workers the request reached. */
+  workersPinged?: number;
+  /** Set on ACCEPTED: the accepting worker's position in the equity ranking. */
+  equityRank?: number;
+  /** Marks a moment a dispute points at, drawn with a coral marker. */
+  disputed?: boolean;
+}
+
+/**
+ * A booking as the administration sees it, denormalised for the same reason as
+ * `AdminWorker`: the portal lists and filters these without joins, and the
+ * backend swaps in behind the shape.
+ */
+export interface AdminBooking {
+  id: Id;
+  /** Short human-quotable handle, e.g. `BKG-01423`. */
+  reference: string;
+  customerId: Id;
+  customerName: string;
+  /** Unset until a worker accepts. */
+  workerId?: Id;
+  workerName?: string;
+  category: string;
+  zoneId: Id;
+  /** Jittered around the zone centroid; this is the job's address, not the zone. */
+  location: GeoPoint;
+  status: BookingStatus;
+  /** Gross the customer paid, which the 90/5/5 split divides. */
+  amount: Paise;
+  createdAt: IsoDateTime;
+  acceptedAt?: IsoDateTime;
+  completedAt?: IsoDateTime;
+  timeline: BookingEvent[];
+}
