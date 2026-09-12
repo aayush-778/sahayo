@@ -99,27 +99,50 @@ export async function getSplitSummary(period: Period = '30D'): Promise<SplitSumm
    * that looks fine in a prototype and then stalls the page when the real ledger
    * has a year of rows in it.
    */
-  const postedByBooking = new Map<string, { worker: Paise; platform: Paise; coopFund: Paise }>();
+  const postedByBooking = new Map<
+    string,
+    { worker: Paise; platform: Paise; coopFund: Paise; refunded: Paise }
+  >();
   for (const entry of adminState().ledger) {
     if (!entry.bookingId) continue;
     /* Reversals are corrections, not part of the original split. */
     if (entry.reversalOf) continue;
 
-    const posted =
-      postedByBooking.get(entry.bookingId) ?? { worker: 0, platform: 0, coopFund: 0 };
+    const posted = postedByBooking.get(entry.bookingId) ?? {
+      worker: 0,
+      platform: 0,
+      coopFund: 0,
+      refunded: 0,
+    };
     if (entry.type === LedgerEntryType.WORKER_PAYOUT) posted.worker += entry.amount;
     else if (entry.type === LedgerEntryType.PLATFORM_FEE) posted.platform += entry.amount;
     else if (entry.type === LedgerEntryType.COOP_FUND_CONTRIBUTION) {
       posted.coopFund += entry.amount;
+    } else if (entry.type === LedgerEntryType.REFUND) {
+      /*
+       * A refund is four rows: the customer's money back, and the same amount
+       * clawed back from the worker, the platform and the fund in the booking's own
+       * proportions. The clawbacks net out of each part and the refund nets out of
+       * the gross, so a refunded period still sums exactly to the paisa.
+       */
+      if (entry.account === LedgerAccount.CUSTOMER) posted.refunded += entry.amount;
+      else if (entry.account === LedgerAccount.WORKER) posted.worker -= entry.amount;
+      else if (entry.account === LedgerAccount.PLATFORM) posted.platform -= entry.amount;
+      else if (entry.account === LedgerAccount.COOP_FUND) posted.coopFund -= entry.amount;
     }
     postedByBooking.set(entry.bookingId, posted);
   }
 
   const summary = completed.reduce<SplitSummary>(
     (acc, booking) => {
-      const posted = postedByBooking.get(booking.id) ?? { worker: 0, platform: 0, coopFund: 0 };
+      const posted = postedByBooking.get(booking.id) ?? {
+        worker: 0,
+        platform: 0,
+        coopFund: 0,
+        refunded: 0,
+      };
       return {
-        gross: acc.gross + booking.amount,
+        gross: acc.gross + booking.amount - posted.refunded,
         worker: acc.worker + posted.worker,
         platform: acc.platform + posted.platform,
         coopFund: acc.coopFund + posted.coopFund,

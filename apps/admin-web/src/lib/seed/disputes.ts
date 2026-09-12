@@ -6,7 +6,7 @@ import {
   type Dispute,
   type DisputeMessage,
 } from '@sahayo/shared';
-import { SEEDS, createRng, isoAgo } from './rng';
+import { DAY_MS, SEED_NOW, SEEDS, createRng, isoAgo } from './rng';
 
 export const DISPUTE_COUNT = 40;
 
@@ -98,8 +98,18 @@ const INTERNAL_NOTES = [
 export function buildDisputes(bookings: AdminBooking[]): Dispute[] {
   const rng = createRng(SEEDS.disputes);
 
-  /* Only a booking with both parties attached can be disputed by either of them. */
-  const disputable = bookings.filter((booking) => booking.workerId && booking.workerName);
+  /*
+   * Only a booking with both parties attached can be disputed by either of them, and
+   * only a recent one: people complain within days of a job, not months. An earlier
+   * version sampled the whole 90 days and paired tickets with random ages, so a
+   * complaint could arrive eighty days after the job it was about.
+   */
+  const ageDays = (booking: AdminBooking): number =>
+    Math.floor((SEED_NOW.getTime() - new Date(booking.createdAt).getTime()) / DAY_MS);
+  const disputable = bookings.filter(
+    (booking) =>
+      booking.workerId && booking.workerName && ageDays(booking) >= 2 && ageDays(booking) <= 38,
+  );
   const subjects = rng.sample(disputable, DISPUTE_COUNT);
 
   return subjects.map((booking, index) => {
@@ -118,11 +128,11 @@ export function buildDisputes(bookings: AdminBooking[]): Dispute[] {
     );
 
     /*
-     * Age range reaches past 14 days on purpose: tickets older than that are the
-     * ones the MSCS Amendment Act 2023 requires be escalatable to the
-     * Co-operative Ombudsman, and Phase 7 needs real candidates for that action.
+     * Raised within a couple of days of the job, never before it. Jobs reach back 38
+     * days, so tickets reach past the 14-day line the MSCS Amendment Act 2023 sets for
+     * escalation to the Co-operative Ombudsman — Phase 7 needs real candidates.
      */
-    const openedDaysAgo = rng.int(1, 34);
+    const openedDaysAgo = Math.max(1, ageDays(booking) - rng.int(0, 2));
 
     const messages: DisputeMessage[] = [
       {

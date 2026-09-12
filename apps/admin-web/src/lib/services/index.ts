@@ -84,13 +84,18 @@ export {
   OMBUDSMAN_ESCALATION_DAYS,
   canEscalate,
   countDisputesByOrigin,
+  disputeAgeDays,
   escalateToOmbudsman,
   getDispute,
+  getDisputeContext,
   listDisputes,
   postMessage,
   previewResolutionEntries,
+  refundableAmount,
   resolveDispute,
+  type DisputeContext,
   type DisputeFilter,
+  type TimelineNode,
 } from './disputes.service';
 
 export {

@@ -247,6 +247,16 @@ to the bank appends a `PAYOUT_RELEASE` row carrying `releaseOf` — the same pat
 as `reversalOf` — and "released" means such a row exists. Any future state on a
 ledger entry must follow this pattern: a new row that points back.
 
+**A refund is four rows, and they net to zero.** The customer receives R as a
+`REFUND` credit, and R is recovered from the worker, the platform and the fund as
+`REFUND` debits, split by `splitAmount(R)` — the same function the booking was
+split with, so the three recoveries sum to R exactly. `getSplitSummary` nets these
+out of each part and out of the gross, so a refund moves the finance totals by
+exactly R and a refunded period still sums to the paisa. A single customer-only
+refund row would leave the finance hub's split unchanged, which misstates where
+the money went. A refund is refused on a job with no posted split: money that never
+moved cannot be recovered.
+
 Verify with
 `grep -rniwE "edit|delete|remove|update" apps/admin-web/src/components/finance`,
 which must print nothing. Use `-w`: without it the grep matches `CREDIT`.
@@ -449,6 +459,14 @@ Every empty state says why it is empty and what would fill it.
 | **`pnpm dev:worker`** | **Expo / Metro on `:8082` — use this for worker-app work** |
 | `pnpm typecheck` | `tsc --noEmit` across all packages |
 | `pnpm lint` | eslint across all packages |
+
+**Building while `pnpm dev:admin` is running corrupts the dev server**, because both
+write `apps/admin-web/.next`. To verify a build beside a running dev server, point
+the build elsewhere and remove it afterwards:
+
+```bash
+cd apps/admin-web && NEXT_DIST_DIR=.next-verify npx next build && rm -rf .next-verify
+```
 
 For day-to-day mobile work run `pnpm dev:customer` and `pnpm dev:worker` in
 separate terminals. `pnpm dev` is for bringing the whole stack up at once;

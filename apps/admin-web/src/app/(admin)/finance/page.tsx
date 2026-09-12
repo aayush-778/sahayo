@@ -49,6 +49,17 @@ export default function FinancePage() {
 
   const [notice, setNotice] = useState<string>();
 
+  /*
+   * A dispute's resolution card links here with ?entry=<id>, which opens the ledger
+   * narrowed to that entry. Read from window.location once on mount rather than with
+   * useSearchParams, which would force this page behind a Suspense boundary for a
+   * value that only matters on arrival.
+   */
+  useEffect(() => {
+    const entry = new URLSearchParams(window.location.search).get('entry');
+    if (entry) setFilters({ ...EMPTY_FILTERS, search: entry });
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     setSummary(undefined);
