@@ -140,4 +140,13 @@ export {
 
 export { getDashboardSummary, type DashboardSummary } from './dashboard.service';
 
+export {
+  getWorkerBookings,
+  getWorkerDocuments,
+  getWorkerEarnings,
+  summariseEarnings,
+  type WorkerEarning,
+  type WorkerEarningsSummary,
+} from './worker-profile.service';
+
 export { listZones, resetDemoData } from './platform.service';
