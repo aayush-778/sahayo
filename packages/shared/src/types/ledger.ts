@@ -9,6 +9,14 @@ export const LedgerEntryType = {
   COOP_FUND_DISBURSEMENT: 'COOP_FUND_DISBURSEMENT',
   REFUND: 'REFUND',
   ADJUSTMENT: 'ADJUSTMENT',
+  /**
+   * Money leaving a worker's platform balance for their bank account.
+   *
+   * A separate row rather than a status on the WORKER_PAYOUT it settles, because
+   * the ledger is append-only: "pending" and "released" are derived from whether a
+   * release row exists, never stored by changing the payout row.
+   */
+  PAYOUT_RELEASE: 'PAYOUT_RELEASE',
 } as const;
 export type LedgerEntryType = (typeof LedgerEntryType)[keyof typeof LedgerEntryType];
 
@@ -57,6 +65,12 @@ export interface LedgerEntry {
    * permission-gated, simply absent. The immutability is the feature.
    */
   reversalOf?: Id;
+  /**
+   * Set on a PAYOUT_RELEASE row, and holds the id of the WORKER_PAYOUT it sends to
+   * the bank. The same append-only pattern as `reversalOf`: the payout row is never
+   * changed to say it was released; a new row points back at it.
+   */
+  releaseOf?: Id;
   createdAt: IsoDateTime;
 }
 

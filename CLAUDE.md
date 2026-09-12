@@ -231,7 +231,25 @@ entry carrying `reversalOf` — the original stays byte-identical forever. Refun
 released payouts and loan disbursements all arrive as new rows.
 
 In the UI this means the row menu offers View booking, Copy trace ID and Issue
-reversal, and nothing else. Not disabled, not permission-gated: absent.
+reversal, and nothing else. Not disabled, not permission-gated: absent. The table
+header says so in a line, so an auditor sees the claim without asking. A reversal
+row carries a coral left edge and "Reversal of #xxxx"; its original shows
+"Reversed by #yyyy". Both links are derived from `reversalOf` — neither row is
+written again to create them.
+
+`issueReversal` refuses, with a reason, to reverse a row twice, to reverse a
+reversal, to reverse without a written reason, and to reverse a payout that has
+already reached a bank.
+
+**Status is derived, never stored.** A row cannot hold "pending" or "released",
+because changing that field would be changing the row. Releasing a worker payout
+to the bank appends a `PAYOUT_RELEASE` row carrying `releaseOf` — the same pattern
+as `reversalOf` — and "released" means such a row exists. Any future state on a
+ledger entry must follow this pattern: a new row that points back.
+
+Verify with
+`grep -rniwE "edit|delete|remove|update" apps/admin-web/src/components/finance`,
+which must print nothing. Use `-w`: without it the grep matches `CREDIT`.
 
 ### UIDAI Circular 14 of 2025 — Aadhaar
 

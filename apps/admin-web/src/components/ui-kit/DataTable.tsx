@@ -28,6 +28,11 @@ export interface DataTableProps<T, TValue = unknown> {
   /** Stable row identity, so selection survives a re-sort or a re-filter. */
   getRowId?: (row: T) => string;
   onRowClick?: (row: T) => void;
+  /**
+   * Extra classes for one row, e.g. the coral edge the ledger puts on a reversal.
+   * For marking what a row IS — selection and hover are handled here already.
+   */
+  rowClassName?: (row: T) => string | undefined;
   pageSize?: number;
   isLoading?: boolean;
   /** Shown in place of rows when `data` is empty. Must say what would fill it. */
@@ -58,6 +63,7 @@ export function DataTable<T, TValue = unknown>({
   onRowSelectionChange,
   getRowId,
   onRowClick,
+  rowClassName,
   pageSize = 12,
   isLoading = false,
   empty,
@@ -169,6 +175,7 @@ export function DataTable<T, TValue = unknown>({
                       'border-b border-hairline transition-colors',
                       row.getIsSelected() ? 'bg-marigold-tint/60' : 'hover:bg-marigold-tint/40',
                       onRowClick ? 'cursor-pointer' : undefined,
+                      rowClassName?.(row.original),
                     )}
                   >
                     {row.getVisibleCells().map((cell) => (

@@ -1,6 +1,5 @@
 import {
   LedgerAccount,
-  LedgerDirection,
   LedgerEntryType,
   type LedgerEntry,
   type Paise,
@@ -230,21 +229,4 @@ export async function appendEntries(entries: LedgerEntry[]): Promise<LedgerEntry
   const state = adminState();
   state.appendLedgerEntries(entries);
   return respond(entries);
-}
-
-/** Pending worker payouts: credits to a worker that have not yet been released. */
-export async function listPendingPayouts(): Promise<LedgerEntry[]> {
-  const { ledger } = adminState();
-  const reversed = new Set(
-    ledger.filter((entry) => entry.reversalOf).map((entry) => entry.reversalOf as string),
-  );
-
-  const pending = ledger.filter(
-    (entry) =>
-      entry.type === LedgerEntryType.WORKER_PAYOUT &&
-      entry.direction === LedgerDirection.CREDIT &&
-      !reversed.has(entry.id),
-  );
-
-  return respond([...pending].sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
 }

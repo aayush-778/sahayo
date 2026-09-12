@@ -26,6 +26,7 @@ export const ledgerEntrySchema = z.object({
   referenceKey: z.string().min(1).max(200).optional(),
   traceId: z.string().regex(/^tr_[A-Za-z0-9]{16}$/).optional(),
   reversalOf: idSchema.optional(),
+  releaseOf: idSchema.optional(),
   createdAt: isoDateTimeSchema,
 }) satisfies z.ZodType<LedgerEntry>;
 

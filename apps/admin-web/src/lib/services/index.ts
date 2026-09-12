@@ -60,7 +60,6 @@ export {
   getRevenueSeries,
   getSplitSummary,
   listLedger,
-  listPendingPayouts,
   type Granularity,
   type LedgerFilter,
   type Period,
@@ -154,5 +153,16 @@ export {
   type WorkerEarning,
   type WorkerEarningsSummary,
 } from './worker-profile.service';
+
+export {
+  issueReversal,
+  listLedgerRows,
+  listPayouts,
+  previewSplit,
+  releasePayouts,
+  type LedgerRow,
+  type LedgerRowStatus,
+  type PayoutRow,
+} from './finance.service';
 
 export { listZones, resetDemoData } from './platform.service';

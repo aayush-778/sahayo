@@ -10,11 +10,14 @@ import {
   type LedgerEntry,
   type Paise,
 } from '@sahayo/shared';
-import { SEEDS, createRng, isoAgo } from './rng';
+import { DAY_MS, SEED_NOW, SEEDS, createRng, isoAgo } from './rng';
 import { BOOKING_WINDOW_DAYS, isCompletedBooking } from './bookings';
 
 /** How many reversing entries the seed includes, so the append-only UI has real ones. */
 export const SEEDED_REVERSAL_COUNT = 6;
+
+/** Payouts older than this have already been released to the worker's bank. */
+export const RELEASE_AFTER_DAYS = 3;
 
 /*
  * The three shares must sum to exactly 1, or a split silently loses money. This
@@ -126,11 +129,52 @@ export function buildLedger(bookings: AdminBooking[], workers: AdminWorker[]): L
   }
 
   /*
+   * Releases to the bank.
+   *
+   * A worker's payout is credited to their platform balance when the job is paid,
+   * and sent to their bank in a later batch. Payouts older than
+   * RELEASE_AFTER_DAYS have already gone; newer ones are still pending, which is
+   * what gives the Payouts tab a real queue to release. The release is its own row
+   * pointing back through `releaseOf` — the payout row itself never changes.
+   */
+  const releaseCutoff = new Date(
+    SEED_NOW.getTime() - RELEASE_AFTER_DAYS * DAY_MS,
+  ).toISOString();
+  const releases: LedgerEntry[] = [];
+  for (const payout of entries) {
+    if (payout.type !== LedgerEntryType.WORKER_PAYOUT) continue;
+    if (payout.createdAt >= releaseCutoff) continue;
+    releases.push({
+      id: rng.uuid(),
+      type: LedgerEntryType.PAYOUT_RELEASE,
+      account: LedgerAccount.WORKER,
+      direction: LedgerDirection.DEBIT,
+      amount: payout.amount,
+      subjectId: payout.subjectId,
+      bookingId: payout.bookingId,
+      description: "Released to the worker's bank account.",
+      referenceKey: `${payout.id}:release`,
+      traceId: traceId(rng),
+      releaseOf: payout.id,
+      /* Batches go out the morning after a job is paid. */
+      createdAt: new Date(new Date(payout.createdAt).getTime() + DAY_MS).toISOString(),
+    });
+  }
+  entries.push(...releases);
+
+  /*
    * Reversals. Drawn from worker payouts specifically, because a reversed payout
    * is the case an auditor actually asks about — it is the one where a real
    * person is owed money and the correction has to be traceable.
+   *
+   * Only payouts that have not been released yet. Reversing money that has already
+   * reached a bank account is a recovery, not a correction, and the seed should not
+   * pretend it is a routine one.
    */
-  const payouts = entries.filter((entry) => entry.type === LedgerEntryType.WORKER_PAYOUT);
+  const released = new Set(releases.map((release) => release.releaseOf));
+  const payouts = entries.filter(
+    (entry) => entry.type === LedgerEntryType.WORKER_PAYOUT && !released.has(entry.id),
+  );
   for (const original of rng.sample(payouts, SEEDED_REVERSAL_COUNT)) {
     entries.push({
       id: rng.uuid(),
