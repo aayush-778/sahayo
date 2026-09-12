@@ -462,10 +462,11 @@ Every empty state says why it is empty and what would fill it.
 
 **Building while `pnpm dev:admin` is running corrupts the dev server**, because both
 write `apps/admin-web/.next`. To verify a build beside a running dev server, point
-the build elsewhere and remove it afterwards:
+the build elsewhere, then remove it and undo the `.next-verify/types` include that
+Next adds to `tsconfig.json` on every build:
 
 ```bash
-cd apps/admin-web && NEXT_DIST_DIR=.next-verify npx next build && rm -rf .next-verify
+cd apps/admin-web && NEXT_DIST_DIR=.next-verify npx next build; rm -rf .next-verify && git checkout -- tsconfig.json
 ```
 
 For day-to-day mobile work run `pnpm dev:customer` and `pnpm dev:worker` in
