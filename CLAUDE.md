@@ -253,26 +253,45 @@ which must print nothing. Use `-w`: without it the grep matches `CREDIT`.
 
 ### UIDAI Circular 14 of 2025 — Aadhaar
 
-These five rules are absolute and override design and convenience.
+These rules have legal force. They override design and convenience. The five
+numbered rules below are verbatim from the build brief and must not be reworded.
 
-1. **No raw 12-digit Aadhaar number exists anywhere** — not in a type, the seed,
-   the store, React state, a URL, a log, `localStorage`, `sessionStorage`, or
-   IndexedDB. `KycSubmission.aadhaarRef` is an opaque `aref_…` handle, and
-   `kycSubmissionSchema` rejects a 12-digit value in that field outright.
-2. **Aadhaar always renders masked** as `XXXX-XXXX-4567`. The masked form is the
-   default and the only persistent representation; only the last four digits are
-   ever stored.
-3. **A reveal requires a stated purpose, and logs before it shows.**
-   `revealAadhaar(id, purpose)` writes the audit row FIRST, then returns a value
-   for a 30-second window. A reveal that cannot be logged does not happen.
-4. **Hashing an Aadhaar number is banned.** A 12-digit space is small enough to
-   enumerate, so a hash of an Aadhaar is the Aadhaar. Routes use UUIDs and
-   nothing Aadhaar-derived.
-5. **Every reveal is listed in the access log** with admin, timestamp, worker and
-   purpose. The log is append-only; there is no function that edits or removes an
-   entry.
+1. No Aadhaar number is ever stored in localStorage, sessionStorage,
+   IndexedDB, Zustand, React state, a URL, or a log. The store holds a
+   reference key only.
+2. Aadhaar always renders masked: XXXX-XXXX-4567. The masked form is the
+   default and the only persistent representation.
+3. A "Reveal" button calls kyc.service.revealAadhaar(id, purpose). It
+   first requires selecting a purpose from a dropdown, then writes an
+   audit record (admin id, timestamp, worker id, purpose), then shows the
+   full value for 30 seconds with a visible countdown, then clears it
+   from memory. It is never written to state that survives that window.
+4. Hashing Aadhaar numbers is banned. Routes use UUIDs
+   (/workers/[uuid]), never anything Aadhaar-derived.
+5. Add an "Access log" tab listing every reveal event with admin,
+   timestamp, worker, and stated purpose. This is the auditability proof
+   an evaluator will ask for.
 
-Verify with `grep -rnE "[0-9]{12}" apps/admin-web/src`, which must print nothing.
+How the code meets them:
+
+- **Rules 1 and 3 together.** Rule 1 forbids React state outright; rule 3 allows
+  the value on screen for 30 seconds. `AadhaarReveal` satisfies both by writing
+  the value straight into one text node through a ref and wiping it when the
+  window ends or the component unmounts. React state holds only the countdown.
+  **Every Aadhaar field in the product must use `AadhaarReveal`** — an earlier
+  profile tab kept the value in `useState`, which broke rule 1.
+- **The audit row is written before the value exists.** `revealAadhaar` appends
+  to the access log synchronously, before its first `await`, so the row is there
+  while the promise is still pending.
+- `KycSubmission.aadhaarRef` is an opaque `aref_…` handle, `kycSubmissionSchema`
+  rejects a 12-digit value in it, and only `aadhaarLast4` is ever stored. No
+  component or route reads `aadhaarRef`.
+- Review selection on `/verification` is page state, never the URL, so nothing
+  about identity documents reaches history, a shared link or a referrer.
+
+Verify with `grep -rnE "[0-9]{12}" apps/admin-web/src`, which must print nothing,
+and `grep -rn "aadhaarRef" apps/admin-web/src/components apps/admin-web/src/app`,
+which must also print nothing.
 
 ### Service conventions
 

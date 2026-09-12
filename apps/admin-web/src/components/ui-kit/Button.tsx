@@ -2,7 +2,7 @@ import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { forwardRef } from 'react';
 import { cn } from '@/lib/utils';
 
-export type ButtonVariant = 'primary' | 'outline' | 'danger' | 'ghost';
+export type ButtonVariant = 'primary' | 'approve' | 'outline' | 'danger' | 'ghost';
 export type ButtonSize = 'sm' | 'md';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -25,6 +25,8 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  */
 const VARIANTS: Record<ButtonVariant, string> = {
   primary: 'bg-marigold text-ink hover:bg-marigold/85',
+  /* Fund-green means a worker was verified or money reached them. Ink text, because white on this green fails contrast. */
+  approve: 'bg-fund-green text-ink hover:bg-fund-green/85',
   outline: 'border border-hairline bg-surface text-ink hover:bg-marigold-tint/40',
   danger: 'border border-coral bg-surface text-ink hover:bg-coral/10',
   ghost: 'text-muted hover:bg-marigold-tint/40 hover:text-ink',

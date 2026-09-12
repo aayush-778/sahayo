@@ -1,4 +1,5 @@
 import {
+  type KycDocumentType,
   KycStatus,
   type AadhaarAccessLogEntry,
   type AadhaarAccessPurpose,
@@ -15,6 +16,7 @@ export const AADHAAR_REVEAL_WINDOW_MS = 30_000;
 
 export interface KycFilter {
   status?: KycStatus;
+  documentType?: KycDocumentType;
   search?: string;
 }
 
@@ -37,6 +39,7 @@ export async function listKycQueue(filter: KycFilter = {}): Promise<KycQueueItem
     const worker = workerById.get(submission.workerId);
     if (!worker) return [];
     if (filter.status && worker.kycStatus !== filter.status) return [];
+    if (filter.documentType && submission.documentType !== filter.documentType) return [];
     if (needle && !worker.name.toLowerCase().includes(needle)) return [];
 
     return [
