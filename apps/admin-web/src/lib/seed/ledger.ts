@@ -12,14 +12,15 @@ import {
   type Paise,
 } from '@sahayo/shared';
 import { DAY_MS, SEED_NOW, SEEDS, createRng, isoAgo } from './rng';
+import { compareIso } from '@/lib/dates';
 import { BOOKING_WINDOW_DAYS, isCompletedBooking } from './bookings';
 import { FUND_PROGRAMMES } from './fund-programmes';
 
 /** How many reversing entries the seed includes, so the append-only UI has real ones. */
 export const SEEDED_REVERSAL_COUNT = 6;
 
-/** How many months of contributions before the booking window are carried over. */
-const CARRIED_OVER_MONTHS = 21;
+/** The carried-over history starts at this fraction of the window's daily contribution rate. */
+const CARRIED_OVER_STARTING_RATE = 0.15;
 
 /** Payouts older than this have already been released to the worker's bank. */
 export const RELEASE_AFTER_DAYS = 3;
@@ -64,8 +65,18 @@ export function splitAmount(gross: Paise): {
 /** A Stripe-shaped payment trace, which is what support quotes when chasing a payout. */
 function traceId(rng: ReturnType<typeof createRng>): string {
   const alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  /*
+   * Four characters per draw rather than one: 62^4 fits comfortably inside a single
+   * 32-bit draw, and the ledger mints some thirty thousand trace ids.
+   */
   let out = 'tr_';
-  for (let i = 0; i < 16; i += 1) out += alphabet[rng.int(0, alphabet.length - 1)];
+  for (let draw = 0; draw < 4; draw += 1) {
+    let value = rng.int(0, 62 ** 4 - 1);
+    for (let i = 0; i < 4; i += 1) {
+      out += alphabet[value % 62];
+      value = Math.floor(value / 62);
+    }
+  }
   return out;
 }
 
@@ -162,7 +173,7 @@ export function buildLedger(bookings: AdminBooking[], workers: AdminWorker[]): L
       traceId: traceId(rng),
       releaseOf: payout.id,
       /* Batches go out the morning after a job is paid. */
-      createdAt: new Date(new Date(payout.createdAt).getTime() + DAY_MS).toISOString(),
+      createdAt: new Date(Date.parse(payout.createdAt) + DAY_MS).toISOString(),
     });
   }
   entries.push(...releases);
@@ -205,50 +216,26 @@ export function buildLedger(bookings: AdminBooking[], workers: AdminWorker[]): L
    * The fund's history before this window.
    *
    * The 90 days of bookings above are the visible slice of a platform that has been
-   * running for about two years — workers joined up to 760 days ago and carry lifetime
+   * running for well over a year — workers joined up to 760 days ago and carry lifetime
    * contribution figures on their profiles. What they contributed before the window is
    * derived, not invented: the sum of every worker's lifetime contribution, less what
    * the window's bookings already account for, so the fund and the worker profiles
    * reconcile by construction.
    *
-   * It is posted as one row per month rather than one lump. A single opening-balance
-   * row drew the fund's twelve-month chart as a flat line that jumped by lakhs in one
-   * month, which is not how a fund fed by 5% of every booking grows. Months are
-   * weighted to rise over time, the way a platform's bookings do, and the last month
-   * takes the rounding remainder so the rows sum to the derived total exactly.
+   * It is posted as one row per calendar month, and the months follow a daily rate that
+   * climbs steadily and arrives at the window's own daily rate on the day the window
+   * opens. Both halves of that matter on the twelve-month chart. A single lump drew a
+   * flat line that jumped by lakhs in one month; a ramp that ended below the window's
+   * rate drew a step where the bookings begin; and a monthly row dated inside the
+   * window's first month counted that month twice. The month the window opens in gets
+   * a row only for its days before the window, so it adds up to one ordinary month.
    */
   const lifetimeContributed = workers.reduce((sum, worker) => sum + worker.fundContributed, 0);
   const windowContributed = entries
     .filter((entry) => entry.type === LedgerEntryType.COOP_FUND_CONTRIBUTION)
     .reduce((sum, entry) => sum + entry.amount, 0);
   const carriedOver = Math.max(0, lifetimeContributed - windowContributed);
-
-  const weights = Array.from({ length: CARRIED_OVER_MONTHS }, (_, index) => index + 1);
-  const weightTotal = weights.reduce((sum, weight) => sum + weight, 0);
-  let allocated = 0;
-
-  weights.forEach((weight, index) => {
-    const isLast = index === weights.length - 1;
-    const amount = isLast ? carriedOver - allocated : Math.floor((carriedOver * weight) / weightTotal);
-    allocated += amount;
-    /* Oldest first: index 0 is the furthest month back. */
-    const daysAgo = BOOKING_WINDOW_DAYS + 1 + (CARRIED_OVER_MONTHS - 1 - index) * 30;
-    const createdAt = isoAgo(daysAgo);
-    const month = new Date(createdAt).toLocaleDateString('en-IN', {
-      month: 'long',
-      year: 'numeric',
-    });
-    entries.push({
-      id: rng.uuid(),
-      type: LedgerEntryType.COOP_FUND_CONTRIBUTION,
-      account: LedgerAccount.COOP_FUND,
-      direction: LedgerDirection.CREDIT,
-      amount,
-      description: `Member contributions for ${month}, carried over from the earlier register.`,
-      referenceKey: `coop-fund:carried-over:${index}`,
-      createdAt,
-    });
-  });
+  entries.push(...carriedOverContributions(rng, carriedOver, windowContributed / BOOKING_WINDOW_DAYS));
 
   /*
    * What the fund has spent: one row per programme the members voted through, for
@@ -273,5 +260,63 @@ export function buildLedger(bookings: AdminBooking[], workers: AdminWorker[]): L
   }
 
   /* Oldest first, so the ledger reads as a chronological record. */
-  return entries.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  return entries.sort((a, b) => compareIso(a.createdAt, b.createdAt));
+}
+
+/**
+ * Monthly contribution rows for the fund's history before the booking window.
+ *
+ * The daily rate rises linearly from CARRIED_OVER_STARTING_RATE of `windowDailyRate` to
+ * `windowDailyRate` itself, over however many days it takes for the rows to total
+ * `total` exactly. Each row is dated mid-month, or mid-way through the part of the month
+ * before the window opens, and the last row takes the rounding remainder.
+ */
+function carriedOverContributions(
+  rng: ReturnType<typeof createRng>,
+  total: Paise,
+  windowDailyRate: number,
+): LedgerEntry[] {
+  if (total <= 0 || windowDailyRate <= 0) return [];
+
+  const startRate = windowDailyRate * CARRIED_OVER_STARTING_RATE;
+  /* The area under a straight ramp is its length times its average height. */
+  const days = Math.max(1, Math.round((2 * total) / (startRate + windowDailyRate)));
+  const windowStart = SEED_NOW.getTime() - BOOKING_WINDOW_DAYS * DAY_MS;
+  const firstDay = windowStart - days * DAY_MS;
+  const rateOn = (dayIndex: number): number =>
+    startRate + ((windowDailyRate - startRate) * (dayIndex + 0.5)) / days;
+
+  /* Sum the ramp into calendar months, keeping each month's first and last day. */
+  const months: Array<{ key: string; from: number; to: number; weight: number }> = [];
+  for (let dayIndex = 0; dayIndex < days; dayIndex += 1) {
+    const time = firstDay + dayIndex * DAY_MS;
+    const key = new Date(time).toISOString().slice(0, 7);
+    const last = months[months.length - 1];
+    if (last && last.key === key) {
+      last.to = time;
+      last.weight += rateOn(dayIndex);
+    } else {
+      months.push({ key, from: time, to: time, weight: rateOn(dayIndex) });
+    }
+  }
+
+  const weightTotal = months.reduce((sum, month) => sum + month.weight, 0);
+  let allocated = 0;
+  return months.map((month, index) => {
+    const isLast = index === months.length - 1;
+    const amount = isLast ? total - allocated : Math.floor((total * month.weight) / weightTotal);
+    allocated += amount;
+    const createdAt = new Date(Math.round((month.from + month.to) / 2)).toISOString();
+    const label = new Date(month.from).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+    return {
+      id: rng.uuid(),
+      type: LedgerEntryType.COOP_FUND_CONTRIBUTION,
+      account: LedgerAccount.COOP_FUND,
+      direction: LedgerDirection.CREDIT,
+      amount,
+      description: `Member contributions for ${label}, carried over from the earlier register.`,
+      referenceKey: `coop-fund:carried-over:${index}`,
+      createdAt,
+    };
+  });
 }

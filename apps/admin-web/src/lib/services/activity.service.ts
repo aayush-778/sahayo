@@ -9,6 +9,7 @@ import {
 import { zoneName } from '@/lib/seed';
 import { adminState } from '@/lib/store';
 import { respond } from './latency';
+import { compareIso } from '@/lib/dates';
 
 /** The kinds of thing that show up in the activity feed. */
 export const ActivityKind = {
@@ -104,5 +105,5 @@ export async function listRecentActivity(limit = 12): Promise<ActivityItem[]> {
     });
   }
 
-  return respond(items.sort((a, b) => b.at.localeCompare(a.at)).slice(0, limit));
+  return respond(items.sort((a, b) => compareIso(b.at, a.at)).slice(0, limit));
 }

@@ -9,6 +9,7 @@ import {
 import { DAY_MS, SEED_NOW, computeEquityScore } from '@/lib/seed';
 import { adminState } from '@/lib/store';
 import { respond } from './latency';
+import { compareIso } from '@/lib/dates';
 
 /** Statuses that put a booking in the live dispatch queue. */
 const LIVE_STATUSES: ReadonlySet<AdminBooking['status']> = new Set([
@@ -39,7 +40,7 @@ export async function getLiveMap(): Promise<LiveMap> {
 
   const liveBookings = bookings
     .filter((booking) => LIVE_STATUSES.has(booking.status))
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    .sort((a, b) => compareIso(b.createdAt, a.createdAt));
 
   const mapped = workers.flatMap<MappedWorker>((worker) => {
     if (worker.kycStatus !== 'VERIFIED') return [];

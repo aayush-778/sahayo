@@ -17,6 +17,7 @@ import { Skeleton } from '@/components/ui-kit/Skeleton';
 import { rupees, rupeesCompact } from '@/lib/format';
 import type { RevenuePoint } from '@/lib/services';
 import { AXIS, GRID, LINE, SERIES } from './chart-theme';
+import { compareIso } from '@/lib/dates';
 
 type Grain = 'DAY' | 'MONTH' | 'YEAR';
 
@@ -69,7 +70,7 @@ function reaggregate(daily: RevenuePoint[], grain: Grain): RevenuePoint[] {
     buckets.set(key, existing);
   }
 
-  return [...buckets.values()].sort((a, b) => a.bucket.localeCompare(b.bucket));
+  return [...buckets.values()].sort((a, b) => compareIso(a.bucket, b.bucket));
 }
 
 interface TooltipPayloadEntry {

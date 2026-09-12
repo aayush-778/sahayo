@@ -119,21 +119,24 @@ export function createRng(seed: number): Rng {
        * Shaped like a v4 UUID and drawn from this stream, so it is stable across
        * runs. It is NOT cryptographically random and must never be used as a
        * secret or a token — these are display ids for prototype data only.
+       *
+       * Built from four 32-bit draws rather than one draw per hex digit: the seed mints
+       * well over a hundred thousand ids for 12,000 bookings, and thirty-two draws each
+       * was the single largest cost of building the dataset.
+       *
+       * The last group always opens with a letter. Twelve hex digits that happen to be
+       * all numerals are shaped exactly like an Aadhaar number, and at this many ids
+       * several hundred of them would sit in the serialised state for every
+       * Aadhaar-shaped search to trip over.
        */
-      const hex = '0123456789abcdef';
-      let out = '';
-      for (let i = 0; i < 36; i += 1) {
-        if (i === 8 || i === 13 || i === 18 || i === 23) {
-          out += '-';
-        } else if (i === 14) {
-          out += '4';
-        } else if (i === 19) {
-          out += hex[(int(0, 15) & 0x3) | 0x8];
-        } else {
-          out += hex[int(0, 15)];
-        }
-      }
-      return out;
+      const word = (): string => (Math.floor(next() * 4294967296) >>> 0).toString(16).padStart(8, '0');
+      const a = word();
+      const b = word();
+      const c = word();
+      const d = word();
+      const variant = ((parseInt(c[0], 16) & 0x3) | 0x8).toString(16);
+      const letter = 'abcdef'[parseInt(c[4], 16) % 6];
+      return `${a}-${b.slice(0, 4)}-4${b.slice(5, 8)}-${variant}${c.slice(1, 4)}-${letter}${c.slice(5, 8)}${d}`;
     },
   };
 }

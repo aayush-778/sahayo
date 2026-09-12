@@ -10,6 +10,7 @@ import { CURRENT_ADMIN } from '@/lib/nav/session';
 import { SEED_NOW } from '@/lib/seed';
 import { adminState } from '@/lib/store';
 import { respond, settle } from './latency';
+import { compareIso } from '@/lib/dates';
 
 /** How long a revealed Aadhaar stays on screen before it is cleared. */
 export const AADHAAR_REVEAL_WINDOW_MS = 30_000;
@@ -56,7 +57,7 @@ export async function listKycQueue(filter: KycFilter = {}): Promise<KycQueueItem
 
   /* Oldest submission first: a review queue is worked front to back. */
   return respond(
-    items.sort((a, b) => a.submission.submittedAt.localeCompare(b.submission.submittedAt)),
+    items.sort((a, b) => compareIso(a.submission.submittedAt, b.submission.submittedAt)),
   );
 }
 

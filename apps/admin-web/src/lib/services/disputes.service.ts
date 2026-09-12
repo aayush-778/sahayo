@@ -20,6 +20,7 @@ import { DAY_MS, SEED_NOW, splitAmount } from '@/lib/seed';
 import { adminState } from '@/lib/store';
 import { respond } from './latency';
 import { appendEntries } from './ledger.service';
+import { compareIso } from '@/lib/dates';
 
 /**
  * Days after which an unresolved ticket may be escalated to the Co-operative
@@ -52,7 +53,7 @@ export async function listDisputes(filter: DisputeFilter = {}): Promise<Dispute[
   });
 
   /* Newest first, so a ticket raised this morning is at the top of the queue. */
-  return respond([...matched].sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
+  return respond([...matched].sort((a, b) => compareIso(b.createdAt, a.createdAt)));
 }
 
 export async function getDispute(disputeId: string): Promise<Dispute | undefined> {
@@ -461,7 +462,7 @@ export async function getDisputeContext(disputeId: string): Promise<DisputeConte
   /* Stable order: by time, and at equal times keep insertion order. */
   const ordered = timeline
     .map((node, index) => ({ node, index }))
-    .sort((a, b) => a.node.at.localeCompare(b.node.at) || a.index - b.index)
+    .sort((a, b) => compareIso(a.node.at, b.node.at) || a.index - b.index)
     .map(({ node }) => node);
 
   return respond({

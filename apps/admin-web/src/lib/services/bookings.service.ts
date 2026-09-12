@@ -1,6 +1,7 @@
 import type { AdminBooking, BookingEvent, BookingStatus } from '@sahayo/shared';
 import { adminState } from '@/lib/store';
 import { respond } from './latency';
+import { compareIso } from '@/lib/dates';
 
 export interface BookingFilter {
   /** Matches the booking reference, the customer or the worker. */
@@ -32,7 +33,7 @@ export async function listBookings(filter: BookingFilter = {}): Promise<AdminBoo
   });
 
   /* Newest first: a booking log is read from the top. */
-  return respond([...matched].sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
+  return respond([...matched].sort((a, b) => compareIso(b.createdAt, a.createdAt)));
 }
 
 export async function getBooking(bookingId: string): Promise<AdminBooking | undefined> {
@@ -50,5 +51,5 @@ export async function getBooking(bookingId: string): Promise<AdminBooking | unde
 export async function getBookingTimeline(bookingId: string): Promise<BookingEvent[]> {
   const { bookings } = adminState();
   const booking = bookings.find((candidate) => candidate.id === bookingId);
-  return respond(booking ? [...booking.timeline].sort((a, b) => a.at.localeCompare(b.at)) : []);
+  return respond(booking ? [...booking.timeline].sort((a, b) => compareIso(a.at, b.at)) : []);
 }

@@ -9,6 +9,7 @@ import { SEED_NOW, splitAmount } from '@/lib/seed';
 import { adminState } from '@/lib/store';
 import { respond } from './latency';
 import { appendEntries, listLedger, type LedgerFilter } from './ledger.service';
+import { compareIso } from '@/lib/dates';
 
 /** Where an entry stands, derived from the rows that point at it. */
 export type LedgerRowStatus =
@@ -206,7 +207,7 @@ export async function listPayouts(status: 'PENDING' | 'RELEASED'): Promise<Payou
     })
     .filter((row) => (status === 'PENDING' ? !row.released : row.released));
 
-  return respond(rows.sort((a, b) => b.payout.createdAt.localeCompare(a.payout.createdAt)));
+  return respond(rows.sort((a, b) => compareIso(b.payout.createdAt, a.payout.createdAt)));
 }
 
 /**

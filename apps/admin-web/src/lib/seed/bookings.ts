@@ -10,7 +10,16 @@ import { createNameFactory } from './names';
 import { SEEDS, createRng, isoAgo } from './rng';
 import { ZONE_IDS, getZone } from './zones';
 
-export const BOOKING_COUNT = 900;
+/**
+ * About 12,000 jobs over the 90-day window, roughly 133 a day.
+ *
+ * Sized to agree with the workers' own figures. At the earlier 900, the cohort's
+ * lifetime job counts and this week's job counts implied about thirteen times more
+ * work than the bookings showed, so the same platform looked busy on a worker's profile
+ * and nearly idle in the booking log — and the fund's growth chart showed monthly
+ * contributions collapsing the moment the booking window began.
+ */
+export const BOOKING_COUNT = 12000;
 export const BOOKING_WINDOW_DAYS = 90;
 
 /**
@@ -37,10 +46,10 @@ const STATUS_WEIGHTS: ReadonlyArray<{ status: AdminBooking['status']; weight: nu
     * Five is also enough: the dispatch page has a "Simulate incoming request"
     * action, so the queue is meant to be filled on stage rather than pre-stuffed.
     */
-  { status: BookingStatus.IN_PROGRESS, weight: 0.18 },
-  { status: BookingStatus.ACCEPTED, weight: 0.14 },
-  { status: BookingStatus.BROADCAST, weight: 0.1 },
-  { status: BookingStatus.REQUESTED, weight: 0.1 },
+  { status: BookingStatus.IN_PROGRESS, weight: 0.07 },
+  { status: BookingStatus.ACCEPTED, weight: 0.05 },
+  { status: BookingStatus.BROADCAST, weight: 0.03 },
+  { status: BookingStatus.REQUESTED, weight: 0.02 },
 ];
 
 /** Statuses where the job ran to the end and money therefore moved. */
@@ -61,6 +70,9 @@ const ASSIGNED_STATUSES: ReadonlySet<AdminBooking['status']> = new Set([
   BookingStatus.DISPUTED,
 ]);
 
+const STATUSES = STATUS_WEIGHTS.map((s) => s.status);
+const STATUS_WEIGHT_VALUES = STATUS_WEIGHTS.map((s) => s.weight);
+
 export function isCompletedBooking(booking: AdminBooking): boolean {
   return COMPLETED_STATUSES.has(booking.status);
 }
@@ -71,7 +83,7 @@ function categoryLabel(category: string): string {
 }
 
 /**
- * The 900 bookings, spread over the 90 days ending at SEED_NOW.
+ * The bookings, spread over the 90 days ending at SEED_NOW.
  *
  * Takes the workers so that a booking's worker, zone and category are mutually
  * consistent: a Plumber booking is assigned to a plumber, and it sits in a zone
@@ -83,23 +95,29 @@ export function buildBookings(workers: AdminWorker[]): AdminBooking[] {
   const nextCustomerName = createNameFactory(rng);
   const bookings: AdminBooking[] = [];
 
-  /* A pool of repeat customers, so the same household books more than once. */
-  const customers = Array.from({ length: 260 }, () => ({
+  /*
+   * A pool of repeat customers, so the same household books more than once — about six
+   * times in 90 days on average, which is a regular household rather than a business.
+   */
+  const customers = Array.from({ length: 2000 }, () => ({
     id: rng.uuid(),
     name: nextCustomerName(),
   }));
 
   /* Only verified workers can hold a booking — the same rule as the seed above. */
   const assignableWorkers = workers.filter((worker) => worker.kycStatus === 'VERIFIED');
+  const workerWeights = assignableWorkers.map((worker) => worker.jobsThisWeek + 1);
 
   for (let index = 0; index < BOOKING_COUNT; index += 1) {
-    const status = rng.weighted(
-      STATUS_WEIGHTS.map((s) => s.status),
-      STATUS_WEIGHTS.map((s) => s.weight),
-    );
+    const status = rng.weighted(STATUSES, STATUS_WEIGHT_VALUES);
 
     const isAssigned = ASSIGNED_STATUSES.has(status);
-    const worker = isAssigned ? rng.pick(assignableWorkers) : undefined;
+    /*
+     * Weighted by how much work each worker is getting this week, so a worker's booking
+     * history agrees with the jobs-this-week figure on their profile. Uniform assignment
+     * gave an under-allocated worker as many recent jobs as the busiest one.
+     */
+    const worker = isAssigned ? rng.weighted(assignableWorkers, workerWeights) : undefined;
     const customer = rng.pick(customers);
 
     /*

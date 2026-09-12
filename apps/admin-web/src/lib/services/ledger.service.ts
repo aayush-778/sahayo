@@ -8,6 +8,7 @@ import {
 import { DAY_MS, SEED_NOW, isCompletedBooking } from '@/lib/seed';
 import { adminState } from '@/lib/store';
 import { respond } from './latency';
+import { compareIso } from '@/lib/dates';
 
 /** The periods the finance page and the dashboard chart offer. */
 export type Period = '7D' | '30D' | '90D' | 'ALL';
@@ -56,7 +57,7 @@ export async function listLedger(filter: LedgerFilter = {}): Promise<LedgerEntry
   });
 
   /* Newest first: an auditor opens the ledger at the most recent movement. */
-  return respond([...matched].sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
+  return respond([...matched].sort((a, b) => compareIso(b.createdAt, a.createdAt)));
 }
 
 export async function getLedgerEntry(entryId: string): Promise<LedgerEntry | undefined> {
@@ -207,7 +208,7 @@ export async function getRevenueSeries(
   }
 
   /* Chronological: a growth chart reads left to right. */
-  return respond([...buckets.values()].sort((a, b) => a.bucket.localeCompare(b.bucket)));
+  return respond([...buckets.values()].sort((a, b) => compareIso(a.bucket, b.bucket)));
 }
 
 function bucketKey(iso: string, granularity: Granularity): string {

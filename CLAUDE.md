@@ -201,7 +201,7 @@ three read derived state from the one store.
 Nothing under `src/lib/seed` may call `Math.random()`, `Date.now()`, or `crypto`.
 Every figure comes from `createRng(seed)`, and every date is computed backwards
 from the fixed `SEED_NOW` constant. A dataset that drifts with the wall clock is
-not deterministic: "900 bookings over 90 days" would silently re-bucket overnight
+not deterministic: "12,000 bookings over 90 days" would silently re-bucket overnight
 and the charts would change shape between the rehearsal and the room.
 
 Each collection draws from **its own seed** in `SEEDS`. With one shared stream,

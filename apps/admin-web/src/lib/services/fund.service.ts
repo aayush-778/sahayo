@@ -19,6 +19,7 @@ import { DAY_MS, SEED_NOW } from '@/lib/seed';
 import { adminState } from '@/lib/store';
 import { respond } from './latency';
 import { appendEntries } from './ledger.service';
+import { compareIso } from '@/lib/dates';
 
 /**
  * The fund's position, derived from the ledger every time rather than stored.
@@ -72,7 +73,7 @@ export async function listProposals(status?: ProposalStatus): Promise<Proposal[]
       const aOpen = a.status === ProposalStatus.OPEN ? 0 : 1;
       const bOpen = b.status === ProposalStatus.OPEN ? 0 : 1;
       if (aOpen !== bOpen) return aOpen - bOpen;
-      return b.openedAt.localeCompare(a.openedAt);
+      return compareIso(b.openedAt, a.openedAt);
     }),
   );
 }
@@ -93,7 +94,7 @@ export async function listPastDecisions(): Promise<Proposal[]> {
   return respond(
     proposals
       .filter((proposal) => proposal.status !== ProposalStatus.OPEN)
-      .sort((a, b) => b.closesAt.localeCompare(a.closesAt)),
+      .sort((a, b) => compareIso(b.closesAt, a.closesAt)),
   );
 }
 
@@ -313,7 +314,7 @@ export async function listLoanRequests(status?: LoanStatus): Promise<LoanRequest
   const { loanRequests } = adminState();
   const matched = status ? loanRequests.filter((loan) => loan.status === status) : loanRequests;
   /* Oldest request first: a queue of people waiting on money is worked in order. */
-  return respond([...matched].sort((a, b) => a.requestedAt.localeCompare(b.requestedAt)));
+  return respond([...matched].sort((a, b) => compareIso(a.requestedAt, b.requestedAt)));
 }
 
 /**

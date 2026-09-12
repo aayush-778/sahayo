@@ -4,6 +4,7 @@ import { adminState } from '@/lib/store';
 import { respond } from './latency';
 import type { Period } from './ledger.service';
 import { DAY_MS, SEED_NOW } from '@/lib/dates';
+import { compareIso } from '@/lib/dates';
 
 /** One row of a worker's earnings table: a booking and where its money went. */
 export interface WorkerEarning {
@@ -65,7 +66,7 @@ export async function getWorkerEarnings(
     });
 
   /* Newest first: an earnings statement is read from the most recent job. */
-  return respond(rows.sort((a, b) => b.completedAt.localeCompare(a.completedAt)));
+  return respond(rows.sort((a, b) => compareIso(b.completedAt, a.completedAt)));
 }
 
 /** A worker's bookings, newest first, for the profile's Bookings tab. */
@@ -73,7 +74,7 @@ export async function getWorkerBookings(workerId: string, limit = 25): Promise<A
   const { bookings } = adminState();
   const rows = bookings
     .filter((booking) => booking.workerId === workerId)
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .sort((a, b) => compareIso(b.createdAt, a.createdAt))
     .slice(0, limit);
   return respond(rows);
 }
@@ -91,7 +92,7 @@ export async function getWorkerDocuments(workerId: string): Promise<KycSubmissio
   const { kycQueue } = adminState();
   const rows = kycQueue
     .filter((submission) => submission.workerId === workerId)
-    .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt));
+    .sort((a, b) => compareIso(b.submittedAt, a.submittedAt));
   return respond(rows);
 }
 

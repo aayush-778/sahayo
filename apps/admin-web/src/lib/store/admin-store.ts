@@ -110,7 +110,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   /*
    * Collections start empty and `hydrate()` fills them. They are not seeded in
    * the initialiser because `reset()` must be able to rebuild them from the same
-   * function, and because a store that builds 900 bookings at module-eval time
+   * function, and because a store that builds 12,000 bookings at module-eval time
    * would do it during the server render of every route.
    */
   hydrated: false,
