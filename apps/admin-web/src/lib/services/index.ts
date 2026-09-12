@@ -99,17 +99,26 @@ export {
 } from './disputes.service';
 
 export {
+  VOTING_WINDOW_DAYS,
   castVote,
+  createProposal,
   disburseLoan,
   getFundGrowth,
   getFundTotals,
+  getOpenVoteSummary,
   getProposal,
+  getProposalBreakdown,
   hasQuorum,
   listLoanRequests,
+  listMembersYetToVote,
+  listPastDecisions,
   listProposals,
   provisionalOutcome,
   rejectLoan,
+  type BreakdownRow,
   type FundGrowthPoint,
+  type NewProposalInput,
+  type ProposalBreakdown,
 } from './fund.service';
 
 export {

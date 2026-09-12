@@ -5,6 +5,7 @@ import {
   LedgerDirection,
   LedgerEntryType,
   LoanStatus,
+  PROPOSAL_QUORUM_SHARE,
   ProposalStatus,
   VoteDirection,
   type FundTotals,
@@ -13,7 +14,8 @@ import {
   type Paise,
   type Proposal,
 } from '@sahayo/shared';
-import { SEED_NOW } from '@/lib/seed';
+import { CURRENT_ADMIN } from '@/lib/nav/session';
+import { DAY_MS, SEED_NOW } from '@/lib/seed';
 import { adminState } from '@/lib/store';
 import { respond } from './latency';
 import { appendEntries } from './ledger.service';
@@ -21,10 +23,10 @@ import { appendEntries } from './ledger.service';
 /**
  * The fund's position, derived from the ledger every time rather than stored.
  *
- * Derived, not stored, so it cannot drift: disbursing a loan writes a DEBIT and
- * the balance falls everywhere it appears — the fund page's hero figure, the
- * dashboard's hero card, and the lending headroom above the loan queue — without
- * any of them being told to update.
+ * Derived, not stored, so it cannot drift: disbursing a loan writes a DEBIT and the
+ * balance falls everywhere it appears — the fund page's hero figure, the dashboard's
+ * hero card, and the lending headroom above the loan queue — without any of them
+ * being told to update.
  */
 export async function getFundTotals(): Promise<FundTotals> {
   const { ledger, workers } = adminState();
@@ -46,20 +48,16 @@ export async function getFundTotals(): Promise<FundTotals> {
     }
   }
 
-  /*
-    * Every worker who has contributed owns a share — which is all of them. A
-    * share is earned by the 5% taken from their completed jobs, so it does not
-    * lapse because a document needs re-checking. Filtering to currently-verified
-    * workers made the hero line read "owned by 92 workers" while the directory
-    * showed 140, and the smaller number is the wrong one.
-    */
-  const memberCount = workers.length;
-
   return respond({
     balance,
     contributedThisMonth,
     disbursedThisMonth,
-    memberCount,
+    /*
+     * Every worker who has contributed owns a share — which is all of them. A share
+     * is earned by the 5% taken from their completed jobs, so it does not lapse
+     * because a document needs re-checking.
+     */
+    memberCount: workers.length,
     lendingHeadroom: Math.round(balance * FUND_LENDING_HEADROOM_SHARE),
     communityGoal: FUND_COMMUNITY_GOAL,
   });
@@ -85,33 +83,18 @@ export async function getProposal(proposalId: string): Promise<Proposal | undefi
 }
 
 /**
- * Casts a vote on an open proposal.
+ * Concluded proposals, most recently decided first — the trust artifact.
  *
- * Quorum is recomputed from the new tally rather than being a stored flag, so a
- * vote that crosses the threshold flips the indicator immediately. A proposal that
- * meets quorum but has more votes against it is REJECTED; one that has the
- * majority in favour but too few voters is QUORUM_NOT_MET, and the card says so
- * rather than reporting it as a rejection.
+ * Every decision stays here for good, whichever way it went. A record of only the
+ * things that passed would be a brochure, not a record.
  */
-export async function castVote(proposalId: string, direction: VoteDirection): Promise<Proposal> {
-  const state = adminState();
-  const proposal = state.proposals.find((candidate) => candidate.id === proposalId);
-  if (!proposal) throw new Error(`No proposal with id ${proposalId}`);
-  if (proposal.status !== ProposalStatus.OPEN) {
-    throw new Error('This proposal has closed, so no more votes can be cast.');
-  }
-
-  const votesFor = proposal.votesFor + (direction === VoteDirection.FOR ? 1 : 0);
-  const votesAgainst = proposal.votesAgainst + (direction === VoteDirection.AGAINST ? 1 : 0);
-
-  if (votesFor + votesAgainst > proposal.electorate) {
-    throw new Error('Every eligible member has already voted on this proposal.');
-  }
-
-  state.updateProposal(proposalId, { votesFor, votesAgainst });
-
-  const updated = adminState().proposals.find((candidate) => candidate.id === proposalId);
-  return respond(updated as Proposal);
+export async function listPastDecisions(): Promise<Proposal[]> {
+  const { proposals } = adminState();
+  return respond(
+    proposals
+      .filter((proposal) => proposal.status !== ProposalStatus.OPEN)
+      .sort((a, b) => b.closesAt.localeCompare(a.closesAt)),
+  );
 }
 
 /** Whether a proposal's tally has reached quorum. */
@@ -122,9 +105,208 @@ export function hasQuorum(proposal: Proposal): boolean {
 /** The result a proposal would conclude with, given its tally right now. */
 export function provisionalOutcome(proposal: Proposal): ProposalStatus {
   if (!hasQuorum(proposal)) return ProposalStatus.QUORUM_NOT_MET;
-  return proposal.votesFor > proposal.votesAgainst
-    ? ProposalStatus.PASSED
-    : ProposalStatus.REJECTED;
+  return proposal.votesFor > proposal.votesAgainst ? ProposalStatus.PASSED : ProposalStatus.REJECTED;
+}
+
+/**
+ * Records one member's vote, on their behalf.
+ *
+ * Administrators record votes for members who voted by phone or on paper at a zone
+ * meeting, so the member is named and the vote carries the administrator's id. Each
+ * member votes once: a second vote from the same member is refused rather than
+ * silently replacing the first, because changing a recorded vote is a different act
+ * and should not happen by a stray click.
+ *
+ * The ballot and the tally are written together, so the counts on the card, the quorum
+ * line and the dashboard's vote figure all move in the same instant.
+ */
+export async function castVote(
+  proposalId: string,
+  direction: VoteDirection,
+  workerId: string,
+): Promise<Proposal> {
+  const state = adminState();
+  const proposal = state.proposals.find((candidate) => candidate.id === proposalId);
+  if (!proposal) throw new Error(`No proposal with id ${proposalId}`);
+  if (proposal.status !== ProposalStatus.OPEN) {
+    throw new Error('This vote has closed, so no more votes can be recorded.');
+  }
+
+  const member = state.workers.find((worker) => worker.id === workerId);
+  if (!member) throw new Error('Choose the member whose vote you are recording.');
+
+  const existing = proposal.ballots.find((ballot) => ballot.workerId === workerId);
+  if (existing) {
+    throw new Error(
+      `${member.name} has already voted ${existing.direction === VoteDirection.FOR ? 'for' : 'against'} this. Each member votes once.`,
+    );
+  }
+
+  const ballots = [
+    ...proposal.ballots,
+    {
+      workerId,
+      direction,
+      castAt: SEED_NOW.toISOString(),
+      recordedByAdminId: CURRENT_ADMIN.id,
+    },
+  ];
+
+  state.updateProposal(proposalId, {
+    ballots,
+    votesFor: ballots.filter((ballot) => ballot.direction === VoteDirection.FOR).length,
+    votesAgainst: ballots.filter((ballot) => ballot.direction === VoteDirection.AGAINST).length,
+  });
+
+  const updated = adminState().proposals.find((candidate) => candidate.id === proposalId);
+  return respond(updated as Proposal);
+}
+
+/** Members who have not yet voted on a proposal, for the "record a vote" picker. */
+export async function listMembersYetToVote(
+  proposalId: string,
+): Promise<{ id: string; name: string; category: string; zoneId: string }[]> {
+  const { proposals, workers } = adminState();
+  const proposal = proposals.find((candidate) => candidate.id === proposalId);
+  if (!proposal) return respond([]);
+  const voted = new Set(proposal.ballots.map((ballot) => ballot.workerId));
+  return respond(
+    workers
+      .filter((worker) => !voted.has(worker.id))
+      .map((worker) => ({
+        id: worker.id,
+        name: worker.name,
+        category: worker.category,
+        zoneId: worker.zoneId,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name)),
+  );
+}
+
+export interface BreakdownRow {
+  key: string;
+  label: string;
+  for: number;
+  against: number;
+  /** Members in the group who have not voted. */
+  notVoted: number;
+}
+
+export interface ProposalBreakdown {
+  byCategory: BreakdownRow[];
+  byZone: BreakdownRow[];
+}
+
+/**
+ * How a vote split across trades and zones.
+ *
+ * Counted from the ballots against the worker records, so every figure can be traced to
+ * a named member. A proposal that passes on the strength of one zone, or that one trade
+ * voted down together, is worth knowing about before the money moves.
+ */
+export async function getProposalBreakdown(proposalId: string): Promise<ProposalBreakdown | undefined> {
+  const { proposals, workers, zones } = adminState();
+  const proposal = proposals.find((candidate) => candidate.id === proposalId);
+  if (!proposal) return respond(undefined);
+
+  const directionByWorker = new Map(proposal.ballots.map((ballot) => [ballot.workerId, ballot.direction]));
+  const zoneName = new Map(zones.map((zone) => [zone.id, zone.name]));
+
+  function group(keyOf: (worker: (typeof workers)[number]) => string, labelOf: (key: string) => string): BreakdownRow[] {
+    const rows = new Map<string, BreakdownRow>();
+    for (const worker of workers) {
+      const key = keyOf(worker);
+      const row = rows.get(key) ?? { key, label: labelOf(key), for: 0, against: 0, notVoted: 0 };
+      const direction = directionByWorker.get(worker.id);
+      if (direction === VoteDirection.FOR) row.for += 1;
+      else if (direction === VoteDirection.AGAINST) row.against += 1;
+      else row.notVoted += 1;
+      rows.set(key, row);
+    }
+    return [...rows.values()].sort((a, b) => b.for + b.against - (a.for + a.against));
+  }
+
+  return respond({
+    byCategory: group(
+      (worker) => worker.category,
+      (key) => key.charAt(0) + key.slice(1).toLowerCase(),
+    ),
+    byZone: group(
+      (worker) => worker.zoneId,
+      (key) => zoneName.get(key) ?? 'Unknown zone',
+    ),
+  });
+}
+
+export interface NewProposalInput {
+  title: string;
+  description: string;
+  /** In paise. */
+  amountRequested: Paise;
+  votingDays: number;
+  /** The member putting the proposal forward. */
+  proposerId: string;
+}
+
+/** Shortest and longest voting windows, so every member has a fair chance to vote. */
+export const VOTING_WINDOW_DAYS = { min: 3, max: 21 } as const;
+
+/**
+ * Puts a new proposal to the members.
+ *
+ * It is put forward by a named member, not by the administrator: the fund belongs to
+ * the workers, and the administrator's part is to record the proposal. It cannot ask
+ * for more than the fund holds, and the voting window is long enough for members on
+ * shifts to see it.
+ */
+export async function createProposal(input: NewProposalInput): Promise<Proposal> {
+  const state = adminState();
+  const title = input.title.trim();
+  const description = input.description.trim();
+
+  if (title.length < 6) throw new Error('Give the proposal a title members will recognise.');
+  if (description.length < 20) {
+    throw new Error('Say what the money would do in a sentence or two, so members can decide.');
+  }
+  if (!Number.isFinite(input.amountRequested) || input.amountRequested <= 0) {
+    throw new Error('Enter how much the proposal asks for.');
+  }
+  if (input.votingDays < VOTING_WINDOW_DAYS.min || input.votingDays > VOTING_WINDOW_DAYS.max) {
+    throw new Error(
+      `Voting should stay open between ${VOTING_WINDOW_DAYS.min} and ${VOTING_WINDOW_DAYS.max} days, so members on shifts can vote.`,
+    );
+  }
+
+  const proposer = state.workers.find((worker) => worker.id === input.proposerId);
+  if (!proposer) throw new Error('Choose the member putting this forward.');
+
+  const totals = await getFundTotals();
+  if (input.amountRequested > totals.balance) {
+    throw new Error('The fund holds less than this. Ask for a smaller amount, or split it into stages.');
+  }
+
+  const electorate = state.workers.length;
+  const opened = SEED_NOW.getTime();
+  const proposal: Proposal = {
+    id: `prop_${state.proposals.length + 1}_${opened}`,
+    title,
+    description,
+    amountRequested: input.amountRequested,
+    proposerId: proposer.id,
+    proposerName: proposer.name,
+    votesFor: 0,
+    votesAgainst: 0,
+    quorum: Math.ceil(electorate * PROPOSAL_QUORUM_SHARE),
+    electorate,
+    status: ProposalStatus.OPEN,
+    openedAt: new Date(opened).toISOString(),
+    closesAt: new Date(opened + input.votingDays * DAY_MS).toISOString(),
+    comments: [],
+    ballots: [],
+  };
+
+  state.addProposal(proposal);
+  return respond(proposal);
 }
 
 export async function listLoanRequests(status?: LoanStatus): Promise<LoanRequest[]> {
@@ -137,11 +319,10 @@ export async function listLoanRequests(status?: LoanStatus): Promise<LoanRequest
 /**
  * Disburses a micro-loan.
  *
- * Writes a DEBIT against the cooperative fund through the ledger service, so the
- * fund balance falls everywhere it is shown. Refuses if the amount exceeds the
- * fund's lending headroom — the fund keeps the rest liquid, because a loan book
- * that consumes the whole balance cannot also pay an accident claim the week it is
- * needed.
+ * Writes a DEBIT against the cooperative fund through the ledger service, so the fund
+ * balance falls everywhere it is shown. Refuses if the amount exceeds the fund's lending
+ * headroom — the fund keeps the rest liquid, because a loan book that consumes the whole
+ * balance cannot also pay an accident claim the week it is needed.
  */
 export async function disburseLoan(loanId: string): Promise<LoanRequest> {
   const state = adminState();
@@ -179,17 +360,22 @@ export async function disburseLoan(loanId: string): Promise<LoanRequest> {
   return respond(updated as LoanRequest);
 }
 
-/** Rejects a loan request. The reason is required, as with a KYC rejection. */
+/** Rejects a loan request. The reason is required, because the worker is told it. */
 export async function rejectLoan(loanId: string, reason: string): Promise<LoanRequest> {
   const state = adminState();
   const loan = state.loanRequests.find((candidate) => candidate.id === loanId);
   if (!loan) throw new Error(`No loan request with id ${loanId}`);
   if (loan.status !== LoanStatus.PENDING) return respond(loan);
 
+  const trimmed = reason.trim();
+  if (!trimmed) {
+    throw new Error(`Write down why. ${loan.workerName} will be told, and can ask again later.`);
+  }
+
   state.updateLoanRequest(loanId, {
     status: LoanStatus.REJECTED,
     decidedAt: SEED_NOW.toISOString(),
-    rejectionReason: reason,
+    rejectionReason: trimmed,
   });
 
   const updated = adminState().loanRequests.find((candidate) => candidate.id === loanId);
@@ -199,41 +385,79 @@ export async function rejectLoan(loanId: string, reason: string): Promise<LoanRe
 export interface FundGrowthPoint {
   bucket: string;
   label: string;
-  /** Running balance at the end of this month. */
+  /** What the fund held at the start of the month. */
+  heldBefore: Paise;
+  /** Net change during the month: money in, less money out. */
+  netChange: Paise;
+  /** What the fund held at the end of the month. */
   balance: Paise;
   contributed: Paise;
   disbursed: Paise;
 }
 
-/** Twelve months of fund growth, for the stacked area chart. */
-export async function getFundGrowth(): Promise<FundGrowthPoint[]> {
+const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/**
+ * The last twelve months of the fund, one point per calendar month, with no gaps.
+ *
+ * Every month appears even if nothing moved in it, and the running balance carries in
+ * from everything before the first month shown — so the chart starts at what the fund
+ * actually held twelve months ago rather than at zero.
+ */
+export async function getFundGrowth(months = 12): Promise<FundGrowthPoint[]> {
   const { ledger } = adminState();
-  const months = new Map<string, { contributed: Paise; disbursed: Paise }>();
+
+  const now = new Date(SEED_NOW);
+  const keys: string[] = [];
+  for (let offset = months - 1; offset >= 0; offset -= 1) {
+    const date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - offset, 1));
+    keys.push(date.toISOString().slice(0, 7));
+  }
+  const firstKey = keys[0];
+
+  let carried = 0;
+  const byMonth = new Map(keys.map((key) => [key, { contributed: 0, disbursed: 0 }]));
 
   for (const entry of ledger) {
     if (entry.account !== LedgerAccount.COOP_FUND) continue;
-    const bucket = entry.createdAt.slice(0, 7);
-    const existing = months.get(bucket) ?? { contributed: 0, disbursed: 0 };
-    if (entry.direction === LedgerDirection.CREDIT) existing.contributed += entry.amount;
-    else existing.disbursed += entry.amount;
-    months.set(bucket, existing);
+    const key = entry.createdAt.slice(0, 7);
+    const signed = entry.direction === LedgerDirection.CREDIT ? entry.amount : -entry.amount;
+    if (key < firstKey) {
+      carried += signed;
+      continue;
+    }
+    const month = byMonth.get(key);
+    if (!month) continue;
+    if (entry.direction === LedgerDirection.CREDIT) month.contributed += entry.amount;
+    else month.disbursed += entry.amount;
   }
 
-  const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  let running = 0;
-
-  const points = [...months.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([bucket, totals]) => {
-      running += totals.contributed - totals.disbursed;
-      return {
-        bucket,
-        label: MONTH_NAMES[Number(bucket.slice(5, 7)) - 1] ?? bucket,
-        balance: running,
-        contributed: totals.contributed,
-        disbursed: totals.disbursed,
-      };
-    });
+  let running = carried;
+  const points = keys.map((key) => {
+    const { contributed, disbursed } = byMonth.get(key) as { contributed: Paise; disbursed: Paise };
+    const heldBefore = running;
+    const netChange = contributed - disbursed;
+    running += netChange;
+    return {
+      bucket: key,
+      label: `${MONTH_NAMES[Number(key.slice(5, 7)) - 1]} ${key.slice(2, 4)}`,
+      heldBefore,
+      netChange,
+      balance: running,
+      contributed,
+      disbursed,
+    };
+  });
 
   return respond(points);
+}
+
+/** Open votes at a glance, for the dashboard. */
+export async function getOpenVoteSummary(): Promise<{ openProposals: number; votesCast: number }> {
+  const { proposals } = adminState();
+  const open = proposals.filter((proposal) => proposal.status === ProposalStatus.OPEN);
+  return respond({
+    openProposals: open.length,
+    votesCast: open.reduce((sum, proposal) => sum + proposal.ballots.length, 0),
+  });
 }

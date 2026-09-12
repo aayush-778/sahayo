@@ -261,6 +261,27 @@ Verify with
 `grep -rniwE "edit|delete|remove|update" apps/admin-web/src/components/finance`,
 which must print nothing. Use `-w`: without it the grep matches `CREDIT`.
 
+### The cooperative fund keeps one record, not two
+
+`src/lib/seed/fund-programmes.ts` is the single source for what the members have
+voted on and what the fund has spent. A PASSED programme produces the ledger
+disbursement for exactly the amount approved, dated just after its vote closed;
+nothing else in the seed spends from the fund. The proposals and the ledger used to
+be written separately and contradicted each other — a paid health insurance premium
+beside a health insurance vote still open — on the one page where members' decisions
+and the fund's spending are read side by side. Add a programme there, never directly
+to the ledger or the proposals.
+
+Each proposal carries one `ProposalBallot` per member who voted, and `votesFor` /
+`votesAgainst` always equal the ballots counted by direction. Ballots are what make
+"each member votes once" enforceable and what the breakdown by trade and zone is
+counted from. Administrators record votes on a named member's behalf; `castVote`
+refuses a second vote from the same member rather than replacing the first.
+
+Contributions from before the 90-day booking window are carried over as one ledger
+row per month, not one lump, so the fund's twelve-month chart grows the way a fund fed
+by every booking does instead of jumping by lakhs in a single month.
+
 ### UIDAI Circular 14 of 2025 — Aadhaar
 
 These rules have legal force. They override design and convenience. The five

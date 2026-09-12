@@ -41,6 +41,15 @@ export function FundHero({ summary }: { summary?: DashboardSummary }) {
           {summary.fundSharePercent}% of every booking, owned by{' '}
           {count(summary.memberCount)} workers
         </p>
+        {summary.openProposals > 0 ? (
+          <p className="mt-1 text-table text-muted">
+            Members are voting on{' '}
+            <span className="tabular text-ink">{count(summary.openProposals)}</span>{' '}
+            {summary.openProposals === 1 ? 'proposal' : 'proposals'}, with{' '}
+            <span className="tabular text-ink">{count(summary.votesCastOnOpenProposals)}</span>{' '}
+            votes cast so far.
+          </p>
+        ) : null}
       </div>
 
       <div className="mt-auto">

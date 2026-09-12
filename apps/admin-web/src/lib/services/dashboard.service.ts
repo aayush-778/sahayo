@@ -2,7 +2,7 @@ import { COOP_FUND_SHARE, WORKER_SHARE, type Paise } from '@sahayo/shared';
 import { DAY_MS, SEED_NOW } from '@/lib/seed';
 import { adminState } from '@/lib/store';
 import { respond } from './latency';
-import { getFundTotals } from './fund.service';
+import { getFundTotals, getOpenVoteSummary } from './fund.service';
 
 export interface DashboardSummary {
   /** The hero figure: what the cooperative fund holds right now. */
@@ -14,6 +14,9 @@ export interface DashboardSummary {
   memberCount: number;
   /** The share of each booking that routes to the fund, as a percentage. */
   fundSharePercent: number;
+  /** Proposals members are voting on right now, and votes cast on them so far. */
+  openProposals: number;
+  votesCastOnOpenProposals: number;
 
   workerPayoutsThisWeek: Paise;
   workerPayoutsDeltaPercent: number;
@@ -43,7 +46,7 @@ function deltaPercent(current: number, previous: number): number {
  */
 export async function getDashboardSummary(): Promise<DashboardSummary> {
   const { bookings, workers } = adminState();
-  const fund = await getFundTotals();
+  const [fund, votes] = await Promise.all([getFundTotals(), getOpenVoteSummary()]);
 
   const now = SEED_NOW.getTime();
   const weekStart = new Date(now - 7 * DAY_MS).toISOString();
@@ -104,6 +107,8 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
     fundGoal: fund.communityGoal,
     memberCount: fund.memberCount,
     fundSharePercent: Math.round(COOP_FUND_SHARE * 100),
+    openProposals: votes.openProposals,
+    votesCastOnOpenProposals: votes.votesCast,
 
     workerPayoutsThisWeek: thisWeek,
     workerPayoutsDeltaPercent: deltaPercent(thisWeek, priorWeek),

@@ -31,6 +31,23 @@ export interface ProposalComment {
   createdAt: IsoDateTime;
 }
 
+/**
+ * One member's vote on one proposal.
+ *
+ * Kept as a record, not just a tally, for two reasons. Each member votes once, and a
+ * count alone cannot enforce that. And the result has to be explainable — how drivers
+ * voted against how cleaners did, how Danapur voted against Kankarbagh — which needs
+ * to know who cast each vote. `votesFor` and `votesAgainst` are always equal to the
+ * count of these by direction.
+ */
+export interface ProposalBallot {
+  workerId: Id;
+  direction: VoteDirection;
+  castAt: IsoDateTime;
+  /** Set when an administrator recorded the vote for a member, e.g. by phone. */
+  recordedByAdminId?: Id;
+}
+
 export interface Proposal {
   id: Id;
   title: string;
@@ -49,6 +66,8 @@ export interface Proposal {
   openedAt: IsoDateTime;
   closesAt: IsoDateTime;
   comments: ProposalComment[];
+  /** Every vote cast, one per member. */
+  ballots: ProposalBallot[];
   /** What the money actually did, recorded once the proposal has concluded. */
   outcomeNote?: string;
 }

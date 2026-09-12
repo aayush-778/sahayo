@@ -6,6 +6,7 @@ import {
   type FundTotals,
   type LoanRequest,
   type Proposal,
+  type ProposalBallot,
   type ProposalComment,
 } from '../types/fund';
 import { idSchema, isoDateTimeSchema, paiseSchema } from './common';
@@ -22,6 +23,13 @@ export const proposalCommentSchema = z.object({
   createdAt: isoDateTimeSchema,
 }) satisfies z.ZodType<ProposalComment>;
 
+export const proposalBallotSchema = z.object({
+  workerId: idSchema,
+  direction: voteDirectionSchema,
+  castAt: isoDateTimeSchema,
+  recordedByAdminId: idSchema.optional(),
+}) satisfies z.ZodType<ProposalBallot>;
+
 export const proposalSchema = z.object({
   id: idSchema,
   title: z.string().min(1).max(200),
@@ -37,6 +45,7 @@ export const proposalSchema = z.object({
   openedAt: isoDateTimeSchema,
   closesAt: isoDateTimeSchema,
   comments: z.array(proposalCommentSchema),
+  ballots: z.array(proposalBallotSchema),
   outcomeNote: z.string().max(1000).optional(),
 }) satisfies z.ZodType<Proposal>;
 

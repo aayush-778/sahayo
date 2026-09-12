@@ -4,6 +4,7 @@ import {
   LedgerDirection,
   LedgerEntryType,
   PLATFORM_SHARE,
+  ProposalStatus,
   WORKER_SHARE,
   type AdminBooking,
   type AdminWorker,
@@ -12,9 +13,13 @@ import {
 } from '@sahayo/shared';
 import { DAY_MS, SEED_NOW, SEEDS, createRng, isoAgo } from './rng';
 import { BOOKING_WINDOW_DAYS, isCompletedBooking } from './bookings';
+import { FUND_PROGRAMMES } from './fund-programmes';
 
 /** How many reversing entries the seed includes, so the append-only UI has real ones. */
 export const SEEDED_REVERSAL_COUNT = 6;
+
+/** How many months of contributions before the booking window are carried over. */
+const CARRIED_OVER_MONTHS = 21;
 
 /** Payouts older than this have already been released to the worker's bank. */
 export const RELEASE_AFTER_DAYS = 3;
@@ -199,102 +204,74 @@ export function buildLedger(bookings: AdminBooking[], workers: AdminWorker[]): L
   /*
    * The fund's history before this window.
    *
-   * The 90 days of bookings above are the visible slice of a platform that has
-   * been running for two years — workers joined up to 760 days ago and carry
-   * lifetime contribution figures on their profiles. Without these entries the
-   * fund would show about ₹62,000 while the worker profiles added up to
-   * ₹37,00,000, and the two screens would contradict each other in front of
-   * anyone who looked at both.
+   * The 90 days of bookings above are the visible slice of a platform that has been
+   * running for about two years — workers joined up to 760 days ago and carry lifetime
+   * contribution figures on their profiles. What they contributed before the window is
+   * derived, not invented: the sum of every worker's lifetime contribution, less what
+   * the window's bookings already account for, so the fund and the worker profiles
+   * reconcile by construction.
    *
-   * So the opening balance is derived, not invented: it is the sum of what every
-   * worker has contributed over their lifetime, less what the window's bookings
-   * already account for. The figures reconcile by construction.
+   * It is posted as one row per month rather than one lump. A single opening-balance
+   * row drew the fund's twelve-month chart as a flat line that jumped by lakhs in one
+   * month, which is not how a fund fed by 5% of every booking grows. Months are
+   * weighted to rise over time, the way a platform's bookings do, and the last month
+   * takes the rounding remainder so the rows sum to the derived total exactly.
    */
   const lifetimeContributed = workers.reduce((sum, worker) => sum + worker.fundContributed, 0);
   const windowContributed = entries
     .filter((entry) => entry.type === LedgerEntryType.COOP_FUND_CONTRIBUTION)
     .reduce((sum, entry) => sum + entry.amount, 0);
-  const openingBalance = Math.max(0, lifetimeContributed - windowContributed);
+  const carriedOver = Math.max(0, lifetimeContributed - windowContributed);
 
-  entries.push({
-    id: rng.uuid(),
-    type: LedgerEntryType.COOP_FUND_CONTRIBUTION,
-    account: LedgerAccount.COOP_FUND,
-    direction: LedgerDirection.CREDIT,
-    amount: openingBalance,
-    description: 'Opening balance: cooperative fund contributions before this period.',
-    referenceKey: 'coop-fund:opening-balance',
-    createdAt: isoAgo(BOOKING_WINDOW_DAYS + 1),
+  const weights = Array.from({ length: CARRIED_OVER_MONTHS }, (_, index) => index + 1);
+  const weightTotal = weights.reduce((sum, weight) => sum + weight, 0);
+  let allocated = 0;
+
+  weights.forEach((weight, index) => {
+    const isLast = index === weights.length - 1;
+    const amount = isLast ? carriedOver - allocated : Math.floor((carriedOver * weight) / weightTotal);
+    allocated += amount;
+    /* Oldest first: index 0 is the furthest month back. */
+    const daysAgo = BOOKING_WINDOW_DAYS + 1 + (CARRIED_OVER_MONTHS - 1 - index) * 30;
+    const createdAt = isoAgo(daysAgo);
+    const month = new Date(createdAt).toLocaleDateString('en-IN', {
+      month: 'long',
+      year: 'numeric',
+    });
+    entries.push({
+      id: rng.uuid(),
+      type: LedgerEntryType.COOP_FUND_CONTRIBUTION,
+      account: LedgerAccount.COOP_FUND,
+      direction: LedgerDirection.CREDIT,
+      amount,
+      description: `Member contributions for ${month}, carried over from the earlier register.`,
+      referenceKey: `coop-fund:carried-over:${index}`,
+      createdAt,
+    });
   });
 
   /*
-   * And what the fund has already spent.
-   *
-   * A fund that only ever took money in would be a savings account, not a
-   * cooperative — the whole claim is that members decide what it pays for, and
-   * the Past Decisions list has to have something true to show. These are the
-   * programmes the membership has funded, each dated before the window.
+   * What the fund has spent: one row per programme the members voted through, for
+   * exactly the amount they approved, dated just after the vote closed. These come from
+   * FUND_PROGRAMMES, the same list the proposals are built from, so the fund page's
+   * past decisions and its ledger can never disagree about what was paid for.
    */
-  for (const programme of HISTORICAL_DISBURSEMENTS) {
+  for (const programme of FUND_PROGRAMMES) {
+    if (programme.status !== ProposalStatus.PASSED || programme.disbursedDaysAgo === undefined) {
+      continue;
+    }
     entries.push({
       id: rng.uuid(),
       type: LedgerEntryType.COOP_FUND_DISBURSEMENT,
       account: LedgerAccount.COOP_FUND,
       direction: LedgerDirection.DEBIT,
-      amount: Math.round(openingBalance * programme.share),
-      description: programme.description,
-      referenceKey: `coop-fund:${programme.key}`,
-      createdAt: isoAgo(programme.daysAgo),
+      amount: programme.amountRupees * 100,
+      description: `Paid for "${programme.title}", as the members voted.`,
+      referenceKey: `coop-fund:programme:${programme.key}`,
+      createdAt: isoAgo(programme.disbursedDaysAgo),
     });
   }
 
   /* Oldest first, so the ledger reads as a chronological record. */
   return entries.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 }
-
-/**
- * What the fund has paid for, as a share of the opening balance.
- *
- * Shares rather than fixed amounts so the history scales with the platform: if
- * the worker cohort grows, the fund's past spending grows with its past income
- * instead of becoming a rounding error. They total 0.30, leaving the fund holding
- * roughly 70% of what it has ever collected — enough to cover the micro-loan
- * queue with headroom, which is the state the loan page needs to be demonstrable.
- */
-const HISTORICAL_DISBURSEMENTS: ReadonlyArray<{
-  key: string;
-  description: string;
-  share: number;
-  daysAgo: number;
-}> = [
-  {
-    key: 'health-insurance-premium',
-    description: 'Group health insurance premium, first year.',
-    share: 0.12,
-    daysAgo: 280,
-  },
-  {
-    key: 'monsoon-gear',
-    description: 'Monsoon gear for everyone working outdoors.',
-    share: 0.05,
-    daysAgo: 210,
-  },
-  {
-    key: 'accident-claims',
-    description: 'Accident cover claims paid to four members.',
-    share: 0.04,
-    daysAgo: 160,
-  },
-  {
-    key: 'tool-loans',
-    description: 'Tool replacement loans, since repaid.',
-    share: 0.05,
-    daysAgo: 120,
-  },
-  {
-    key: 'training-bursaries',
-    description: 'Trade certificate fees for eleven members.',
-    share: 0.04,
-    daysAgo: 95,
-  },
-];

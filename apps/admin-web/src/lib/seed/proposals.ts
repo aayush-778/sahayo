@@ -1,81 +1,26 @@
 import {
   PROPOSAL_QUORUM_SHARE,
   ProposalStatus,
+  VoteDirection,
   type AdminWorker,
   type LoanRequest,
   type Proposal,
+  type ProposalBallot,
   type ProposalComment,
 } from '@sahayo/shared';
-import { SEEDS, createRng, isoAgo } from './rng';
+import { FUND_PROGRAMMES } from './fund-programmes';
+import { DAY_MS, SEEDS, SEED_NOW, createRng, isoAgo } from './rng';
 
 export const LOAN_REQUEST_COUNT = 12;
 
-/**
- * The seven things the members have been asked to vote on.
- *
- * Written in the language a worker would use, not a fund manager. "Help with
- * hospital bills" rather than "healthcare capital allocation" — the copy rules in
- * CLAUDE.md ban that vocabulary, and this is the page where it would be most
- * tempting.
- */
-const PROPOSAL_TOPICS: ReadonlyArray<{
-  title: string;
-  description: string;
-  amountRupees: number;
-}> = [
-  {
-    title: 'Health insurance for every member',
-    description:
-      'Put part of the fund toward a group health policy so a hospital stay does not wipe out a family. Covers the member, a spouse and two children.',
-    amountRupees: 240000,
-  },
-  {
-    title: 'Monsoon gear for outdoor work',
-    description:
-      'Waterproof jackets, boots and covered toolbags for everyone working outdoors between June and September. Paid once, used every year.',
-    amountRupees: 85000,
-  },
-  {
-    title: 'Small loans to replace tools',
-    description:
-      'A standing pot for tool loans, repaid over six months with no interest. A plumber without a wrench cannot work, and a moneylender charges 40%.',
-    amountRupees: 150000,
-  },
-  {
-    title: 'Childcare help during school holidays',
-    description:
-      'Share the cost of a supervised day space so members with young children can still take work through the holidays.',
-    amountRupees: 110000,
-  },
-  {
-    title: 'Accident cover for everyone on the road',
-    description:
-      'Cover for injury on the way to or from a job. Drivers and electricians carry the most risk and currently carry it alone.',
-    amountRupees: 175000,
-  },
-  {
-    title: 'Paid training toward a trade certificate',
-    description:
-      'Fees and lost earnings for members taking a recognised trade certificate. A certified electrician earns more for the same hours.',
-    amountRupees: 95000,
-  },
-  {
-    title: 'Fuel advance for drivers',
-    description:
-      'A small advance at the start of the week so drivers are not paying for fuel out of pocket before they have been paid for the work.',
-    amountRupees: 60000,
-  },
-];
-
 const COMMENT_BODIES = [
   'This would have helped me last year. I am for it.',
-  'Can we see what the premium works out to per member per month?',
-  'Good idea, but six months is tight for repayment on a bigger loan.',
+  'Can we see what it works out to per member per month?',
+  'Good idea, but I would like the amount checked before we vote it through.',
   'My brother works on a platform with nothing like this. We should do it.',
-  'I would rather the money went to the accident cover first.',
+  'I would rather this came after the health cover, not before it.',
 ] as const;
 
-/** What workers actually ask a small loan for. */
 const LOAN_PURPOSES = [
   'Replace a stolen toolkit',
   'Repair the motorcycle I travel to jobs on',
@@ -92,50 +37,71 @@ const LOAN_PURPOSES = [
 ] as const;
 
 /**
- * The governance record.
+ * Turnout and support per programme, as [min, max] ranges.
  *
- * Three proposals are open and being voted on; the rest have concluded and carry
- * an outcome note saying what the money actually did. Concluded proposals are
- * never removed — that chronological record is the trust artifact of the whole
- * platform, and a fund whose history can be edited proves nothing.
+ * The status of a programme is fixed in FUND_PROGRAMMES, so the tally has to be drawn
+ * to agree with it: a PASSED programme reaches quorum with more votes for than
+ * against, a REJECTED one reaches quorum with more against. The three open votes are
+ * drawn at different stages — one past quorum, two still short of it — so the quorum
+ * indicator has something real to say on each card.
+ */
+function tallyRange(
+  status: ProposalStatus,
+  openIndex: number,
+): { turnout: [number, number]; forShare: [number, number] } {
+  if (status === ProposalStatus.PASSED) return { turnout: [92, 126], forShare: [0.58, 0.84] };
+  if (status === ProposalStatus.REJECTED) return { turnout: [88, 118], forShare: [0.24, 0.42] };
+  if (status === ProposalStatus.QUORUM_NOT_MET) return { turnout: [40, 70], forShare: [0.5, 0.8] };
+  const open: [number, number][] = [
+    [88, 104],
+    [62, 76],
+    [34, 48],
+  ];
+  return { turnout: open[openIndex % open.length], forShare: [0.48, 0.78] };
+}
+
+/**
+ * The governance record: every proposal the members have voted on.
+ *
+ * Built from FUND_PROGRAMMES — the same list the ledger's fund spending comes from —
+ * so a proposal marked as passed has a matching payment in the ledger for exactly the
+ * amount approved, and nothing is paid for that was not voted through.
+ *
+ * Each proposal carries one ballot per member who voted, drawn from the real worker
+ * records. The tallies are counted from those ballots, which is what lets the detail
+ * view break a vote down by trade and by zone, and lets the service refuse a second
+ * vote from the same member.
  */
 export function buildProposals(workers: AdminWorker[]): Proposal[] {
   const rng = createRng(SEEDS.proposals);
   const electorate = workers.length;
   const quorum = Math.ceil(electorate * PROPOSAL_QUORUM_SHARE);
+  let openIndex = 0;
 
-  return PROPOSAL_TOPICS.map((topic, index) => {
-    const isOpen = index < 3;
+  return FUND_PROGRAMMES.map((programme) => {
+    const isOpen = programme.status === ProposalStatus.OPEN;
+    const range = tallyRange(programme.status, isOpen ? openIndex++ : 0);
+    const turnout = Math.min(electorate, rng.int(range.turnout[0], range.turnout[1]));
+    const forCount = Math.round(turnout * rng.float(range.forShare[0], range.forShare[1]));
+
+    const openedAt = isoAgo(programme.openedDaysAgo);
+    const closesAt = isOpen
+      ? isoAgo(-(programme.closesInDays ?? 7))
+      : isoAgo(programme.closedDaysAgo ?? 0);
+
+    /* Votes land between the vote opening and the earlier of its close or now. */
+    const firstVote = new Date(openedAt).getTime();
+    const lastVote = Math.min(new Date(closesAt).getTime(), SEED_NOW.getTime());
+    const ballots: ProposalBallot[] = rng.sample(workers, turnout).map((voter, index) => ({
+      workerId: voter.id,
+      direction: index < forCount ? VoteDirection.FOR : VoteDirection.AGAINST,
+      castAt: new Date(firstVote + rng.float(0, 1) * Math.max(DAY_MS, lastVote - firstVote)).toISOString(),
+    }));
+
+    const votesFor = ballots.filter((ballot) => ballot.direction === VoteDirection.FOR).length;
+    const votesAgainst = ballots.length - votesFor;
+
     const proposer = rng.pick(workers);
-
-    /*
-     * Turnout, then the split of it. Deriving both from turnout rather than
-     * drawing votesFor and votesAgainst independently keeps the quorum
-     * indicator honest: a proposal cannot show more votes cast than members.
-     */
-    const turnout = isOpen ? rng.int(48, electorate) : rng.int(62, electorate);
-    const forShare = rng.float(0.35, 0.92);
-    const votesFor = Math.round(turnout * forShare);
-    const votesAgainst = turnout - votesFor;
-
-    /*
-     * Status follows from the arithmetic rather than being picked. Quorum is
-     * about participation: a proposal can fail quorum with every vote in favour,
-     * and the card says exactly that instead of calling it a rejection.
-     */
-    let status: Proposal['status'];
-    if (isOpen) {
-      status = ProposalStatus.OPEN;
-    } else if (turnout < quorum) {
-      status = ProposalStatus.QUORUM_NOT_MET;
-    } else {
-      status = votesFor > votesAgainst ? ProposalStatus.PASSED : ProposalStatus.REJECTED;
-    }
-
-    const openedDaysAgo = isOpen ? rng.int(3, 11) : rng.int(40, 300);
-    /* An open proposal closes in the future; a concluded one closed in the past. */
-    const closesDaysAgo = isOpen ? -rng.int(2, 9) : openedDaysAgo - rng.int(14, 21);
-
     const comments: ProposalComment[] = rng
       .sample(workers, rng.int(2, 4))
       .map((author, commentIndex) => ({
@@ -143,31 +109,26 @@ export function buildProposals(workers: AdminWorker[]): Proposal[] {
         authorId: author.id,
         authorName: author.name,
         body: rng.pick(COMMENT_BODIES),
-        createdAt: isoAgo(Math.max(0, openedDaysAgo - commentIndex - 1)),
+        createdAt: isoAgo(Math.max(0, programme.openedDaysAgo - commentIndex - 1)),
       }));
 
     return {
       id: rng.uuid(),
-      title: topic.title,
-      description: topic.description,
-      amountRequested: topic.amountRupees * 100,
+      title: programme.title,
+      description: programme.description,
+      amountRequested: programme.amountRupees * 100,
       proposerId: proposer.id,
       proposerName: proposer.name,
       votesFor,
       votesAgainst,
       quorum,
       electorate,
-      status,
-      openedAt: isoAgo(openedDaysAgo),
-      closesAt: isoAgo(closesDaysAgo),
+      status: programme.status,
+      openedAt,
+      closesAt,
       comments,
-      ...(status === ProposalStatus.PASSED
-        ? { outcomeNote: `Approved. ${topic.title.toLowerCase()} has been in place since.` }
-        : status === ProposalStatus.REJECTED
-          ? { outcomeNote: 'Members voted against. Revisit with a smaller amount.' }
-          : status === ProposalStatus.QUORUM_NOT_MET
-            ? { outcomeNote: 'Not enough members voted for the result to count.' }
-            : {}),
+      ballots,
+      ...(programme.outcome ? { outcomeNote: programme.outcome } : {}),
     } satisfies Proposal;
   });
 }

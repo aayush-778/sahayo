@@ -90,6 +90,8 @@ export interface AdminState {
   /* --- fund -------------------------------------------------------------- */
 
   updateProposal(proposalId: string, patch: Partial<Proposal>): void;
+  /** Adds a newly put-forward proposal, newest first. */
+  addProposal(proposal: Proposal): void;
   updateLoanRequest(loanId: string, patch: Partial<LoanRequest>): void;
 
   /* --- bookings ---------------------------------------------------------- */
@@ -177,6 +179,10 @@ export const useAdminStore = create<AdminState>((set, get) => ({
 
   updateProposal(proposalId, patch) {
     set((state) => ({ proposals: patchById(state.proposals, proposalId, patch) }));
+  },
+
+  addProposal(proposal) {
+    set((state) => ({ proposals: [proposal, ...state.proposals] }));
   },
 
   updateLoanRequest(loanId, patch) {
