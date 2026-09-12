@@ -185,6 +185,7 @@ export function DataTable<T, TValue = unknown>({
       {!isLoading && rows.length === 0
         ? (empty ?? (
             <EmptyState
+              className="px-5 py-6"
               title="Nothing matches these filters"
               description="Widen the category, zone, or status filters above to bring rows back."
             />

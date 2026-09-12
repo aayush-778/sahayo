@@ -38,9 +38,23 @@ Extracted from your PDF and the SunEnergy / Crextio / DriveOn screenshots. Phase
 
 Banned outright: terracotta/clay `#D97757`, neon gradients, glassmorphism, dark mode, `rgba(0,0,0,0.1)` shadows, emoji as icons.
 
-**Depth.** Page background carries a fixed radial glow — `radial-gradient(1200px circle at 0% 0%, rgba(245,184,20,0.08) 0%, rgba(245,184,20,0.03) 40%, transparent 100%)` — so it reads like light falling on paper, the way the SunEnergy shots do. Cards use a double shadow: `0 1px 3px rgba(31,27,22,0.03), 0 12px 32px rgba(31,27,22,0.05)`. Radii: `24px` structural cards, `12px` icon tiles, `999px` status pills.
+**Depth.** The warmth comes from a *layered* background, not one radial. A single large radial pinned to the corner spreads a flat beige wash and reads as dirty white. Three stacked layers on a fixed full-viewport element behind everything:
 
-**Type.** Plus Jakarta Sans throughout, loaded via `next/font/google` with `display: swap`. The entire interface is English — one family, no second script. Rupee figures still render as ₹, which Plus Jakarta Sans covers. Monospace is permitted *only* for tabular figures in ledgers and chart axes — nowhere decorative. Scale: 36px tabular hero metric / 24px section titles / 15px body / 13px table text / 12px pills.
+```
+background-color: #FDF9F0;                                  /* warm cream base */
+background-image:
+  radial-gradient(900px circle at 12% -5%,
+    rgba(245,184,20,0.22) 0%, rgba(245,184,20,0.08) 35%, transparent 68%),
+  radial-gradient(1100px circle at 95% 8%,
+    rgba(254,243,212,0.55) 0%, transparent 60%),
+  linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 45%);
+```
+
+The relationship that matters: **the whole canvas is cream, and cards are pure white.** Sidebar, header and main all sit on the same cream ground with no white panel behind the nav — only a hairline divider. If the sidebar is white and the content area is beige, the depth reads inverted and the page looks unfinished.
+
+Cards use a double shadow: `0 1px 2px rgba(31,27,22,0.04), 0 8px 24px rgba(31,27,22,0.06)`. Radii: `20px` structural cards, `12px` icon tiles, `999px` status pills.
+
+**Type.** Two families, clearly distinct in job. **Outfit** for headings and large display numbers — geometric, round, light-set, which is what gives the SunEnergy screens their warmth. **Plus Jakarta Sans** for body, tables, labels and buttons, where Outfit's wide geometry would hurt density. Display sizes run at weight 500–600 with `-0.02em` tracking, never 700 at default tracking. Interface is English only; no third family, no second script. Monospace is permitted *only* for tabular figures in ledgers and chart axes — nowhere decorative. Scale: 36px tabular hero metric / 24px section titles / 15px body / 13px table text / 12px pills.
 
 **Layout.** `grid-cols-12` where content dictates span. Identical four-across stat cards are the single biggest slop tell, so the dashboard's top row is deliberately asymmetric: one hero block spanning 5, three smaller stats sharing 7. Fixed sidebar, fixed header, only `<main>` scrolls.
 
@@ -82,8 +96,9 @@ Scope: apps/admin-web — design system, fonts, and application shell.
 Create src/styles/tokens.css defining these as HSL triplets (not hex, not
 oklch — Tailwind 3.4 needs bare triplets so `hsl(var(--x))` works):
 
-  --ground        #FFFDFB   warm paper page background
-  --surface       #FFFFFF   elevated cards
+  --ground        #FDF9F0   warm cream canvas (sidebar, header and main
+                            all sit on this — nothing else)
+  --surface       #FFFFFF   elevated cards, pure white against the cream
   --marigold      #F5B814   primary actions, active nav, hero metric
   --marigold-tint #FEF3D4   icon tiles and the page radial glow
   --fund-green    #34C77B   cooperative fund, positive delta, KYC verified
@@ -99,38 +114,89 @@ tailwind.config.ts colors to expose every token as a utility
 no hardcoded hex values may exist in any component for the rest of the build.
 
 Also extend the theme with:
-  boxShadow.card = '0 1px 3px rgba(31,27,22,0.03), 0 12px 32px rgba(31,27,22,0.05)'
-  borderRadius.card = '24px', borderRadius.tile = '12px'
+  boxShadow.card = '0 1px 2px rgba(31,27,22,0.04), 0 8px 24px rgba(31,27,22,0.06)'
+  borderRadius.card = '20px', borderRadius.tile = '12px'
 
 ## 2. Fonts
 
-next/font/google: Plus Jakarta Sans only (weights 400/500/600/700,
-variable --font-sans, subsets ['latin'], display:'swap'). Apply it on <html>.
-Do NOT add a second typeface or a Devanagari font — the entire product is
-English. Set font-feature-settings 'tnum' 1 on a .tabular utility class for
-financial figures, and confirm ₹ renders correctly at 36px.
+next/font/google, two families with strictly separated jobs, both
+subsets ['latin'], display:'swap':
+
+  Outfit             --font-display   weights 400/500/600
+                     Headings, page titles, card titles, and every large
+                     display number. Geometric and round — this is what
+                     produces the warm SunEnergy feel.
+  Plus Jakarta Sans  --font-sans      weights 400/500/600
+                     Body, tables, labels, buttons, form controls.
+
+Type scale, and these weights are deliberate — do not raise them:
+  Page title      30px / Outfit 500 / tracking -0.02em
+  Hero metric     40px / Outfit 500 / tracking -0.03em / tabular figures
+  Card title      17px / Outfit 500 / tracking -0.01em
+  Body            14.5px / Jakarta 400 / line-height 1.55
+  Table cell      13.5px / Jakarta 400
+  Label, pill     12px / Jakarta 500
+
+Weight 700 is banned everywhere in the product. Emphasis comes from size
+and colour, not from bolding. Set font-feature-settings 'tnum' 1 on a
+.tabular utility class and confirm ₹ renders correctly at 40px.
+Do not add a third family and do not add a Devanagari font — the entire
+product is English.
 
 ## 3. App shell — src/app/(admin)/layout.tsx
 
 Fixed viewport, native-app feel, no full-window scroll:
   body: h-screen w-screen overflow-hidden m-0 p-0
-  A fixed absolute radial glow div behind everything:
-    radial-gradient(1200px circle at 0% 0%, rgba(245,184,20,0.08) 0%,
-                    rgba(245,184,20,0.03) 40%, transparent 100%)
-  Parent: flex h-screen w-screen overflow-hidden
-  <aside>: flex-none w-64 h-full, hairline right border, bg-surface
-  Right: flex-1 flex flex-col h-full min-w-0
-    Header: flex-none, h-16
+
+  A single fixed, pointer-events-none, z-0 element covering the viewport
+  carries the whole background. Three layers, not one radial — one large
+  corner radial produces a flat beige wash that reads as dirty white:
+
+    background-color: #FDF9F0;
+    background-image:
+      radial-gradient(900px circle at 12% -5%,
+        rgba(245,184,20,0.22) 0%, rgba(245,184,20,0.08) 35%,
+        transparent 68%),
+      radial-gradient(1100px circle at 95% 8%,
+        rgba(254,243,212,0.55) 0%, transparent 60%),
+      linear-gradient(180deg, rgba(255,255,255,0.55) 0%,
+        rgba(255,255,255,0) 45%);
+
+  Parent: flex h-screen w-screen overflow-hidden, bg-transparent
+  <aside>: flex-none w-64 h-full, bg-transparent, hairline right border
+  Right: flex-1 flex flex-col h-full min-w-0, bg-transparent
+    Header: flex-none, h-16, bg-transparent, hairline bottom border
     <main>: flex-1 overflow-y-auto px-8 py-6
 
+THE RELATIONSHIP THAT MATTERS: sidebar, header and main all sit on the
+same cream ground and are transparent. Cards are the only white surfaces.
+Do not give the sidebar or header a bg-surface panel — a white sidebar
+against a beige canvas inverts the depth and looks unfinished.
+
+Hide scrollbars visually while keeping them functional: scrollbar-width
+none plus ::-webkit-scrollbar { display: none } on <main> and the nav. A
+visible grey system scrollbar down the middle of the layout breaks the
+native-app feel immediately.
+
 Sidebar contents — wordmark "Sahayo" with a marigold diamond glyph, then
-nav grouped under four small muted 11px labels:
-  MENU      Dashboard, Live Dispatch, Bookings
-  PEOPLE    Workers, Customers, Verification
-  MONEY     Finance, Cooperative Fund
-  INSIGHT   Analytics, Disputes, Settings
-Active item: marigold-tint pill background, ink text, icon in ink.
-Inactive: transparent, muted text and icon. Use usePathname().
+nav in four groups:
+  Dashboard, Live Dispatch, Bookings
+  Workers, Customers, Verification
+  Finance, Cooperative Fund
+  Analytics, Disputes, Settings
+
+Separate the groups with 20px of space and a hairline rule. Do NOT label
+them with tracked-out uppercase words like MENU / PEOPLE / MONEY /
+INSIGHT — uppercase eyebrow labels are the single most recognisable
+generated-UI tell, and the icons plus grouping already carry the meaning.
+If a label is truly needed, use sentence case at 12px in muted, with
+normal tracking.
+
+Group spacing should be tight: 40px item height, 2px gap, 12px horizontal
+padding. The current spacing reads airy and template-like.
+Active item: marigold-tint pill, ink text, marigold icon.
+Inactive: transparent, muted text and icon, hover gets a 40%-opacity
+marigold-tint wash. Use usePathname().
 Sidebar footer: the signed-in admin — 32px avatar, name, role, matching the
 profile-chip pattern in the reference screenshots.
 
@@ -152,7 +218,13 @@ bg-surface — this is the SunEnergy header treatment.
                   resolved. Tinted background, no border, 12px, 999px radius.
   SegmentedToggle Day/Month/Year style control — marigold-tint active
                   segment on a hairline track.
-  EmptyState      illustration slot, one line of direction, one action.
+  EmptyState      LEFT-ALIGNED, not centered, and never a large centered
+                  rounded box floating in the middle of the viewport — that
+                  is the most recognisable generated empty state there is.
+                  Sits inline at the top of the region it belongs to:
+                  a 15px ink line of direction, a 13.5px muted line of
+                  detail, one action button. No icon tile, no card
+                  wrapper, max-width 420px.
   DataTable       wrapper over TanStack Table: sortable headers in muted
                   uppercase 12px, hairline row separators, NO vertical grid
                   lines, NO zebra striping, 56px rows, hover row wash in
@@ -784,6 +856,8 @@ these keystrokes before they land.
   8. Every button label is a verb naming its effect ("Approve worker",
      not "Submit"), and the toast that follows uses the same word.
   9. No "→" appended to button or link text.
+  9b. No font-weight 700 anywhere. No visible system scrollbars. No white
+     sidebar or header panel — both are transparent on the cream ground.
  10. Screenshot every page at 1280x720 and review: does any page look
      interchangeable with a generic SaaS template? Fix what does.
 

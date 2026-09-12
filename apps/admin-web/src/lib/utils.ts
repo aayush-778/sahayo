@@ -14,7 +14,7 @@ import { extendTailwindMerge } from 'tailwind-merge';
  * Keep these lists in step with theme.extend in tailwind.config.ts. A new token
  * colour or font size added there must be added here in the same commit.
  */
-const FONT_SIZES = ['pill', 'table', 'body', 'section', 'hero'] as const;
+const FONT_SIZES = ['pill', 'table', 'body', 'card-title', 'stat', 'page-title', 'hero'] as const;
 
 const TOKEN_COLORS = [
   'ground',

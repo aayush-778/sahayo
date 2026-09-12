@@ -1,40 +1,34 @@
-import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { Inbox } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { IconTile } from './IconTile';
-import type { Tint } from './tint';
 
 export interface EmptyStateProps {
+  /** One 15px line of direction. Say what is missing in plain words. */
   title: string;
   /**
-   * One line of direction telling the reader what to do next. "No data" is not
-   * acceptable copy — say why it is empty and what would fill it.
+   * One 13.5px line of detail saying what would fill the region. "No data" is
+   * not acceptable copy — the reader should learn what to do next.
    */
   description: string;
-  icon?: LucideIcon;
-  tint?: Tint;
   /** A single action. Two choices in an empty state is one too many. */
   action?: ReactNode;
   className?: string;
 }
 
-export function EmptyState({
-  title,
-  description,
-  icon = Inbox,
-  tint = 'muted',
-  action,
-  className,
-}: EmptyStateProps) {
+/**
+ * Left-aligned and inline at the top of the region it belongs to.
+ *
+ * Deliberately NOT a large centred rounded box floating in the middle of the
+ * viewport with a centred icon tile above two centred lines. That shape is the
+ * most recognisable generated empty state there is, and because every feature
+ * page consumes this primitive, getting it wrong would propagate the look
+ * through the whole product. No card wrapper, no icon tile, no centring.
+ */
+export function EmptyState({ title, description, action, className }: EmptyStateProps) {
   return (
-    <div className={cn('flex flex-col items-center gap-3 px-6 py-12 text-center', className)}>
-      <IconTile icon={icon} tint={tint} />
-      <div className="max-w-sm">
-        <p className="font-semibold text-ink">{title}</p>
-        <p className="mt-1 text-table text-muted">{description}</p>
-      </div>
-      {action ? <div className="mt-1">{action}</div> : null}
+    <div className={cn('max-w-[420px] py-2 text-left', className)}>
+      <p className="text-body text-ink">{title}</p>
+      <p className="mt-1 text-table text-muted">{description}</p>
+      {action ? <div className="mt-3">{action}</div> : null}
     </div>
   );
 }

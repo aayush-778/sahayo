@@ -12,9 +12,16 @@
  */
 :root {
   /* --- Surfaces ------------------------------------------------------- */
-  /* #FFFDFB — warm paper page background. Never pure white. */
-  --ground: 30 100% 99.2%;
-  /* #FFFFFF — elevated cards sitting on the ground. */
+  /*
+   * #FDF9F0 — the warm cream canvas. The sidebar, the header and <main> all
+   * sit on this and nothing else does. Never pure white.
+   *
+   * The contrast between this and --surface is the entire depth effect. If a
+   * white card stops reading as raised against the canvas, push this toward
+   * #FCF6EA (40 75% 95.3%) rather than darkening the card.
+   */
+  --ground: 41.5 76.5% 96.7%;
+  /* #FFFFFF — cards, and cards only. The one pure-white surface. */
   --surface: 0 0% 100%;
 
   /* --- Brand ---------------------------------------------------------- */

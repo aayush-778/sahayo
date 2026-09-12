@@ -1,16 +1,26 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
-import { Plus_Jakarta_Sans } from 'next/font/google';
+import { Outfit, Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
 
 /*
- * One family for the entire product. Do not add a second typeface, and do not
- * add a Devanagari face — the admin portal is English throughout. Plus Jakarta
- * Sans covers ₹ at every weight we load, including the 36px hero metric.
+ * Two families, loaded once here, with strictly separated jobs. Outfit is
+ * geometric and round and takes every heading and large display number; Plus
+ * Jakarta Sans takes body, tables, labels and controls. Neither is loaded at
+ * weight 700 — that weight is banned product-wide, so shipping it would only
+ * invite its use. Do not add a third family or a Devanagari face; the product
+ * is English throughout.
  */
+const outfit = Outfit({
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  variable: '--font-display',
+  display: 'swap',
+});
+
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
+  weight: ['400', '500', '600'],
   variable: '--font-sans',
   display: 'swap',
 });
@@ -22,7 +32,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={plusJakartaSans.variable}>
+    <html lang="en" className={`${outfit.variable} ${plusJakartaSans.variable}`}>
       <body className="font-sans text-body">{children}</body>
     </html>
   );

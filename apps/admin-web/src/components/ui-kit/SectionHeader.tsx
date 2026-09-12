@@ -25,9 +25,7 @@ export function SectionHeader({
   return (
     <div className={cn('flex items-start justify-between gap-4', className)}>
       <div className="min-w-0">
-        <Heading className="text-section font-semibold tracking-[-0.01em] text-ink">
-          {title}
-        </Heading>
+        <Heading className="font-display text-card-title font-medium text-ink">{title}</Heading>
         {subtitle ? <p className="mt-1 text-table text-muted">{subtitle}</p> : null}
       </div>
       {action ? <div className="flex-none">{action}</div> : null}

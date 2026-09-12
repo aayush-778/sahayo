@@ -51,8 +51,8 @@ export function StatBlock({
         <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <span
             className={cn(
-              'tabular font-bold tracking-[-0.02em] text-ink',
-              isHero ? 'text-hero' : 'text-section',
+              'tabular font-display font-medium text-ink',
+              isHero ? 'text-hero' : 'text-stat',
             )}
           >
             {value}

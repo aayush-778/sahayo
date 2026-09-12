@@ -14,22 +14,30 @@ import {
 import { findNavItem } from '@/lib/nav/routes';
 import { CURRENT_ADMIN } from '@/lib/nav/session';
 
-/** Every header control is a hairline-bordered pill on the surface colour. */
+/**
+ * Every header control is a hairline-bordered pill on the white surface. The
+ * controls are the only white in the header — the header bar itself is
+ * transparent over the cream canvas.
+ */
 const CONTROL =
   'inline-flex h-9 items-center justify-center rounded-pill border border-hairline bg-surface text-muted transition-colors hover:text-ink';
 
 /**
  * Fixed page header. The title and subtitle come from the nav model, so a route
  * cannot be called one thing in the sidebar and another thing here.
+ *
+ * The title is 30px Outfit at weight 500. It is deliberately not bold: at 64px
+ * of header height the size alone carries the hierarchy, and a 700-weight title
+ * at default tracking is the generic dashboard voice.
  */
 export function Header() {
   const pathname = usePathname();
   const active = findNavItem(pathname);
 
   return (
-    <header className="flex h-16 flex-none items-center justify-between gap-6 border-b border-hairline bg-surface px-8">
+    <header className="flex h-16 flex-none items-center justify-between gap-6 border-b border-hairline bg-transparent px-8">
       <div className="min-w-0">
-        <h1 className="truncate text-lg font-bold tracking-[-0.02em] text-ink">
+        <h1 className="truncate font-display text-page-title font-medium text-ink">
           {active?.label ?? 'Sahayo'}
         </h1>
         <p className="truncate text-pill text-muted">
@@ -71,7 +79,7 @@ export function Header() {
         <DropdownMenu>
           <DropdownMenuTrigger className={`${CONTROL} gap-2 pl-1 pr-2.5`}>
             <Avatar name={CURRENT_ADMIN.name} src={CURRENT_ADMIN.avatarUrl} size={28} />
-            <span className="hidden text-table font-semibold text-ink lg:inline">
+            <span className="hidden text-table font-medium text-ink lg:inline">
               {CURRENT_ADMIN.name}
             </span>
             <ChevronDown size={16} strokeWidth={1.5} aria-hidden />

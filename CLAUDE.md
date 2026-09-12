@@ -177,8 +177,8 @@ rather than by asking nicely each session. The portal is English throughout.
 
 | Token | Hex | The only thing it is for |
 | --- | --- | --- |
-| `--ground` | `#FFFDFB` | Page background. Warm paper, never pure white. |
-| `--surface` | `#FFFFFF` | Elevated cards sitting on the ground. |
+| `--ground` | `#FDF9F0` | The cream canvas. Sidebar, header and `<main>` all sit on it. |
+| `--surface` | `#FFFFFF` | Cards, and cards only. The one pure-white surface. |
 | `--marigold` | `#F5B814` | Primary actions, active nav, the hero metric. |
 | `--marigold-tint` | `#FEF3D4` | Icon tiles, the page radial glow, active row wash. |
 | `--fund-green` | `#34C77B` | Cooperative Fund, positive deltas, verified KYC. Nothing else. |
@@ -203,21 +203,51 @@ shadcn component added later inherits the warm palette for free.
 - Terracotta / clay (`#D97757` and its neighbours) is banned.
 - **No dark mode.** `darkMode` is absent from `tailwind.config.ts` and there is
   no `.dark` block in `globals.css`. Do not reintroduce either.
-- No glassmorphism, no neon, no multi-stop or decorative gradients. The one
-  gradient in the product is the fixed page glow in the `.page-glow` utility.
-- No `box-shadow` using `rgba(0,0,0,*)`. The only shadow is `shadow-card`, whose
-  two layers use warm ink — cold grey shadows fight the paper ground.
+- **The canvas is cream and cards are white.** The sidebar, the header and
+  `<main>` are all `bg-transparent` over one fixed `.canvas` element, divided
+  only by hairlines. Never give the sidebar or header a white panel: a white
+  sidebar against a cream canvas inverts the depth and looks unfinished.
+- No glassmorphism, no neon, no decorative gradients. The only gradients are the
+  three stacked layers of `.canvas` — a marigold bloom off the top-left, a
+  marigold-tint wash top-right, and a white veil down the top 45%. Three layers
+  rather than one large corner radial, because a single radial spreads a uniform
+  wash that reads as flat dirty beige instead of light falling on paper.
+- Scrollbars are hidden via the `.scroll-hidden` utility on `<main>` and the
+  sidebar nav. A grey system scrollbar down the middle of the layout breaks the
+  native-app feel immediately. Scrolling itself is untouched.
+- No `box-shadow` using `rgba(0,0,0,*)`. The only shadow is `shadow-card`,
+  `0 1px 2px rgba(31,27,22,0.04), 0 8px 24px rgba(31,27,22,0.06)` — warm ink, and
+  soft enough that a card separates from the canvas by colour first and shadow
+  second. Cold grey shadows fight the cream ground. Radii: 20px structural cards
+  (`rounded-card`), 12px icon tiles (`rounded-tile`), 999px pills
+  (`rounded-pill`).
 - Never four identically sized stat cards in a row. It is the single biggest
   slop tell. Vary the grid spans and vary `StatBlock`'s `emphasis`.
-- No tracked-out ALL-CAPS eyebrow label above a heading. Uppercase appears in
-  exactly two places: sidebar group labels and table headers.
+- No tracked-out ALL-CAPS eyebrow labels, anywhere. Table headers are the only
+  uppercase text in the product. The sidebar's four nav groups carry **no**
+  visible label — `MENU` / `PEOPLE` / `MONEY` / `INSIGHT` eyebrows are the most
+  recognisable generated-UI signature there is, so the grouping is shown with 20px
+  of space and a hairline rule, and each group's name survives only as an
+  accessible label.
 - No emoji. `lucide-react` only, **18px at stroke 1.5**, each in a 12px-radius
   tinted tile whose tint follows the subject's semantic role.
 - Monospace is for tabular financial figures and chart axes. Nowhere decorative.
-- **One typeface.** Plus Jakarta Sans, loaded once on `<html>`. A second webfont
-  is a layout-shift risk and the fastest route back to a templated look; the
-  `font-mono` stack is the platform's, not a second download. Refuse requests to
-  add a family.
+- **Two typefaces, jobs strictly separated.** Outfit (`font-display`) takes
+  headings, page and card titles, and every large display number — its round
+  geometry at weight 500 is what produces the warmth. Plus Jakarta Sans
+  (`font-sans`) takes body, tables, labels, buttons and form controls, where
+  Outfit's width would cost density. Both are loaded once on `<html>`. There is
+  no third family and no Devanagari face; `font-mono` is the platform stack, not
+  a download. Refuse requests to add a family.
+- **Weight 700 is banned product-wide.** Emphasis comes from size and colour, not
+  from bolding: a 700 display title at default tracking is the generic dashboard
+  voice. Neither webfont ships a 700 face, and `fontWeight.bold` is overridden to
+  600 so a stray `font-bold` degrades instead of breaking the look. Verify with
+  `grep -rnE "font-bold|font-weight: *700" apps/admin-web/src`.
+- **EmptyState is left-aligned and inline**, with no card wrapper, no icon tile
+  and no centring. A large centred rounded box floating mid-viewport is the most
+  recognisable generated empty state there is, and every feature page consumes
+  this primitive.
 - No hardcoded hex in any component. `tokens.css` is the only place a colour is
   written. Verify with
   `grep -rniE "#[0-9a-f]{6}" apps/admin-web/src/components`.
@@ -238,10 +268,31 @@ emitted CSS then has to be converted.
 
 ### Type scale
 
-36px tabular hero metric / 24px section titles / 15px body / 13px table text /
-12px pills. Exposed as `text-hero`, `text-section`, `text-body`, `text-table`,
-`text-pill`. The `.tabular` utility sets `tnum` and is required on every rupee
-figure so columns align and a live number does not jitter.
+| Role | Size | Family and weight | Utility |
+| --- | --- | --- | --- |
+| Hero metric | 40px | Outfit 500, `-0.03em`, tabular | `text-hero` |
+| Page title | 30px | Outfit 500, `-0.02em` | `text-page-title` |
+| Stat figure | 24px | Outfit 500, `-0.02em` | `text-stat` |
+| Card / section title | 17px | Outfit 500, `-0.01em` | `text-card-title` |
+| Body | 14.5px | Jakarta 400, 1.55 | `text-body` |
+| Table cell | 13.5px | Jakarta 400 | `text-table` |
+| Label, pill | 12px | Jakarta 500 | `text-pill` |
+
+`text-stat` is the one step added to the brief's scale: it jumps from a 17px card
+title straight to the 40px hero, and a supporting figure has to read as a figure
+rather than as a heading.
+
+The `.tabular` utility sets `tnum` and is required on every rupee figure so
+columns align and a live number does not jitter.
+
+### `cn()` knows the theme, and must keep knowing it
+
+`src/lib/utils.ts` builds `cn` with `extendTailwindMerge`, declaring the custom
+font sizes, token colours and radii. tailwind-merge files an unrecognised `text-*`
+class under text-colour, so before this was configured `cn('text-table','text-ink')`
+returned only `text-ink` and silently dropped every custom font size — no build
+error, no runtime error. **A font size or token colour added to
+`tailwind.config.ts` must be added to `utils.ts` in the same commit.**
 
 ### Copy
 

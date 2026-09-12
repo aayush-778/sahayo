@@ -27,7 +27,13 @@ export interface NavItem {
 }
 
 export interface NavGroup {
-  /** Sidebar group labels are one of only two permitted uses of uppercase. */
+  /**
+   * Never rendered as visible text. Tracked-out uppercase eyebrow labels over a
+   * nav group are the most recognisable generated-UI tell, so the sidebar shows
+   * the grouping through spacing and a hairline rule instead. This name survives
+   * only as the group's accessible label, so screen-reader users still hear the
+   * structure that sighted users read from the layout.
+   */
   label: string;
   items: NavItem[];
 }

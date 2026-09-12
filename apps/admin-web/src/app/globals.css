@@ -16,7 +16,7 @@
  * colour in the app.
  *
  * There is no `.dark` block. Dark mode is out of scope permanently — see
- * CLAUDE.md "Admin portal design constraints".
+ * CLAUDE.md "Admin portal design system".
  */
 @layer base {
   :root {
@@ -85,16 +85,45 @@
   }
 
   /*
-   * Light falling on paper from the top-left. Fixed, behind everything, and
-   * never animated. This replaces the decorative gradients the palette bans.
+   * The canvas. One fixed element behind everything carries the whole
+   * background, in three stacked layers:
+   *
+   *   1. a marigold bloom off the top-left corner, the light source
+   *   2. a soft marigold-tint wash top-right, so the falloff is not linear
+   *   3. a white veil down the top 45%, which lifts the header out of the cream
+   *
+   * Three layers rather than one large corner radial: a single radial spreads a
+   * uniform wash that reads as flat dirty beige instead of light on paper.
+   *
+   * The colours are the tokens, not literals — layer 1 is --marigold, layer 2
+   * is --marigold-tint, layer 3 is --surface.
    */
-  .page-glow {
-    background-image: radial-gradient(
-      1200px circle at 0% 0%,
-      hsl(var(--marigold) / 0.08) 0%,
-      hsl(var(--marigold) / 0.03) 40%,
-      transparent 100%
-    );
+  .canvas {
+    background-color: hsl(var(--ground));
+    background-image:
+      radial-gradient(
+        900px circle at 12% -5%,
+        hsl(var(--marigold) / 0.22) 0%,
+        hsl(var(--marigold) / 0.08) 35%,
+        transparent 68%
+      ),
+      radial-gradient(1100px circle at 95% 8%, hsl(var(--marigold-tint) / 0.55) 0%, transparent 60%),
+      linear-gradient(180deg, hsl(var(--surface) / 0.55) 0%, hsl(var(--surface) / 0) 45%);
+  }
+
+  /*
+   * Scroll without a scrollbar. A grey system scrollbar down the middle of the
+   * layout breaks the native-app feel immediately, so <main> and the sidebar nav
+   * both hide theirs. Scrolling itself — wheel, trackpad, keyboard — is
+   * untouched, and the elements keep their focusable, scrollable semantics.
+   */
+  .scroll-hidden {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .scroll-hidden::-webkit-scrollbar {
+    display: none;
   }
 
   /* Hairline shimmer for loading skeletons. No spinners anywhere. */
