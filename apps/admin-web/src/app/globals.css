@@ -1,87 +1,43 @@
+/*
+ * tokens.css must be imported BEFORE the tailwind directives: `@import` is only
+ * legal at the top of a stylesheet, and the custom properties have to exist
+ * before @tailwind base emits rules that read them.
+ */
+@import '../styles/tokens.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /*
- * shadcn 2.10's registry serves oklch() colour values (a Tailwind v4
- * convention) while its Tailwind v3 config template wraps every token in
- * hsl(var(--token)). That pairing yields hsl(oklch(...)), which is invalid CSS
- * and silently drops every colour.
+ * shadcn's own token names are aliased onto the Sahayo palette rather than kept
+ * as a parallel neutral scale. Any shadcn component added later inherits the
+ * warm palette automatically, and there is exactly one definition of each
+ * colour in the app.
  *
- * These are the canonical shadcn v3 "neutral" HSL triplets, which are the
- * format hsl(var(--token)) expects. Do not replace them with oklch() values
- * unless tailwind.config.ts stops wrapping in hsl().
+ * There is no `.dark` block. Dark mode is out of scope permanently — see
+ * CLAUDE.md "Admin portal design system".
  */
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
-    --sidebar: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-
-  .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --sidebar: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --background: var(--ground);
+    --foreground: var(--ink);
+    --popover: var(--surface);
+    --popover-foreground: var(--ink);
+    --primary: var(--marigold);
+    --primary-foreground: var(--ink);
+    --secondary: var(--marigold-tint);
+    --secondary-foreground: var(--ink);
+    /* `--muted` itself lives in tokens.css; only the foreground alias is here. */
+    --muted-foreground: var(--muted);
+    --accent: var(--marigold-tint);
+    --accent-foreground: var(--ink);
+    --destructive: var(--coral);
+    --destructive-foreground: var(--ink);
+    --border: var(--hairline);
+    --input: var(--hairline);
+    --ring: var(--marigold);
+    --radius: 0.75rem;
   }
 }
 
@@ -89,7 +45,222 @@
   * {
     @apply border-border;
   }
+
+  /*
+   * The window never scrolls. Only <main> in src/app/(admin)/layout.tsx does.
+   * This is what gives the portal its native-application feel on a projector.
+   *
+   * Both elements are locked, and the minifier emits them merged and
+   * alphabetised as `body,html{…}`. When checking the built stylesheet, grep for
+   * `overflow:hidden` rather than for `html{`, or you will conclude the rule is
+   * missing when it is not.
+   */
+  html,
   body {
-    @apply bg-background text-foreground;
+    height: 100%;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    @apply bg-ground text-ink antialiased;
+    font-feature-settings: 'cv11' 1;
+  }
+
+  /* Colour never carries meaning alone, and focus is always visible. */
+  :focus-visible {
+    @apply outline-none ring-2 ring-marigold ring-offset-2 ring-offset-ground;
+  }
+}
+
+@layer utilities {
+  /*
+   * Financial figures and chart axes only. `tnum` locks digit advance width so
+   * columns of rupee amounts align and a live-updating figure does not jitter.
+   */
+  .tabular {
+    font-feature-settings: 'tnum' 1, 'lnum' 1;
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+
+  /*
+   * The canvas. One fixed element behind everything carries the whole
+   * background, in three stacked layers:
+   *
+   *   1. a marigold bloom off the top-left corner, the light source
+   *   2. a soft marigold-tint wash top-right, so the falloff is not linear
+   *   3. a white veil down the top 45%, which lifts the header out of the cream
+   *
+   * Three layers rather than one large corner radial: a single radial spreads a
+   * uniform wash that reads as flat dirty beige instead of light on paper.
+   *
+   * The colours are the tokens, not literals — layer 1 is --marigold, layer 2
+   * is --marigold-tint, layer 3 is --surface.
+   */
+  .canvas {
+    background-color: hsl(var(--ground));
+    background-image:
+      radial-gradient(
+        900px circle at 12% -5%,
+        hsl(var(--marigold) / 0.22) 0%,
+        hsl(var(--marigold) / 0.08) 35%,
+        transparent 68%
+      ),
+      radial-gradient(1100px circle at 95% 8%, hsl(var(--marigold-tint) / 0.55) 0%, transparent 60%),
+      linear-gradient(180deg, hsl(var(--surface) / 0.55) 0%, hsl(var(--surface) / 0) 45%);
+  }
+
+  /*
+   * Scroll without a scrollbar. A grey system scrollbar down the middle of the
+   * layout breaks the native-app feel immediately, so <main> and the sidebar nav
+   * both hide theirs. Scrolling itself — wheel, trackpad, keyboard — is
+   * untouched, and the elements keep their focusable, scrollable semantics.
+   */
+  .scroll-hidden {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .scroll-hidden::-webkit-scrollbar {
+    display: none;
+  }
+
+  /*
+   * Range inputs in the palette. The browser default draws the unfilled track near
+   * black, which is the only black in the product. The filled part is marigold up to
+   * --fill, set inline by the Slider, and the rest is hairline.
+   */
+  .range {
+    appearance: none;
+    -webkit-appearance: none;
+    background: transparent;
+    height: 16px;
+  }
+
+  .range::-webkit-slider-runnable-track {
+    height: 6px;
+    border-radius: 999px;
+    background: linear-gradient(
+      to right,
+      hsl(var(--marigold)) 0 var(--fill, 0%),
+      hsl(var(--hairline)) var(--fill, 0%) 100%
+    );
+  }
+
+  .range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    margin-top: -5px;
+    border-radius: 999px;
+    border: 2px solid hsl(var(--surface));
+    background: hsl(var(--marigold));
+    box-shadow: 0 1px 2px hsl(var(--ink) / 0.12), 0 2px 6px hsl(var(--ink) / 0.1);
+  }
+
+  .range::-moz-range-track {
+    height: 6px;
+    border-radius: 999px;
+    background: hsl(var(--hairline));
+  }
+
+  .range::-moz-range-progress {
+    height: 6px;
+    border-radius: 999px;
+    background: hsl(var(--marigold));
+  }
+
+  .range::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border-radius: 999px;
+    border: 2px solid hsl(var(--surface));
+    background: hsl(var(--marigold));
+  }
+
+  /* Hairline shimmer for loading skeletons. No spinners anywhere. */
+  .skeleton {
+    @apply bg-hairline/60 animate-pulse rounded-md;
+  }
+}
+
+/*
+ * Demand heat spots on the street maps.
+ *
+ * Outside @layer on purpose: the tier classes are built at runtime
+ * (`heat-spot-${tier}`), and Tailwind removes any class inside a layer that it
+ * cannot find written out in the source.
+ *
+ * Radial glows in the palette, drawn as HTML markers over MapLibre: coral for the
+ * hottest zones, marigold in the middle, lavender for the quietest. The gradient
+ * fades to transparent so overlapping zones blend into one field rather than
+ * showing hard circles. The badge on top is the number the glow stands for.
+ */
+.heat-spot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+}
+
+.heat-spot-high {
+  background: radial-gradient(
+    circle,
+    hsl(var(--coral) / 0.78) 0%,
+    hsl(var(--coral) / 0.38) 40%,
+    hsl(var(--coral) / 0) 72%
+  );
+}
+
+.heat-spot-medium {
+  background: radial-gradient(
+    circle,
+    hsl(var(--marigold) / 0.72) 0%,
+    hsl(var(--marigold) / 0.32) 40%,
+    hsl(var(--marigold) / 0) 72%
+  );
+}
+
+.heat-spot-low {
+  background: radial-gradient(
+    circle,
+    hsl(var(--lavender) / 0.62) 0%,
+    hsl(var(--lavender) / 0.24) 40%,
+    hsl(var(--lavender) / 0) 72%
+  );
+}
+
+.heat-badge {
+  display: inline-block;
+  min-width: 28px;
+  padding: 3px 8px;
+  border: 2px solid hsl(var(--surface));
+  border-radius: 999px;
+  background-color: hsl(var(--ink));
+  color: hsl(var(--surface));
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  box-shadow: 0 1px 2px hsl(var(--ink) / 0.16), 0 4px 10px hsl(var(--ink) / 0.14);
+}
+
+.heat-legend-dot {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  flex: none;
+  border-radius: 999px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

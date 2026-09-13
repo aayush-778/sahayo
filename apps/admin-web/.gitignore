@@ -15,10 +15,14 @@
 
 # next.js
 /.next/
+/.next-verify/
 /out/
 
 # production
 /build
+
+# copied from node_modules by scripts/copy-maplibre-worker.mjs
+/public/maplibre/
 
 # misc
 .DS_Store
