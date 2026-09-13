@@ -362,6 +362,32 @@ saying what went wrong **and what to do next**, because that message is what the
 user sees. Mutations that a queue is worked fast are idempotent: `approveKyc`
 called twice does not throw and does not double-apply.
 
+### Street maps: MapLibre, heat spots, and the worker script
+
+Both the dashboard's demand map (`src/components/maps/DemandMap.tsx`) and Live Dispatch
+(`src/components/dispatch/DispatchMap.tsx`) are MapLibre maps on OpenStreetMap raster
+tiles, with no API key. CARTO basemaps render an "API key required" watermark without an
+account, so do not switch to them. Do not add Leaflet or a second map library.
+
+- **The worker script must be served.** MapLibre 6 looks for its worker next to its own
+  module file, which inside a Next bundle is not a web URL. Without help it silently
+  starts the page as the worker: GeoJSON layers (worker dots, request pins) never load
+  and the map never fires `load`. `scripts/copy-maplibre-worker.mjs` copies the worker
+  into `public/maplibre/` (gitignored) on `predev` / `prebuild`, and
+  `src/components/maps/maplibre-worker.ts` calls `setWorkerUrl`. Every component that
+  creates a map imports that module first. If you run `next build` directly rather than
+  `pnpm build`, run the copy script yourself.
+- **Demand is drawn as heat spots**, not a WebGL heatmap layer: a CSS radial glow in
+  coral / marigold / lavender plus a numbered badge per zone
+  (`DemandHeatSpots.tsx`, classes in `globals.css` outside `@layer`, because the tier
+  class names are built at runtime and Tailwind would strip them). Tiers are by rank
+  across the twelve zones, in thirds. Numbers come from `getZoneDemand()`; never hardcode
+  zone figures in a component.
+- **Tile health is measured on the first basemap tile**, not on the map's `load` event.
+  If none arrives within `TILE_TIMEOUT_MS`, the SVG map (`ZoneMapCanvas`) is laid over the
+  street map as the offline view. The street map stays mounted underneath, so the cover
+  lifts by itself if tiles arrive late. Keep `ZoneMapCanvas`: it is that fallback.
+
 ### Offline support
 
 `public/sw.js` precaches every route listed by `/offline-manifest` (every sidebar page

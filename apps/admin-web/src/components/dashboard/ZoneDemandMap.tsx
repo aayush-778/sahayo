@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { Card } from '@/components/ui-kit/Card';
 import { EmptyState } from '@/components/ui-kit/EmptyState';
@@ -11,11 +12,25 @@ import { ZoneMapCanvas } from './ZoneMapCanvas';
 import { LinkButton } from '@/components/ui-kit/LinkButton';
 
 /**
- * The dashboard's card around the Patna choropleth, plus the thin-cover list.
+ * The street map loads in the browser only, because MapLibre needs `window` and WebGL.
  *
- * The map itself lives in ZoneMapCanvas, which the dispatch page reuses as its
- * offline fallback. Keeping the card and the map separate is what lets the fallback
- * look like the map a viewer already recognises from here.
+ * If its code cannot be fetched at all — offline, before the chunk was ever cached —
+ * the import resolves to the SVG map instead of throwing, so the card never becomes an
+ * error.
+ */
+const DemandMap = dynamic(
+  () =>
+    import('@/components/maps/DemandMap')
+      .then((module) => module.DemandMap)
+      .catch(() => function OfflineDemandMap({ zones }: { zones: ZoneDemandPoint[] }) {
+        return <ZoneMapCanvas zones={zones} />;
+      }),
+  { ssr: false, loading: () => <Skeleton className="h-[400px] w-full rounded-tile" /> },
+);
+
+/**
+ * The dashboard's regional demand card: the street heatmap of Patna, plus the list of
+ * zones where cover is thin.
  */
 export function ZoneDemandMap({ zones }: { zones?: ZoneDemandPoint[] }) {
   const underserved = (zones ?? []).filter((zone) => zone.underserved).slice(0, 3);
@@ -28,7 +43,7 @@ export function ZoneDemandMap({ zones }: { zones?: ZoneDemandPoint[] }) {
       />
 
       <div className="mt-4">
-        {zones ? <ZoneMapCanvas zones={zones} /> : <Skeleton className="h-44 w-full" />}
+        {zones ? <DemandMap zones={zones} className="h-[400px] w-full" /> : <Skeleton className="h-[400px] w-full rounded-tile" />}
       </div>
 
       {/* Zones where cover is thin, and a way to act on it. */}

@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { SegmentedToggle } from '@/components/ui-kit/SegmentedToggle';
 import { count } from '@/lib/format';
 import type { ZoneDemandPoint } from '@/lib/services';
+import { MEASURES, measureMax, measureValue, type MapMeasure } from '@/components/maps/demand-measure';
 import { SURFACE, WATER, WATER_EDGE, demandColor } from './chart-theme';
 import {
   GANGA_BAND,
@@ -26,16 +27,9 @@ import {
  * the city is.
  *
  * No tile provider and no API key: it is arithmetic over a hand-authored outline.
- * That is what lets the dispatch page use it as an offline fallback.
+ * That is why it is the offline fallback for both street maps — the dashboard's
+ * DemandMap and Live Dispatch — shown only when no street tile arrives.
  */
-
-export type MapMeasure = 'ORDERS' | 'WORKERS' | 'WAIT';
-
-const MEASURES = [
-  { value: 'ORDERS' as const, label: 'Orders' },
-  { value: 'WORKERS' as const, label: 'Workers' },
-  { value: 'WAIT' as const, label: 'Wait time' },
-];
 
 /**
  * Below this area, in square viewBox units, a cell is too small for its name.
@@ -45,30 +39,6 @@ const MEASURES = [
  * so it is identified on hover and focus instead, like every other cell.
  */
 const LABEL_AREA_THRESHOLD = 2400;
-
-/** The 0–1 value a measure contributes, normalised across the zones shown. */
-function measureValue(zone: ZoneDemandPoint, measure: MapMeasure, max: number): number {
-  if (max <= 0) return 0;
-  if (measure === 'ORDERS') return zone.orderCount / max;
-  /*
-   * Workers inverts: a zone with FEW available workers should read hot, because the
-   * question the map answers is "where is cover thin", not "where are people".
-   */
-  if (measure === 'WORKERS') return 1 - zone.availableWorkerCount / max;
-  return zone.avgWaitMinutes / max;
-}
-
-function measureMax(zones: ZoneDemandPoint[], measure: MapMeasure): number {
-  return zones.reduce((max, zone) => {
-    const raw =
-      measure === 'ORDERS'
-        ? zone.orderCount
-        : measure === 'WORKERS'
-          ? zone.availableWorkerCount
-          : zone.avgWaitMinutes;
-    return Math.max(max, raw);
-  }, 0);
-}
 
 export interface ZoneMapCanvasProps {
   zones: ZoneDemandPoint[];

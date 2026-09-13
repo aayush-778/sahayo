@@ -8,18 +8,19 @@ import type { AdminBooking, Zone } from '@sahayo/shared';
 import { Button } from '@/components/ui-kit/Button';
 import { Skeleton } from '@/components/ui-kit/Skeleton';
 import { BroadcastInspector } from '@/components/dispatch/BroadcastInspector';
-import type { DispatchLayerVisibility } from '@/components/dispatch/DispatchMap';
+import type { DispatchLayerVisibility, DispatchMapProps } from '@/components/dispatch/DispatchMap';
+import { ZoneMapCanvas } from '@/components/dashboard/ZoneMapCanvas';
+import { MEASURES, type MapMeasure } from '@/components/maps/demand-measure';
+import { SegmentedToggle } from '@/components/ui-kit/SegmentedToggle';
 import { LiveQueue } from '@/components/dispatch/LiveQueue';
 import {
   acceptSimulatedRequest,
   getBroadcast,
-  getHeatmapGeoJSON,
   getLiveMap,
   getZoneDemand,
   reassignBooking,
   simulateRequest,
   type Broadcast,
-  type HeatmapGeoJSON,
   type LiveMap,
   type ZoneDemandPoint,
 } from '@/lib/services';
@@ -33,7 +34,17 @@ import { cn } from '@/lib/utils';
  * other route's bundle — it is the heaviest dependency in the app by a wide margin.
  */
 const DispatchMap = dynamic(
-  () => import('@/components/dispatch/DispatchMap').then((module) => module.DispatchMap),
+  () =>
+    import('@/components/dispatch/DispatchMap')
+      .then((module) => module.DispatchMap)
+      /* Offline before the map's code was ever cached: show the SVG map, not an error. */
+      .catch(() => function OfflineDispatchMap({ zones }: DispatchMapProps) {
+        return (
+          <div className="flex h-full flex-col justify-center bg-ground px-8">
+            <ZoneMapCanvas zones={zones} showMeasureToggle={false} />
+          </div>
+        );
+      }),
   {
     ssr: false,
     loading: () => (
@@ -57,10 +68,7 @@ function DispatchConsole() {
   const searchParams = useSearchParams();
 
   const [live, setLive] = useState<LiveMap>();
-  const [heatmap, setHeatmap] = useState<HeatmapGeoJSON>({
-    type: 'FeatureCollection',
-    features: [],
-  });
+  const [measure, setMeasure] = useState<MapMeasure>('ORDERS');
   const [zoneDemand, setZoneDemand] = useState<ZoneDemandPoint[]>([]);
   const [layers, setLayers] = useState<DispatchLayerVisibility>({
     workers: true,
@@ -74,13 +82,8 @@ function DispatchConsole() {
   const [notice, setNotice] = useState<string>();
 
   const reload = useCallback(async () => {
-    const [map, heat, demand] = await Promise.all([
-      getLiveMap(),
-      getHeatmapGeoJSON(),
-      getZoneDemand(),
-    ]);
+    const [map, demand] = await Promise.all([getLiveMap(), getZoneDemand()]);
     setLive(map);
-    setHeatmap(heat);
     setZoneDemand(demand);
   }, []);
 
@@ -201,6 +204,10 @@ function DispatchConsole() {
           ))}
         </div>
 
+        {layers.demand ? (
+          <SegmentedToggle label="Heat spots show" options={MEASURES} value={measure} onChange={setMeasure} />
+        ) : null}
+
         {notice ? (
           <p role="status" className="min-w-0 flex-1 truncate text-pill text-muted">
             {notice}
@@ -220,13 +227,13 @@ function DispatchConsole() {
       </div>
 
       <div className="flex min-h-0 flex-1">
-        <div className="min-w-0 flex-1">
+        <div className="min-h-[500px] w-full min-w-0 flex-1">
           <DispatchMap
             workers={live?.workers ?? []}
             liveBookings={live?.liveBookings ?? []}
-            heatmap={heatmap}
             zones={zoneDemand}
             layers={layers}
+            measure={measure}
             selectedBookingId={selectedId}
             geofenceKm={broadcast?.radiusKm ?? 5}
             onSelectBooking={setSelectedId}

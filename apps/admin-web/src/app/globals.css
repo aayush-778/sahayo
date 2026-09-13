@@ -185,6 +185,75 @@
   }
 }
 
+/*
+ * Demand heat spots on the street maps.
+ *
+ * Outside @layer on purpose: the tier classes are built at runtime
+ * (`heat-spot-${tier}`), and Tailwind removes any class inside a layer that it
+ * cannot find written out in the source.
+ *
+ * Radial glows in the palette, drawn as HTML markers over MapLibre: coral for the
+ * hottest zones, marigold in the middle, lavender for the quietest. The gradient
+ * fades to transparent so overlapping zones blend into one field rather than
+ * showing hard circles. The badge on top is the number the glow stands for.
+ */
+.heat-spot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+}
+
+.heat-spot-high {
+  background: radial-gradient(
+    circle,
+    hsl(var(--coral) / 0.78) 0%,
+    hsl(var(--coral) / 0.38) 40%,
+    hsl(var(--coral) / 0) 72%
+  );
+}
+
+.heat-spot-medium {
+  background: radial-gradient(
+    circle,
+    hsl(var(--marigold) / 0.72) 0%,
+    hsl(var(--marigold) / 0.32) 40%,
+    hsl(var(--marigold) / 0) 72%
+  );
+}
+
+.heat-spot-low {
+  background: radial-gradient(
+    circle,
+    hsl(var(--lavender) / 0.62) 0%,
+    hsl(var(--lavender) / 0.24) 40%,
+    hsl(var(--lavender) / 0) 72%
+  );
+}
+
+.heat-badge {
+  display: inline-block;
+  min-width: 28px;
+  padding: 3px 8px;
+  border: 2px solid hsl(var(--surface));
+  border-radius: 999px;
+  background-color: hsl(var(--ink));
+  color: hsl(var(--surface));
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  box-shadow: 0 1px 2px hsl(var(--ink) / 0.16), 0 4px 10px hsl(var(--ink) / 0.14);
+}
+
+.heat-legend-dot {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  flex: none;
+  border-radius: 999px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

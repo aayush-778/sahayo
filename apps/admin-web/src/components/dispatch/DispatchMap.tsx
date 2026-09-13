@@ -4,13 +4,17 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 
 import type { MapRef } from 'react-map-gl/maplibre';
 import { Layer, Map, NavigationControl, Source } from 'react-map-gl/maplibre';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useReducedMotion } from '@/lib/use-reduced-motion';
 import type { AdminBooking } from '@sahayo/shared';
 import { ZoneMapCanvas } from '@/components/dashboard/ZoneMapCanvas';
-import type { HeatmapGeoJSON, MappedWorker, ZoneDemandPoint } from '@/lib/services';
+import { DemandHeatSpots, HeatLegend } from '@/components/maps/DemandHeatSpots';
+import type { MapMeasure } from '@/components/maps/demand-measure';
+import '@/components/maps/maplibre-worker';
+import { useTileHealth } from '@/components/maps/use-tile-health';
+import type { MappedWorker, ZoneDemandPoint } from '@/lib/services';
 import { mapColor } from './map-colors';
-import { BASEMAP_STYLE, INITIAL_VIEW, TILE_TIMEOUT_MS } from './map-style';
+import { BASEMAP_STYLE, INITIAL_VIEW } from './map-style';
 
 export interface DispatchLayerVisibility {
   workers: boolean;
@@ -21,9 +25,10 @@ export interface DispatchLayerVisibility {
 export interface DispatchMapProps {
   workers: MappedWorker[];
   liveBookings: AdminBooking[];
-  heatmap: HeatmapGeoJSON;
   zones: ZoneDemandPoint[];
   layers: DispatchLayerVisibility;
+  /** What the demand heat spots measure. */
+  measure: MapMeasure;
   selectedBookingId?: string;
   /** Geofence to draw around the selected booking, in kilometres. */
   geofenceKm?: number;
@@ -59,9 +64,8 @@ function circlePolygon(
 /**
  * The live dispatch map.
  *
- * MapLibre with key-free OpenStreetMap raster tiles, and a hard rule: if nothing
- * has painted within three seconds, the SVG choropleth of Patna from the dashboard
- * takes the same slot with an "Offline map view" label. The demo must never show a grey
+ * MapLibre with key-free street tiles, and a hard rule: if no tile has arrived
+ * within three seconds, the SVG choropleth of Patna takes the same slot with an "Offline map view" label. The demo must never show a grey
  * rectangle, and on venue wifi that is not a hypothetical.
  *
  * Every data layer uses expressions that Mapbox GL supports too, so switching to
@@ -70,26 +74,19 @@ function circlePolygon(
 export function DispatchMap({
   workers,
   liveBookings,
-  heatmap,
   zones,
   layers,
+  measure,
   selectedBookingId,
   geofenceKm = 5,
   onSelectBooking,
 }: DispatchMapProps) {
   const mapRef = useRef<MapRef | null>(null);
   const reducedMotion = useReducedMotion();
-  const [tilesReady, setTilesReady] = useState(false);
-  const [tilesFailed, setTilesFailed] = useState(false);
+  const tiles = useTileHealth();
+  const tilesReady = tiles.ready;
 
   /* The three-second deadline. Cleared as soon as the map reports it has painted. */
-  useEffect(() => {
-    if (tilesReady) return;
-    const timer = setTimeout(() => {
-      if (!tilesReady) setTilesFailed(true);
-    }, TILE_TIMEOUT_MS);
-    return () => clearTimeout(timer);
-  }, [tilesReady]);
 
   /*
    * Fly to the selected booking rather than jumping, so the move is followable — unless
@@ -147,22 +144,6 @@ export function DispatchMap({
     [selected, geofenceKm],
   );
 
-  /*
-   * The fallback. Same slot, same honeycomb the dashboard shows, so a viewer is
-   * looking at a map they already recognise rather than an error state.
-   */
-  if (tilesFailed && !tilesReady) {
-    return (
-      <div className="relative flex h-full flex-col justify-center bg-ground px-8">
-        <p className="mb-4 inline-flex w-fit items-center gap-2 rounded-pill border border-hairline bg-surface px-3 py-1.5 text-pill text-muted">
-          <span aria-hidden className="h-2 w-2 rounded-full bg-coral" />
-          Offline map view. Zone demand is still live.
-        </p>
-        <ZoneMapCanvas zones={zones} showMeasureToggle={false} />
-      </div>
-    );
-  }
-
   return (
     <div className="relative h-full">
       <Map
@@ -174,7 +155,7 @@ export function DispatchMap({
         touchZoomRotate={false}
         attributionControl={{ compact: true }}
         interactiveLayerIds={layers.requests ? ['requests'] : []}
-        onLoad={() => setTilesReady(true)}
+        onSourceData={tiles.onSourceData}
         onClick={(event) => {
           const feature = event.features?.[0];
           const id = feature?.properties?.id;
@@ -183,41 +164,6 @@ export function DispatchMap({
         style={{ width: '100%', height: '100%' }}
       >
         <NavigationControl position="top-right" showCompass={false} />
-
-        {/*
-         * Demand sits underneath everything: it is context for the dots, not a
-         * competitor to them.
-         */}
-        {layers.demand ? (
-          <Source id="demand" type="geojson" data={heatmap}>
-            <Layer
-              id="demand-heat"
-              type="heatmap"
-              paint={{
-                /* Weight comes from the pre-aggregated count per zone. */
-                'heatmap-weight': ['get', 'weight'],
-                /* Intensity grows with zoom so the shape survives zooming in. */
-                'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 10, 1, 14, 3],
-                'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 10, 28, 14, 70],
-                'heatmap-opacity': 0.55,
-                /* transparent -> lavender -> marigold -> coral, from the tokens. */
-                'heatmap-color': [
-                  'interpolate',
-                  ['linear'],
-                  ['heatmap-density'],
-                  0,
-                  mapColor('lavender', 0),
-                  0.25,
-                  mapColor('lavender', 0.55),
-                  0.6,
-                  mapColor('marigold', 0.7),
-                  1,
-                  mapColor('coral', 0.85),
-                ],
-              }}
-            />
-          </Source>
-        ) : null}
 
         {/* The geofence the selected request went out to. */}
         {geofence ? (
@@ -326,10 +272,16 @@ export function DispatchMap({
             />
           </Source>
         ) : null}
+        {/*
+         * Demand heat spots. They are HTML markers, so they draw above the canvas;
+         * they ignore the pointer, so request pins underneath stay clickable.
+         */}
+        {layers.demand ? <DemandHeatSpots zones={zones} measure={measure} /> : null}
       </Map>
 
       {/* A legend. The dot colours mean nothing without it. */}
-      <ul className="pointer-events-none absolute bottom-3 left-3 flex flex-col gap-1 rounded-tile border border-hairline bg-surface/95 px-3 py-2 shadow-card">
+      <div className="pointer-events-none absolute bottom-3 left-3 flex flex-col gap-2 rounded-tile border border-hairline bg-surface/95 px-3 py-2 shadow-card">
+        <ul className="flex flex-col gap-1">
         {[
           { token: 'fund-green' as const, label: 'Free to take work' },
           { token: 'marigold' as const, label: 'On a job' },
@@ -345,7 +297,24 @@ export function DispatchMap({
             {entry.label}
           </li>
         ))}
-      </ul>
+        </ul>
+        {layers.demand ? <HeatLegend measure={measure} className="border-t border-hairline pt-2" /> : null}
+      </div>
+
+      {/*
+       * The fallback, laid over the map rather than replacing it, so the map keeps trying
+       * underneath and the cover lifts the moment a street tile arrives. The SVG map of
+       * the same zones means a viewer sees Patna and its demand, never a grey rectangle.
+       */}
+      {tiles.failed ? (
+        <div className="absolute inset-0 z-20 flex flex-col justify-center bg-ground px-8">
+          <p className="mb-4 inline-flex w-fit items-center gap-2 rounded-pill border border-hairline bg-surface px-3 py-1.5 text-pill text-muted">
+            <span aria-hidden className="h-2 w-2 rounded-full bg-coral" />
+            Offline map view. Zone demand is still live.
+          </p>
+          <ZoneMapCanvas zones={zones} showMeasureToggle={false} />
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -217,7 +217,7 @@ export interface ZoneDemandPoint {
   workerCount: number;
   availableWorkerCount: number;
   avgWaitMinutes: number;
-  /** 0–1 pressure, used to colour both the hex map and the heatmap layer. */
+  /** 0–1 pressure: orders per available worker, normalised across the zones. */
   demandIndex: number;
   /** True where orders outnumber available workers. */
   underserved: boolean;
@@ -283,56 +283,6 @@ export async function getZoneDemand(): Promise<ZoneDemandPoint[]> {
   return respond(points.sort((a, b) => b.demandIndex - a.demandIndex));
 }
 
-/** A GeoJSON point feature carrying a demand weight. */
-export interface HeatmapFeature {
-  type: 'Feature';
-  geometry: { type: 'Point'; coordinates: [number, number] };
-  properties: { weight: number; zoneId: string };
-}
-
-export interface HeatmapGeoJSON {
-  type: 'FeatureCollection';
-  features: HeatmapFeature[];
-}
-
-/**
- * Pre-aggregated demand points for the MapLibre heatmap layer.
- *
- * IN PRODUCTION this aggregation moves to PostGIS — `ST_ClusterDBSCAN` over the
- * bookings table, grouped by cluster and weighted by count — and this function
- * becomes a `fetch` of that endpoint. It is done client-side here only because
- * there is no backend yet; the shape it returns is the shape the endpoint will
- * return, so the map layer does not change when the swap happens.
- */
-export async function getHeatmapGeoJSON(): Promise<HeatmapGeoJSON> {
-  const { zones } = adminState();
-  const zoneById = new Map(zones.map((zone) => [zone.id, zone]));
-
-  /*
-   * Weighted by demandIndex — the same measure the dashboard's hex map colours by —
-   * and NOT by raw booking count.
-   *
-   * Those two disagree. Raw volume made Patliputra the hottest zone on this map
-   * while the dashboard, colouring by orders-per-available-worker, made Patna City
-   * hottest. Two maps both labelled "demand" pointing at different places is worse
-   * than either being slightly wrong, and unmet need is the figure a dispatcher can
-   * act on: a busy zone that is fully covered needs nothing.
-   */
-  const demand = await getZoneDemand();
-
-  const features: HeatmapFeature[] = [];
-  for (const point of demand) {
-    const zone = zoneById.get(point.zoneId);
-    if (!zone) continue;
-    features.push({
-      type: 'Feature',
-      geometry: { type: 'Point', coordinates: [zone.centroid.lng, zone.centroid.lat] },
-      properties: { weight: point.demandIndex, zoneId: point.zoneId },
-    });
-  }
-
-  return respond({ type: 'FeatureCollection', features });
-}
 
 /**
  * Seeds a new request and starts the dispatch loop.
