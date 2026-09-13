@@ -323,7 +323,13 @@ export async function simulateRequest(zoneId?: string): Promise<AdminBooking> {
    * Drawn from an existing customer rather than invented, so the simulated request
    * belongs to someone who exists elsewhere in the data.
    */
-  const sourceBooking = bookings[Math.floor(bookings.length / 2)];
+  const suspended = new Set(
+    state.customers.filter((customer) => customer.status === 'SUSPENDED').map((customer) => customer.id),
+  );
+  const middle = Math.floor(bookings.length / 2);
+  /* A suspended customer cannot book, so the simulated request never comes from one. */
+  const sourceBooking =
+    bookings.slice(middle).find((candidate) => !suspended.has(candidate.customerId)) ?? bookings[middle];
   const at = new Date(SEED_NOW.getTime()).toISOString();
   const id = `sim_${bookings.length + 1}_${targetZoneId}`;
   const pinged = Math.min(eligible.length, 7);

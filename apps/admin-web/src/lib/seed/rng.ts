@@ -154,6 +154,7 @@ export const SEEDS = {
   proposals: 0x5a4a_0006,
   loans: 0x5a4a_0007,
   kyc: 0x5a4a_0008,
+  customers: 0x5a4a_0009,
 } as const;
 
 /*

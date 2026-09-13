@@ -1,34 +1,13 @@
 import Link from 'next/link';
-import { BookingStatus, type AdminBooking } from '@sahayo/shared';
+import type { AdminBooking } from '@sahayo/shared';
 import { Card } from '@/components/ui-kit/Card';
 import { EmptyState } from '@/components/ui-kit/EmptyState';
 import { SectionHeader } from '@/components/ui-kit/SectionHeader';
 import { Skeleton } from '@/components/ui-kit/Skeleton';
-import { StatusPill, type StatusVariant } from '@/components/ui-kit/StatusPill';
+import { StatusPill } from '@/components/ui-kit/StatusPill';
+import { bookingStatusPill } from '@/components/bookings/booking-status';
 import { rupees } from '@/lib/format';
 import { LinkButton } from '@/components/ui-kit/LinkButton';
-
-/**
- * Booking lifecycle states mapped onto the six pill variants.
- *
- * The pill set is deliberately small, so several booking states share one. The
- * label keeps the distinction the colour loses — "Cancelled" and "Expired" both
- * read as rejected, but they say which they are.
- */
-const STATUS_PILL: Record<string, { status: StatusVariant; label: string }> = {
-  [BookingStatus.REQUESTED]: { status: 'pending', label: 'Requested' },
-  [BookingStatus.BROADCAST]: { status: 'pending', label: 'Offered out' },
-  [BookingStatus.ACCEPTED]: { status: 'active', label: 'Accepted' },
-  [BookingStatus.EN_ROUTE]: { status: 'active', label: 'On the way' },
-  [BookingStatus.ARRIVED]: { status: 'active', label: 'Arrived' },
-  [BookingStatus.IN_PROGRESS]: { status: 'active', label: 'In progress' },
-  [BookingStatus.COMPLETED]: { status: 'resolved', label: 'Finished' },
-  [BookingStatus.SETTLED]: { status: 'resolved', label: 'Paid' },
-  [BookingStatus.CANCELLED_BY_CUSTOMER]: { status: 'rejected', label: 'Customer cancelled' },
-  [BookingStatus.CANCELLED_BY_WORKER]: { status: 'rejected', label: 'Worker cancelled' },
-  [BookingStatus.EXPIRED_NO_ACCEPT]: { status: 'rejected', label: 'Nobody accepted' },
-  [BookingStatus.DISPUTED]: { status: 'rejected', label: 'Disputed' },
-};
 
 /** Recent jobs, each linking to the timeline the dispute queue also reads. */
 export function BookingsTab({ bookings }: { bookings?: AdminBooking[] }) {
@@ -55,10 +34,7 @@ export function BookingsTab({ bookings }: { bookings?: AdminBooking[] }) {
       ) : (
         <ul className="flex flex-col border-t border-hairline">
           {bookings.map((booking) => {
-            const pill = STATUS_PILL[booking.status] ?? {
-              status: 'pending' as StatusVariant,
-              label: booking.status,
-            };
+            const pill = bookingStatusPill(booking.status);
             return (
               <li
                 key={booking.id}

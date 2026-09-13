@@ -43,7 +43,7 @@ export const CRCS_DATASETS: ReadonlyArray<{ value: CrcsDataset; label: string; d
   {
     value: 'AUDIT_LOG',
     label: 'Concurrent audit log',
-    description: 'Reversals, refunds, verification decisions, Aadhaar reveals and settings changes.',
+    description: 'Reversals, refunds, verification decisions, Aadhaar reveals, customer suspensions and settings changes.',
   },
   {
     value: 'ANNUAL_RETURN',
@@ -150,7 +150,7 @@ function relatedParty(year: FinancialYear): DatasetTable {
 
 function auditLog(year: FinancialYear): DatasetTable {
   const columns = ['at', 'category', 'actor', 'subject_id', 'detail'];
-  const { ledger, disputes, kycQueue, aadhaarAccessLog, settingsHistory, team } = adminState();
+  const { ledger, disputes, kycQueue, aadhaarAccessLog, settingsHistory, team, customers } = adminState();
   const nameOf = (adminId?: string): string =>
     team.find((member) => member.id === adminId)?.name ?? adminId ?? 'System';
   const rows: Row[] = [];
@@ -206,6 +206,16 @@ function auditLog(year: FinancialYear): DatasetTable {
       actor: access.adminName,
       subject_id: access.workerId,
       detail: `Purpose: ${access.purpose}`,
+    });
+  }
+  for (const customer of customers) {
+    if (!customer.suspension || !within(customer.suspension.suspendedAt, year)) continue;
+    rows.push({
+      at: customer.suspension.suspendedAt,
+      category: 'Customer suspended',
+      actor: customer.suspension.adminName,
+      subject_id: customer.id,
+      detail: customer.suspension.reason,
     });
   }
   for (const change of settingsHistory) {

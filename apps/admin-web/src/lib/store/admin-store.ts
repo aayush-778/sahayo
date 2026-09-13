@@ -1,6 +1,7 @@
 import type {
   AadhaarAccessLogEntry,
   AdminBooking,
+  AdminCustomer,
   AdminWorker,
   Dispute,
   KycStatus,
@@ -45,6 +46,7 @@ export interface AdminState {
   zones: Zone[];
   workers: AdminWorker[];
   bookings: AdminBooking[];
+  customers: AdminCustomer[];
   ledger: LedgerEntry[];
   disputes: Dispute[];
   proposals: Proposal[];
@@ -106,6 +108,10 @@ export interface AdminState {
   addBooking(booking: AdminBooking): void;
   updateBooking(bookingId: string, patch: Partial<AdminBooking>): void;
 
+  /* --- customers --------------------------------------------------------- */
+
+  updateCustomer(customerId: string, patch: Partial<AdminCustomer>): void;
+
   /* --- settings ---------------------------------------------------------- */
 
   /**
@@ -133,6 +139,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   zones: [],
   workers: [],
   bookings: [],
+  customers: [],
   ledger: [],
   disputes: [],
   proposals: [],
@@ -214,6 +221,10 @@ export const useAdminStore = create<AdminState>((set, get) => ({
 
   updateBooking(bookingId, patch) {
     set((state) => ({ bookings: patchById(state.bookings, bookingId, patch) }));
+  },
+
+  updateCustomer(customerId, patch) {
+    set((state) => ({ customers: patchById(state.customers, customerId, patch) }));
   },
 
   applySettings(settings, change) {

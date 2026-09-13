@@ -1,6 +1,7 @@
 import type {
   AadhaarAccessLogEntry,
   AdminBooking,
+  AdminCustomer,
   AdminWorker,
   Dispute,
   KycSubmission,
@@ -13,6 +14,7 @@ import type {
   Zone,
 } from '@sahayo/shared';
 import { buildBookings } from './bookings';
+import { buildCustomers } from './customers';
 import { buildDisputes } from './disputes';
 import { buildKycQueue } from './kyc';
 import { buildLedger } from './ledger';
@@ -33,6 +35,7 @@ export interface SeedDataset {
   zones: Zone[];
   workers: AdminWorker[];
   bookings: AdminBooking[];
+  customers: AdminCustomer[];
   ledger: LedgerEntry[];
   disputes: Dispute[];
   proposals: Proposal[];
@@ -64,6 +67,7 @@ export function buildSeedDataset(): SeedDataset {
   const bookings = buildBookings(workers);
   const ledger = buildLedger(bookings, workers);
   const disputes = buildDisputes(bookings);
+  const customers = buildCustomers(bookings, disputes);
   const proposals = buildProposals(workers);
   const loanRequests = buildLoanRequests(workers);
   const kycQueue = buildKycQueue(workers);
@@ -72,6 +76,7 @@ export function buildSeedDataset(): SeedDataset {
     zones: ZONES,
     workers,
     bookings,
+    customers,
     ledger,
     disputes,
     proposals,

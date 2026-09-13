@@ -204,3 +204,18 @@ export {
   type ExportFormat,
   type FinancialYear,
 } from './compliance.service';
+
+export {
+  LAPSED_AFTER_DAYS,
+  NEW_CUSTOMER_DAYS,
+  REGULAR_MIN_BOOKINGS,
+  getCustomerOverview,
+  getCustomerProfile,
+  listCustomers,
+  reinstateCustomer,
+  suspendCustomer,
+  type CategorySpend,
+  type CustomerFilter,
+  type CustomerOverview,
+  type CustomerProfile,
+} from './customers.service';
