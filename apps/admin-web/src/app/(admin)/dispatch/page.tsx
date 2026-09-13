@@ -248,6 +248,7 @@ function DispatchConsole() {
             zoneName={zoneName}
             selectedId={selectedId}
             onSelect={setSelectedId}
+            onSimulate={() => void onSimulate()}
           />
         )}
       </div>

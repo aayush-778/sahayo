@@ -48,18 +48,39 @@ const KYC_WEIGHTS: ReadonlyArray<{ status: AdminWorker['kycStatus']; weight: num
   { status: KycStatus.UNSUBMITTED, weight: 3 },
 ];
 
+/** The three dispatch weights as fractions summing to 1. */
+export interface EquityWeights {
+  proximity: number;
+  rating: number;
+  inverseAllocation: number;
+}
+
+/**
+ * The weights the cooperative launched with. Administrators can change them in
+ * Settings; the seed always builds with these, so a reset restores them exactly.
+ */
+export const DEFAULT_EQUITY_WEIGHTS: EquityWeights = {
+  proximity: EQUITY_WEIGHT_PROXIMITY,
+  rating: EQUITY_WEIGHT_RATING,
+  inverseAllocation: EQUITY_WEIGHT_INVERSE_ALLOCATION,
+};
+
 /**
  * Combines the three equity inputs into the score the dispatcher ranks on.
  *
  * Exported because the Broadcast Inspector in Phase 4 must show the same
  * arithmetic it claims to be using. One definition, used by both the seed and
- * the ranking, is the only way that claim stays true.
+ * the ranking, is the only way that claim stays true. The ranking passes the
+ * weights currently set in Settings; the seed uses the defaults.
  */
-export function computeEquityScore(inputs: EquityScoreInputs): number {
+export function computeEquityScore(
+  inputs: EquityScoreInputs,
+  weights: EquityWeights = DEFAULT_EQUITY_WEIGHTS,
+): number {
   const score =
-    inputs.proximity * EQUITY_WEIGHT_PROXIMITY +
-    inputs.rating * EQUITY_WEIGHT_RATING +
-    inputs.inverseAllocation * EQUITY_WEIGHT_INVERSE_ALLOCATION;
+    inputs.proximity * weights.proximity +
+    inputs.rating * weights.rating +
+    inputs.inverseAllocation * weights.inverseAllocation;
   return Math.round(score * 1000) / 1000;
 }
 

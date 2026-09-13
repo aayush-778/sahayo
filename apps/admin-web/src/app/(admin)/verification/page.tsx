@@ -58,6 +58,11 @@ export default function VerificationPage() {
 
   const paneRef = useRef<HTMLDivElement>(null);
 
+  /* Settings > Compliance links here with ?tab=log to open the Aadhaar access log. */
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('tab') === 'log') setTab('log');
+  }, []);
+
   useEffect(() => {
     void Promise.all([listZones(), listWorkers()]).then(([zones, workers]) => {
       setZoneNames(new Map(zones.map((zone) => [zone.id, zone.name])));
@@ -212,7 +217,7 @@ export default function VerificationPage() {
         </div>
       ) : (
         <div role="tabpanel" aria-label="Access log">
-          <AccessLogTable entries={log} workerName={workerName} />
+          <AccessLogTable entries={log} workerName={workerName} onOpenQueue={() => setTab('queue')} />
         </div>
       )}
 

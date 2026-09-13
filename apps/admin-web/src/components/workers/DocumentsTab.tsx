@@ -7,6 +7,7 @@ import { SectionHeader } from '@/components/ui-kit/SectionHeader';
 import { Skeleton } from '@/components/ui-kit/Skeleton';
 import { StatusPill } from '@/components/ui-kit/StatusPill';
 import { AadhaarReveal } from '@/components/verification/AadhaarReveal';
+import { LinkButton } from '@/components/ui-kit/LinkButton';
 
 const DOCUMENT_LABEL: Record<string, string> = {
   [KycDocumentType.AADHAAR]: 'Aadhaar',
@@ -50,6 +51,7 @@ export function DocumentsTab({
           className="mt-3"
           title="Nothing submitted yet"
           description="This worker has not uploaded an identity document. They cannot be verified, and so cannot be offered jobs, until they do."
+          action={<LinkButton href="/verification">Open the verification queue</LinkButton>}
         />
       ) : (
         <ul className="mt-5 flex flex-col gap-4">

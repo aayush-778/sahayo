@@ -14,6 +14,7 @@ import { Skeleton } from '@/components/ui-kit/Skeleton';
 import type { Tint } from '@/components/ui-kit/tint';
 import { relativeTime, rupees } from '@/lib/format';
 import { ActivityKind, type ActivityItem } from '@/lib/services';
+import { LinkButton } from '@/components/ui-kit/LinkButton';
 
 /**
  * Icon and tint per event kind.
@@ -50,6 +51,7 @@ export function ActivityFeed({ items, now }: { items?: ActivityItem[]; now: Date
           className="mt-3"
           title="Nothing has happened yet today"
           description="Completed jobs, approvals, disputes and fund decisions all appear here as they happen."
+          action={<LinkButton href="/dispatch">Open live dispatch</LinkButton>}
         />
       ) : (
         <ol className="relative mt-5 flex flex-col gap-4 pl-4">

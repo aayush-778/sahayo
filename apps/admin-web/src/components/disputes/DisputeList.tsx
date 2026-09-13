@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui-kit/Skeleton';
 import { StatusPill, type StatusVariant } from '@/components/ui-kit/StatusPill';
 import { rupees } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui-kit/Button';
 
 export type DisputeTab = 'ALL' | 'CUSTOMER' | 'WORKER' | 'OPEN' | 'RESOLVED';
 
@@ -110,7 +111,14 @@ export function DisputeList({
           <EmptyState
             className="p-4"
             title="No tickets here"
-            description="Nobody has raised a dispute that matches this filter. Choose All to see every ticket."
+            description="Nobody has raised a dispute that matches this filter."
+            action={
+              tab === 'ALL' ? undefined : (
+                <Button variant="outline" size="sm" onClick={() => onTabChange('ALL')}>
+                  Show every ticket
+                </Button>
+              )
+            }
           />
         ) : (
           <ul className="flex flex-col">

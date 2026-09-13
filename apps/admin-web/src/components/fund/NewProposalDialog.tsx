@@ -6,7 +6,7 @@ import { Button } from '@/components/ui-kit/Button';
 import { Select } from '@/components/ui-kit/Select';
 import { rupees } from '@/lib/format';
 import { VOTING_WINDOW_DAYS, type NewProposalInput } from '@/lib/services';
-import { Modal } from './Modal';
+import { Modal } from '@/components/ui-kit/Modal';
 
 export interface NewProposalDialogProps {
   open: boolean;
@@ -157,7 +157,7 @@ export function NewProposalDialog({ open, members, fundBalance, onClose, onConfi
 
         <div className="flex justify-end gap-2">
           <Button variant="ghost" onClick={onClose} disabled={saving}>
-            Cancel
+            Discard proposal
           </Button>
           <Button type="submit" variant="primary" disabled={saving || !proposerId || !title.trim() || amountPaise <= 0}>
             Put it to a vote

@@ -6,7 +6,10 @@ import type {
   KycSubmission,
   LedgerEntry,
   LoanRequest,
+  PlatformSettings,
   Proposal,
+  SettingsChange,
+  TeamMember,
   Zone,
 } from '@sahayo/shared';
 import { buildBookings } from './bookings';
@@ -15,6 +18,7 @@ import { buildKycQueue } from './kyc';
 import { buildLedger } from './ledger';
 import { buildLoanRequests, buildProposals } from './proposals';
 import { buildWorkers } from './workers';
+import { DEFAULT_SETTINGS, buildTeam } from './settings';
 import { ZONES } from './zones';
 
 /**
@@ -36,6 +40,10 @@ export interface SeedDataset {
   kycQueue: KycSubmission[];
   /** Empty at seed time. Every entry is written by an actual reveal. */
   aadhaarAccessLog: AadhaarAccessLogEntry[];
+  settings: PlatformSettings;
+  /** Empty at seed time, for the same reason as the Aadhaar access log. */
+  settingsHistory: SettingsChange[];
+  team: TeamMember[];
 }
 
 /**
@@ -75,14 +83,19 @@ export function buildSeedDataset(): SeedDataset {
      * happened — the opposite of what an audit trail is for.
      */
     aadhaarAccessLog: [],
+    /* A copy, so a change in the session can never write through to the defaults. */
+    settings: structuredClone(DEFAULT_SETTINGS),
+    settingsHistory: [],
+    team: buildTeam(),
   };
 }
 
 export { BOOKING_COUNT, BOOKING_WINDOW_DAYS, isCompletedBooking } from './bookings';
 export { DISPUTE_COUNT } from './disputes';
 export { KYC_QUEUE_SIZE } from './kyc';
-export { SEEDED_REVERSAL_COUNT, splitAmount } from './ledger';
+export { DEFAULT_SPLIT_SHARES, SEEDED_REVERSAL_COUNT, splitAmount, type SplitShares } from './ledger';
 export { LOAN_REQUEST_COUNT } from './proposals';
 export { DAY_MS, SEED_NOW, isoAgo } from './rng';
-export { WORKER_COUNT, computeEquityScore } from './workers';
+export { DEFAULT_EQUITY_WEIGHTS, WORKER_COUNT, computeEquityScore, type EquityWeights } from './workers';
+export { DEFAULT_SETTINGS, buildTeam } from './settings';
 export { ZONES, ZONE_IDS, getZone, zoneName } from './zones';

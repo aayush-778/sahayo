@@ -282,6 +282,35 @@ Contributions from before the 90-day booking window are carried over as one ledg
 row per month, not one lump, so the fund's twelve-month chart grows the way a fund fed
 by every booking does instead of jumping by lakhs in a single month.
 
+### Settings are live, and changing them is recorded
+
+`constants.ts` holds the split and the dispatch weights the cooperative launched with.
+The portal opens on exactly those (`src/lib/seed/settings.ts` derives its defaults from
+them), but Settings can change them for the session, so services never read the
+constants directly for anything a setting controls. They read
+`currentSplitShares()`, `currentEquityWeights()` and `currentDispatchSettings()` from
+`settings.service.ts`, and pass the result to `splitAmount` / `computeEquityScore`.
+
+- A split change applies to bookings paid from then on. Nothing already in the ledger
+  is re-split, and a refund recovers money in the proportion that booking was actually
+  paid, read from its own ledger rows.
+- Past-period figures show the ratio that period was paid at, computed from its totals,
+  not the split in force now.
+- Changing the split never saves on slider release. It opens a dialog that computes the
+  consequence in rupees and refuses until `CONFIRM` is typed; `applySplitChange`
+  enforces the word server-side too. Do not add a shortcut around this.
+- Every settings write goes through the store's `applySettings(settings, change)`, which
+  writes the setting and its `SettingsChange` audit row together. Changing the dispatch
+  weights recomputes every worker's stored equity score in the same write.
+
+### Compliance exports never carry Aadhaar data
+
+`compliance.service.ts` builds the CRCS datasets from the same collections every page
+reads. No export may contain an Aadhaar number, masked form, `aadhaarRef` or last four:
+the audit log records that a reveal happened, by whom and for what purpose, and nothing
+about the number. CSV cells opening with `= + - @` are prefixed with an apostrophe so a
+free-text note cannot become a spreadsheet formula.
+
 ### UIDAI Circular 14 of 2025 — Aadhaar
 
 These rules have legal force. They override design and convenience. The five
@@ -332,6 +361,15 @@ Reads return plain data; writes return the updated record. Errors carry a messag
 saying what went wrong **and what to do next**, because that message is what the
 user sees. Mutations that a queue is worked fast are idempotent: `approveKyc`
 called twice does not throw and does not double-apply.
+
+### Offline support
+
+`public/sw.js` precaches every route listed by `/offline-manifest` (every sidebar page
+and every worker profile, which are statically generated for this reason) plus the
+scripts, styles and fonts their HTML references, so an airplane-mode reload renders
+every page. It is registered in production builds only; test it with `next build` and
+`next start`, never `next dev`. A page added to `NAV_GROUPS` is precached automatically.
+The cache is named after `NEXT_PUBLIC_BUILD_VERSION`, set per build in `next.config.ts`.
 
 ## Admin portal design system
 

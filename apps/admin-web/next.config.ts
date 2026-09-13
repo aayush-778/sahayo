@@ -15,6 +15,14 @@ const nextConfig: NextConfig = {
    * NEXT_DIST_DIR=.next-verify for a verification build keeps the two apart.
    */
   distDir: process.env.NEXT_DIST_DIR ?? '.next',
+
+  /**
+   * Names the offline cache after this build, so a new build's service worker replaces
+   * the old cache instead of serving pages that point at scripts which no longer exist.
+   */
+  env: {
+    NEXT_PUBLIC_BUILD_VERSION: process.env.NEXT_PUBLIC_BUILD_VERSION ?? String(Date.now()),
+  },
 };
 
 export default nextConfig;

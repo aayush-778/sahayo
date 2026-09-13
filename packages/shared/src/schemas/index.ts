@@ -8,3 +8,4 @@ export * from './zone';
 export * from './kyc';
 export * from './dispute';
 export * from './fund';
+export * from './settings';

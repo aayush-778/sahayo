@@ -1,4 +1,4 @@
-import { COOP_FUND_SHARE, WORKER_SHARE, type Paise } from '@sahayo/shared';
+import { WORKER_SHARE, type Paise } from '@sahayo/shared';
 import { DAY_MS, SEED_NOW } from '@/lib/seed';
 import { adminState } from '@/lib/store';
 import { respond } from './latency';
@@ -106,7 +106,7 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
     fundDeltaPercent: deltaPercent(fund.balance, balanceAtMonthStart),
     fundGoal: fund.communityGoal,
     memberCount: fund.memberCount,
-    fundSharePercent: Math.round(COOP_FUND_SHARE * 100),
+    fundSharePercent: adminState().settings.split.fundPercent,
     openProposals: votes.openProposals,
     votesCastOnOpenProposals: votes.votesCast,
 

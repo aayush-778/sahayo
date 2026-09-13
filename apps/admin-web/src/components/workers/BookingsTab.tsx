@@ -6,6 +6,7 @@ import { SectionHeader } from '@/components/ui-kit/SectionHeader';
 import { Skeleton } from '@/components/ui-kit/Skeleton';
 import { StatusPill, type StatusVariant } from '@/components/ui-kit/StatusPill';
 import { rupees } from '@/lib/format';
+import { LinkButton } from '@/components/ui-kit/LinkButton';
 
 /**
  * Booking lifecycle states mapped onto the six pill variants.
@@ -49,6 +50,7 @@ export function BookingsTab({ bookings }: { bookings?: AdminBooking[] }) {
           className="px-6 pb-6"
           title="This worker has not taken a job yet"
           description="Jobs appear here as soon as dispatch offers one and they accept it."
+          action={<LinkButton href="/dispatch">Open live dispatch</LinkButton>}
         />
       ) : (
         <ul className="flex flex-col border-t border-hairline">

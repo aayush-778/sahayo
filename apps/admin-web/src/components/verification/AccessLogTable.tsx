@@ -7,6 +7,7 @@ import { AadhaarAccessPurpose, type AadhaarAccessLogEntry } from '@sahayo/shared
 import { Card } from '@/components/ui-kit/Card';
 import { DataTable } from '@/components/ui-kit/DataTable';
 import { EmptyState } from '@/components/ui-kit/EmptyState';
+import { Button } from '@/components/ui-kit/Button';
 
 const PURPOSE_LABEL: Record<string, string> = {
   [AadhaarAccessPurpose.IDENTITY_VERIFICATION]: 'Verifying identity',
@@ -18,6 +19,7 @@ const PURPOSE_LABEL: Record<string, string> = {
 export interface AccessLogTableProps {
   entries?: AadhaarAccessLogEntry[];
   workerName: (workerId: string) => string;
+  onOpenQueue?: () => void;
 }
 
 /**
@@ -28,7 +30,7 @@ export interface AccessLogTableProps {
  * any number, only the fact of the access. Each row is written before the number it
  * records was ever shown.
  */
-export function AccessLogTable({ entries, workerName }: AccessLogTableProps) {
+export function AccessLogTable({ entries, workerName, onOpenQueue }: AccessLogTableProps) {
   const columns = useMemo<ColumnDef<AadhaarAccessLogEntry>[]>(
     () => [
       {
@@ -98,6 +100,13 @@ export function AccessLogTable({ entries, workerName }: AccessLogTableProps) {
             className="px-5 py-6"
             title="Nobody has revealed an Aadhaar number yet"
             description="Reveals appear here the moment they happen, with the administrator and the purpose they gave. Numbers stay masked until someone gives a reason to look."
+            action={
+              onOpenQueue ? (
+                <Button variant="outline" size="sm" onClick={onOpenQueue}>
+                  Open the review queue
+                </Button>
+              ) : undefined
+            }
           />
         }
       />

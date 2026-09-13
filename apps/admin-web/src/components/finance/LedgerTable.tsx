@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { rupees } from '@/lib/format';
 import type { LedgerRow, Period } from '@/lib/services';
+import { Button } from '@/components/ui-kit/Button';
 
 /** What each kind of movement is called, and the pill it wears. */
 export const ENTRY_TYPE: Record<string, { label: string; pill: StatusVariant }> = {
@@ -364,7 +365,16 @@ export function LedgerTable({
           <EmptyState
             className="px-5 py-6"
             title="No entries match"
-            description="Clear the search box or widen the type, party or period filters above."
+            description="Nothing in the ledger matches the search and filters above."
+            action={
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onFiltersChange({ search: '', type: '', party: '', period: '' })}
+              >
+                Clear filters
+              </Button>
+            }
           />
         }
       />

@@ -16,7 +16,8 @@ export interface SelectProps {
   onChange: (value: string) => void;
   options: SelectOption[];
   /** The option shown for the empty value, e.g. "All categories". */
-  allLabel: string;
+  /** The empty option, e.g. "All zones". Omit when a value must always be chosen. */
+  allLabel?: string;
   className?: string;
 }
 
@@ -52,7 +53,7 @@ export function Select({
           onChange={(event) => onChange(event.target.value)}
           className="h-9 w-full appearance-none rounded-pill border border-hairline bg-surface pl-3 pr-8 text-table text-ink"
         >
-          <option value="">{allLabel}</option>
+          {allLabel === undefined ? null : <option value="">{allLabel}</option>}
           {options.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}

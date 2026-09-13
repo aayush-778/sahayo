@@ -3,6 +3,7 @@
 import { Gavel, Landmark } from 'lucide-react';
 import Link from 'next/link';
 import { useRef } from 'react';
+import { useReducedMotion } from '@/lib/use-reduced-motion';
 import { DisputeOrigin, DisputeOutcome, DisputeStatus } from '@sahayo/shared';
 import { Avatar } from '@/components/ui-kit/Avatar';
 import { Button } from '@/components/ui-kit/Button';
@@ -15,6 +16,7 @@ import { OMBUDSMAN_ESCALATION_DAYS, type DisputeContext } from '@/lib/services';
 import { Conversation } from './Conversation';
 import { DISPUTE_STATUS, OriginBadge } from './DisputeList';
 import { TicketTimeline } from './TicketTimeline';
+import { LinkButton } from '@/components/ui-kit/LinkButton';
 
 const OUTCOME_LABEL: Record<string, string> = {
   [DisputeOutcome.FULL_REFUND]: 'Full refund',
@@ -42,6 +44,7 @@ export interface TicketPaneProps {
  */
 export function TicketPane({ context, loading, busy, onResolve, onEscalate, onSend }: TicketPaneProps) {
   const conversationRef = useRef<HTMLElement>(null);
+  const reducedMotion = useReducedMotion();
 
   if (loading) {
     return (
@@ -212,12 +215,16 @@ export function TicketPane({ context, loading, busy, onResolve, onEscalate, onSe
         <SectionHeader as="h3" title="What happened on the job" subtitle="From the request to the payment, in order" />
         <div className="mt-4">
           {timeline.length === 0 ? (
-            <EmptyState title="No job record" description="The booking for this ticket could not be found." />
+            <EmptyState
+              title="No job record"
+              description="The booking for this ticket could not be found. Search the ledger for its reference to see whether any money moved."
+              action={<LinkButton href="/finance">Search the ledger</LinkButton>}
+            />
           ) : (
             <TicketTimeline
               nodes={timeline}
               onJumpToConversation={() =>
-                conversationRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                conversationRef.current?.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' })
               }
             />
           )}

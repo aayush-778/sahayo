@@ -180,3 +180,30 @@ export {
 } from './finance.service';
 
 export { listZones, resetDemoData } from './platform.service';
+
+export {
+  SPLIT_CONFIRMATION_WORD,
+  SPLIT_IMPACT_WINDOW_DAYS,
+  applySplitChange,
+  getSettings,
+  listSettingsHistory,
+  listTeam,
+  previewSplitChange,
+  saveDispatchSettings,
+  savePlatformDetails,
+  type SplitChangeImpact,
+} from './settings.service';
+
+/* The fraction shapes settings resolve to, for components that display them. */
+export type { EquityWeights, SplitShares } from '@/lib/seed';
+
+export {
+  CRCS_DATASETS,
+  buildCrcsExport,
+  listFinancialYears,
+  listOmbudsmanEscalations,
+  type CrcsDataset,
+  type CrcsExport,
+  type ExportFormat,
+  type FinancialYear,
+} from './compliance.service';

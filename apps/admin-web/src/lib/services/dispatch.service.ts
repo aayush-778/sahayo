@@ -6,9 +6,10 @@ import {
   type EquityScoreInputs,
   type Zone,
 } from '@sahayo/shared';
-import { DAY_MS, SEED_NOW, computeEquityScore } from '@/lib/seed';
+import { DAY_MS, SEED_NOW, computeEquityScore, type EquityWeights, type SplitShares } from '@/lib/seed';
 import { adminState } from '@/lib/store';
 import { respond } from './latency';
+import { currentDispatchSettings, currentEquityWeights, currentSplitShares } from './settings.service';
 import { compareIso } from '@/lib/dates';
 
 /** Statuses that put a booking in the live dispatch queue. */
@@ -85,6 +86,12 @@ export interface Broadcast {
   candidates: RankedCandidate[];
   /** The zone's average weekly job count, which the plain-language line quotes. */
   zoneAverageJobs: number;
+  /** The weights the ranking was computed with — the ones currently set in Settings. */
+  weights: EquityWeights;
+  /** How long each offer stays open, in seconds. */
+  pingTimeoutSeconds: number;
+  /** The split this booking pays out at. */
+  shares: SplitShares;
 }
 
 /** Great-circle distance in kilometres. */
@@ -107,8 +114,6 @@ function maxJobsThisWeek(workers: AdminWorker[]): number {
   return workers.reduce((max, worker) => Math.max(max, worker.jobsThisWeek), 1);
 }
 
-/** Outer bound of a broadcast, in kilometres. Proximity is normalised against it. */
-const BROADCAST_RADIUS_KM = 5;
 
 /**
  * Where a worker is standing.
@@ -149,6 +154,10 @@ export async function getBroadcast(bookingId: string): Promise<Broadcast | undef
   const booking = bookings.find((candidate) => candidate.id === bookingId);
   if (!booking) return respond(undefined);
 
+  /* Outer bound of a broadcast, from Settings. Proximity is normalised against it. */
+  const { broadcastRadiusKm, pingTimeoutSeconds } = currentDispatchSettings();
+  const weights = currentEquityWeights();
+
   const inZone = workers.filter(
     (worker) => worker.zoneId === booking.zoneId && worker.kycStatus === 'VERIFIED',
   );
@@ -161,11 +170,11 @@ export async function getBroadcast(bookingId: string): Promise<Broadcast | undef
   const candidates: RankedCandidate[] = inZone
     .map((worker) => {
       const position = workerPosition(worker, zones);
-      const km = position ? distanceKm(booking.location, position) : BROADCAST_RADIUS_KM;
+      const km = position ? distanceKm(booking.location, position) : broadcastRadiusKm;
 
       const inputs: EquityScoreInputs = {
         /* Nearer is better, normalised against the broadcast radius. */
-        proximity: Math.max(0, Math.min(1, 1 - km / BROADCAST_RADIUS_KM)),
+        proximity: Math.max(0, Math.min(1, 1 - km / broadcastRadiusKm)),
         rating: Math.round(((worker.rating - 3.6) / (5 - 3.6)) * 1000) / 1000,
         /*
          * The input that makes this dispatcher different: taking FEW jobs this
@@ -175,7 +184,7 @@ export async function getBroadcast(bookingId: string): Promise<Broadcast | undef
         inverseAllocation: Math.round((1 - worker.jobsThisWeek / maxJobs) * 1000) / 1000,
       };
 
-      return { worker, distanceKm: km, inputs, score: computeEquityScore(inputs) };
+      return { worker, distanceKm: km, inputs, score: computeEquityScore(inputs, weights) };
     })
     .sort((a, b) => b.score - a.score)
     .slice(0, pingedCount)
@@ -191,9 +200,12 @@ export async function getBroadcast(bookingId: string): Promise<Broadcast | undef
 
   return respond({
     booking,
-    radiusKm: BROADCAST_RADIUS_KM,
+    radiusKm: broadcastRadiusKm,
     candidates,
     zoneAverageJobs,
+    weights,
+    pingTimeoutSeconds,
+    shares: currentSplitShares(),
   });
 }
 

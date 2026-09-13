@@ -1,14 +1,10 @@
 import { Briefcase, CheckCheck, Star } from 'lucide-react';
-import {
-  EQUITY_WEIGHT_INVERSE_ALLOCATION,
-  EQUITY_WEIGHT_PROXIMITY,
-  EQUITY_WEIGHT_RATING,
-  type AdminWorker,
-} from '@sahayo/shared';
+import type { AdminWorker } from '@sahayo/shared';
 import { Card } from '@/components/ui-kit/Card';
 import { SectionHeader } from '@/components/ui-kit/SectionHeader';
 import { StatBlock } from '@/components/ui-kit/StatBlock';
 import { count, percent } from '@/lib/format';
+import type { EquityWeights } from '@/lib/services';
 
 /** Twelve weekly counts as a sparkline. */
 function JobsSparkline({ history }: { history: number[] }) {
@@ -78,11 +74,11 @@ function EquityInputBar({
  *
  * The equity explainer is the point of this tab, and of the platform's central
  * claim. It shows the three actual inputs with their actual weights and the score
- * they produce, rather than asserting that dispatch is fair. The weights come from
- * the shared constants the dispatcher itself reads, so the card cannot describe a
- * formula the system is not using.
+ * they produce, rather than asserting that dispatch is fair. The weights are the
+ * ones currently set in Settings, which the dispatcher itself reads, so the card
+ * cannot describe a formula the system is not using.
  */
-export function OverviewTab({ worker }: { worker: AdminWorker }) {
+export function OverviewTab({ worker, weights }: { worker: AdminWorker; weights: EquityWeights }) {
   const { equityInputs: inputs } = worker;
 
   return (
@@ -133,20 +129,20 @@ export function OverviewTab({ worker }: { worker: AdminWorker }) {
           <EquityInputBar
             label="How close they are"
             value={inputs.proximity}
-            weight={EQUITY_WEIGHT_PROXIMITY}
+            weight={weights.proximity}
             explanation="Distance from the job, measured against the broadcast radius."
           />
           <EquityInputBar
             label="How they are rated"
             value={inputs.rating}
-            weight={EQUITY_WEIGHT_RATING}
+            weight={weights.rating}
             explanation="Customer rating, scaled across the range workers actually sit in."
           />
           <EquityInputBar
             label="How little work they have had"
             value={inputs.inverseAllocation}
-            weight={EQUITY_WEIGHT_INVERSE_ALLOCATION}
-            explanation="The highest-weighted input. Fewer jobs this week scores higher, which is how earnings are kept from piling up with whoever happens to be nearest."
+            weight={weights.inverseAllocation}
+            explanation="Fewer jobs this week scores higher, which is how earnings are kept from piling up with whoever happens to be nearest."
           />
         </ul>
 

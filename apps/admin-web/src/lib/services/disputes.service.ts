@@ -147,9 +147,10 @@ export function refundableAmount(dispute: Dispute): Paise {
  *                                                       PLATFORM    −platform share of R
  *                                                       COOP_FUND   −fund share of R
  *
- * The recovery uses splitAmount on R — the same function the original booking was
- * split with — so the three clawbacks sum to R exactly and every party gives back in
- * the proportion they were paid. No existing row is touched; the original three
+ * The recovery uses splitAmount on R at the shares this booking was actually paid at,
+ * read back from its own ledger rows — not the split currently set in Settings, which
+ * may have changed since. The three clawbacks sum to R exactly and every party gives
+ * back in the proportion they were paid. No existing row is touched; the original three
  * split rows stay exactly as they are and these are new rows beside them. The finance
  * hub's split nets them out, so its totals move by exactly R.
  *
@@ -169,7 +170,12 @@ export function previewResolutionEntries(
   const amount = outcome === DisputeOutcome.FULL_REFUND ? ceiling : (refundAmount ?? 0);
   if (amount <= 0 || amount > ceiling) return [];
 
-  const parts = splitAmount(amount);
+  const posted = postedSplit(dispute.bookingId);
+  const parts = splitAmount(amount, {
+    worker: posted.worker / ceiling,
+    platform: posted.platform / ceiling,
+    coopFund: posted.coopFund / ceiling,
+  });
   const at = SEED_NOW.toISOString();
   const label = outcome === DisputeOutcome.FULL_REFUND ? 'Full refund' : 'Partial refund';
 

@@ -45,6 +45,15 @@ export default function DisputesPage() {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string>();
 
+  /*
+   * The Ombudsman log in Settings links here with ?id=<dispute id>. Set before the list
+   * loads, so the list keeps it selected rather than falling back to the first ticket.
+   */
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get('id');
+    if (id) setSelectedId(id);
+  }, []);
+
   const loadList = useCallback(async (): Promise<Dispute[]> => {
     const [list, byOrigin] = await Promise.all([listDisputes(filterFor(tab)), countDisputesByOrigin()]);
     setDisputes(list);

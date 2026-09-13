@@ -28,6 +28,7 @@ import {
   disburseLoan,
   getFundGrowth,
   getFundTotals,
+  getSettings,
   listLoanRequests,
   listPastDecisions,
   listProposals,
@@ -54,6 +55,7 @@ export default function FundPage() {
   const [loans, setLoans] = useState<LoanRequest[]>();
   const [members, setMembers] = useState<AdminWorker[]>([]);
   const [zoneNames, setZoneNames] = useState<Map<string, string>>(new Map());
+  const [fundPercent, setFundPercent] = useState<number>();
 
   const [voting, setVoting] = useState<{ proposal: Proposal; direction: VoteDirection }>();
   const [reading, setReading] = useState<Proposal>();
@@ -78,7 +80,8 @@ export default function FundPage() {
 
   useEffect(() => {
     void load();
-    void Promise.all([listWorkers(), listZones()]).then(([workers, zones]) => {
+    void Promise.all([listWorkers(), listZones(), getSettings()]).then(([workers, zones, settings]) => {
+      setFundPercent(settings.split.fundPercent);
       setMembers(workers);
       setZoneNames(new Map(zones.map((zone) => [zone.id, zone.name])));
     });
@@ -127,7 +130,7 @@ export default function FundPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <FundOverview totals={totals} growth={growth} />
+      <FundOverview totals={totals} growth={growth} fundPercent={fundPercent} />
 
       {notice ? (
         <p role="status" className="rounded-tile border border-hairline bg-marigold-tint/50 px-4 py-2.5 text-table text-ink">
@@ -141,7 +144,7 @@ export default function FundPage() {
           subtitle="A result counts once enough members have voted"
           action={
             <Button variant="primary" icon={<Plus size={16} strokeWidth={1.5} aria-hidden />} onClick={() => setProposing(true)}>
-              New proposal
+              Put forward a proposal
             </Button>
           }
         />
@@ -154,6 +157,11 @@ export default function FundPage() {
           <EmptyState
             title="Nothing is up for a vote right now"
             description="Put a proposal to the members when someone asks for the fund to pay for something."
+            action={
+              <Button variant="outline" size="sm" onClick={() => setProposing(true)}>
+                Put forward a proposal
+              </Button>
+            }
           />
         ) : (
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">

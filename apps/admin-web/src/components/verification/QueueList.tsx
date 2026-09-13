@@ -13,6 +13,7 @@ import { categoryLabel } from '@/lib/services';
 import { cn } from '@/lib/utils';
 import { DAY_MS, SEED_NOW } from '@/lib/dates';
 import { DOCUMENT_LABEL, QUEUE_STATUS } from './review-copy';
+import { Button } from '@/components/ui-kit/Button';
 
 export interface QueueFilters {
   status: string;
@@ -146,7 +147,16 @@ export function QueueList({
           <EmptyState
             className="p-4"
             title="Nothing in the queue matches"
-            description="Clear the search, or set Status to Any status to see submissions that have already been decided."
+            description="No submission matches the search and filters above, including ones already decided."
+            action={
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onFiltersChange({ status: '', documentType: '', search: '' })}
+              >
+                Show every submission
+              </Button>
+            }
           />
         ) : (
           <ul ref={listRef} className="flex flex-col" role="listbox" aria-label="Submissions">

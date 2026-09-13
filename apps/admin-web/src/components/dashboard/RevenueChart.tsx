@@ -18,6 +18,7 @@ import { rupees, rupeesCompact } from '@/lib/format';
 import type { RevenuePoint } from '@/lib/services';
 import { AXIS, GRID, LINE, SERIES } from './chart-theme';
 import { compareIso } from '@/lib/dates';
+import { useReducedMotion } from '@/lib/use-reduced-motion';
 
 type Grain = 'DAY' | 'MONTH' | 'YEAR';
 
@@ -113,6 +114,7 @@ function ChartTooltip({
 
 export function RevenueChart({ daily }: { daily?: RevenuePoint[] }) {
   const [grain, setGrain] = useState<Grain>('MONTH');
+  const reducedMotion = useReducedMotion();
   const series = useMemo(() => reaggregate(daily ?? [], grain), [daily, grain]);
 
   /*
@@ -130,6 +132,30 @@ export function RevenueChart({ daily }: { daily?: RevenuePoint[] }) {
   const summary = `Platform revenue ${rupees(totals.platform)} and cooperative fund ${rupees(
     totals.fund,
   )} across ${series.length} ${grain.toLowerCase()} periods.`;
+
+  /*
+   * While the platform and the fund take the same share, their lines are the same
+   * amount and draw on top of each other. Say so, rather than let a reader conclude a
+   * series is missing.
+   */
+  const coincide = series.length > 0 && series.every((point) => point.platform === point.coopFund);
+
+  /*
+   * The records cover 90 days, so at month or year grain the first and last buckets are
+   * part-periods. Named here, so the dip at either end reads as fewer days rather than
+   * as a collapse in bookings.
+   */
+  const first = daily?.[0]?.bucket;
+  const last = daily?.[daily.length - 1]?.bucket;
+  const partNote =
+    grain !== 'DAY' && first && last
+      ? `The first and last ${grain === 'MONTH' ? 'months' : 'years'} are part-periods: the records run from ${new Date(
+          first,
+        ).toLocaleDateString('en-IN', { day: 'numeric', month: 'long' })} to ${new Date(last).toLocaleDateString('en-IN', {
+          day: 'numeric',
+          month: 'long',
+        })}.`
+      : undefined;
 
   return (
     <Card className="col-span-12 flex flex-col p-6 lg:col-span-8">
@@ -161,6 +187,7 @@ export function RevenueChart({ daily }: { daily?: RevenuePoint[] }) {
                   dataKey="platform"
                   name="Platform"
                   stroke={SERIES.platform}
+                  isAnimationActive={!reducedMotion}
                 />
                 <Line
                   {...LINE}
@@ -168,6 +195,7 @@ export function RevenueChart({ daily }: { daily?: RevenuePoint[] }) {
                   dataKey="coopFund"
                   name="Cooperative fund"
                   stroke={SERIES.fund}
+                  isAnimationActive={!reducedMotion}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -195,7 +223,11 @@ export function RevenueChart({ daily }: { daily?: RevenuePoint[] }) {
           />
           Cooperative fund
         </li>
+        {coincide ? (
+          <li className="text-pill text-muted">Both take the same share, so the two lines overlap exactly.</li>
+        ) : null}
       </ul>
+      {partNote ? <p className="mt-1.5 text-pill text-muted">{partNote}</p> : null}
     </Card>
   );
 }

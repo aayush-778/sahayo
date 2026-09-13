@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui-kit/Skeleton';
 import { StatusPill } from '@/components/ui-kit/StatusPill';
 import { count, rupees } from '@/lib/format';
 import { getProposalBreakdown, type BreakdownRow, type ProposalBreakdown } from '@/lib/services';
-import { Modal } from './Modal';
+import { Modal } from '@/components/ui-kit/Modal';
 import { PROPOSAL_STATUS, VoteBar, longDate } from './ProposalCard';
 
 function BreakdownTable({ rows }: { rows: BreakdownRow[] }) {

@@ -97,7 +97,7 @@ export function BulkActionBar({
           onClick={onClear}
           className="mb-0.5"
         >
-          Clear
+          Clear selection
         </Button>
       </div>
     </div>

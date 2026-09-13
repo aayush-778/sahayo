@@ -1,30 +1,22 @@
 'use client';
 
 import { Check, X } from 'lucide-react';
-import {
-  COOP_FUND_SHARE,
-  EQUITY_WEIGHT_INVERSE_ALLOCATION,
-  EQUITY_WEIGHT_PROXIMITY,
-  EQUITY_WEIGHT_RATING,
-  PLATFORM_SHARE,
-  WORKER_SHARE,
-} from '@sahayo/shared';
 import { Avatar } from '@/components/ui-kit/Avatar';
 import { Button } from '@/components/ui-kit/Button';
 import { Skeleton } from '@/components/ui-kit/Skeleton';
 import { count, percent, rupees } from '@/lib/format';
-import { rankingExplanation, type Broadcast, type RankedCandidate } from '@/lib/services';
+import { rankingExplanation, type Broadcast, type EquityWeights, type RankedCandidate } from '@/lib/services';
 import { cn } from '@/lib/utils';
 
 /** The three inputs as stacked mini-bars, so the weighting is visible not asserted. */
-function ScoreBars({ candidate }: { candidate: RankedCandidate }) {
+function ScoreBars({ candidate, weights }: { candidate: RankedCandidate; weights: EquityWeights }) {
   const rows = [
-    { label: 'Close by', value: candidate.inputs.proximity, weight: EQUITY_WEIGHT_PROXIMITY },
-    { label: 'Rated well', value: candidate.inputs.rating, weight: EQUITY_WEIGHT_RATING },
+    { label: 'Close by', value: candidate.inputs.proximity, weight: weights.proximity },
+    { label: 'Rated well', value: candidate.inputs.rating, weight: weights.rating },
     {
       label: 'Had less work',
       value: candidate.inputs.inverseAllocation,
-      weight: EQUITY_WEIGHT_INVERSE_ALLOCATION,
+      weight: weights.inverseAllocation,
     },
   ];
 
@@ -129,24 +121,24 @@ export function BroadcastInspector({
             </dl>
 
             {/*
-             * The split preview. Shares come from the shared constants, so this
+             * The split preview. Shares are the ones currently set in Settings, so this
              * shows what the booking will actually pay out, not an illustration.
              */}
             <ul className="mt-3 flex flex-col gap-1 rounded-tile border border-hairline bg-ground p-3">
               {[
                 {
                   label: 'To the worker',
-                  share: WORKER_SHARE,
+                  share: broadcast.shares.worker,
                   tone: 'text-ink',
                 },
                 {
                   label: 'To run the platform',
-                  share: PLATFORM_SHARE,
+                  share: broadcast.shares.platform,
                   tone: 'text-muted',
                 },
                 {
                   label: 'To the cooperative fund',
-                  share: COOP_FUND_SHARE,
+                  share: broadcast.shares.coopFund,
                   tone: 'text-fund-green',
                 },
               ].map((row) => (
@@ -166,7 +158,8 @@ export function BroadcastInspector({
               <span className="tabular text-ink">{count(broadcast.candidates.length)}</span>{' '}
               workers within{' '}
               <span className="tabular text-ink">{broadcast.radiusKm}km</span>, ranked by equity
-              score.
+              score. Each offer stays open for{' '}
+              <span className="tabular text-ink">{broadcast.pingTimeoutSeconds} seconds</span>.
             </p>
 
             <ol className="mt-3 flex flex-col gap-2">
@@ -210,7 +203,7 @@ export function BroadcastInspector({
                         <span className="tabular">{count(candidate.worker.jobsThisWeek)}</span> jobs
                         this week
                       </p>
-                      <ScoreBars candidate={candidate} />
+                      <ScoreBars candidate={candidate} weights={broadcast.weights} />
                     </div>
                   </div>
 

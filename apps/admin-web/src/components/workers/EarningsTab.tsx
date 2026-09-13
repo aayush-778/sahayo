@@ -8,6 +8,7 @@ import { SegmentedToggle } from '@/components/ui-kit/SegmentedToggle';
 import { Skeleton } from '@/components/ui-kit/Skeleton';
 import { count, percent, rupees } from '@/lib/format';
 import { summariseEarnings, type Period, type WorkerEarning } from '@/lib/services';
+import { Button } from '@/components/ui-kit/Button';
 
 const PERIODS = [
   { value: '7D' as const, label: '7 days' },
@@ -101,7 +102,14 @@ export function EarningsTab({ rows, period, onPeriodChange }: EarningsTabProps) 
         <EmptyState
           className="px-6 pb-6"
           title="No finished jobs in this period"
-          description="Widen the period above, or check the Bookings tab for work that is still in progress."
+          description="This worker has no completed jobs in the chosen period. Work still in progress is on the Bookings tab."
+          action={
+            period === 'ALL' ? undefined : (
+              <Button variant="outline" size="sm" onClick={() => onPeriodChange('ALL')}>
+                Show all recorded jobs
+              </Button>
+            )
+          }
         />
       ) : (
         <div className="overflow-x-auto border-t border-hairline">

@@ -220,6 +220,11 @@ export function PayoutsTable({
                 ? 'Every earned payout has already gone to the workers. New ones appear here as jobs are paid.'
                 : 'Payouts appear here once a batch has been released to the bank.'
             }
+            action={
+              <Button variant="outline" size="sm" onClick={() => onViewChange(pending ? 'RELEASED' : 'PENDING')}>
+                {pending ? 'Show sent payouts' : 'Show payouts waiting to send'}
+              </Button>
+            }
           />
         }
       />

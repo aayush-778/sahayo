@@ -8,6 +8,7 @@ import {
 import { SEED_NOW, splitAmount } from '@/lib/seed';
 import { adminState } from '@/lib/store';
 import { respond } from './latency';
+import { currentSplitShares } from './settings.service';
 import { appendEntries, listLedger, type LedgerFilter } from './ledger.service';
 import { compareIso } from '@/lib/dates';
 
@@ -270,8 +271,8 @@ export async function releasePayouts(
  * The three parts of a gross amount, from the same function the ledger posts with.
  *
  * For the finance hub's worked example, so the example is computed rather than
- * written: if the split changes, the sentence changes with it.
+ * written: if the split changes in Settings, the sentence changes with it.
  */
 export function previewSplit(gross: Paise): { worker: Paise; platform: Paise; coopFund: Paise } {
-  return splitAmount(gross);
+  return splitAmount(gross, currentSplitShares());
 }

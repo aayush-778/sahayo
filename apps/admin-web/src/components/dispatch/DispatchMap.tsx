@@ -5,6 +5,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import type { MapRef } from 'react-map-gl/maplibre';
 import { Layer, Map, NavigationControl, Source } from 'react-map-gl/maplibre';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useReducedMotion } from '@/lib/use-reduced-motion';
 import type { AdminBooking } from '@sahayo/shared';
 import { ZoneMapCanvas } from '@/components/dashboard/ZoneMapCanvas';
 import type { HeatmapGeoJSON, MappedWorker, ZoneDemandPoint } from '@/lib/services';
@@ -77,6 +78,7 @@ export function DispatchMap({
   onSelectBooking,
 }: DispatchMapProps) {
   const mapRef = useRef<MapRef | null>(null);
+  const reducedMotion = useReducedMotion();
   const [tilesReady, setTilesReady] = useState(false);
   const [tilesFailed, setTilesFailed] = useState(false);
 
@@ -89,7 +91,10 @@ export function DispatchMap({
     return () => clearTimeout(timer);
   }, [tilesReady]);
 
-  /* Fly to the selected booking rather than jumping, so the move is followable. */
+  /*
+   * Fly to the selected booking rather than jumping, so the move is followable — unless
+   * the viewer has asked for less motion, when it jumps.
+   */
   useEffect(() => {
     if (!selectedBookingId || !tilesReady) return;
     const booking = liveBookings.find((candidate) => candidate.id === selectedBookingId);
@@ -97,9 +102,9 @@ export function DispatchMap({
     mapRef.current?.flyTo({
       center: [booking.location.lng, booking.location.lat],
       zoom: 13.4,
-      duration: 900,
+      duration: reducedMotion ? 0 : 900,
     });
-  }, [selectedBookingId, liveBookings, tilesReady]);
+  }, [selectedBookingId, liveBookings, tilesReady, reducedMotion]);
 
   const workerPoints = useMemo<GeoJSON.FeatureCollection>(
     () => ({

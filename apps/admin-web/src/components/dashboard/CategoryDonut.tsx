@@ -87,12 +87,14 @@ export function CategoryDonut({ slices }: { slices?: CategorySlice[] }) {
       </div>
 
       {/*
-       * A written legend below, in two columns — not a floating chart legend.
+       * A written legend below, one trade per row — not a floating chart legend.
+       * One column, because at a four-column card width two columns cut every
+       * trade name down to its first letter.
        * Every slice carries its name, count and share, so the donut never
        * communicates by colour alone. Each row is focusable, which is how the
        * chart becomes keyboard-reachable at all.
        */}
-      <ul className="mt-5 grid grid-cols-2 gap-x-4 gap-y-2">
+      <ul className="mt-5 grid grid-cols-1 gap-y-2">
         {slices.map((slice, index) => (
           <li key={slice.category}>
             <button
@@ -108,7 +110,7 @@ export function CategoryDonut({ slices }: { slices?: CategorySlice[] }) {
                 className="mt-1 h-2 w-2 flex-none rounded-full"
                 style={{ backgroundColor: DONUT_SEGMENTS[index % DONUT_SEGMENTS.length] }}
               />
-              <span className="min-w-0 flex-1 truncate text-ink">{slice.label}</span>
+              <span className="min-w-0 flex-1 text-ink">{slice.label}</span>
               <span className="tabular text-muted">{count(slice.count)}</span>
               <span className="tabular w-9 text-right text-muted">{percent(slice.share)}</span>
             </button>

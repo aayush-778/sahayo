@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui-kit/Skeleton';
 import { count } from '@/lib/format';
 import type { ZoneDemandPoint } from '@/lib/services';
 import { ZoneMapCanvas } from './ZoneMapCanvas';
+import { LinkButton } from '@/components/ui-kit/LinkButton';
 
 /**
  * The dashboard's card around the Patna choropleth, plus the thin-cover list.
@@ -38,6 +39,7 @@ export function ZoneDemandMap({ zones }: { zones?: ZoneDemandPoint[] }) {
             className="mt-1"
             title="Every zone has enough workers this week"
             description="Orders and available workers are in balance across all twelve zones. Check back after a demand spike."
+            action={<LinkButton href="/dispatch">Watch live dispatch</LinkButton>}
           />
         ) : (
           <ul className="mt-2 flex flex-col">

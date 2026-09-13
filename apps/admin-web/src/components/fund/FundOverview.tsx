@@ -2,13 +2,13 @@
 
 import { ArrowDownRight, ArrowUpRight, HandCoins, Users } from 'lucide-react';
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { COOP_FUND_SHARE, type FundTotals } from '@sahayo/shared';
+import type { FundTotals } from '@sahayo/shared';
 import { AXIS, GRID } from '@/components/dashboard/chart-theme';
 import { Card } from '@/components/ui-kit/Card';
 import { IconTile } from '@/components/ui-kit/IconTile';
 import { SectionHeader } from '@/components/ui-kit/SectionHeader';
 import { Skeleton } from '@/components/ui-kit/Skeleton';
-import { count, percent, rupees, rupeesCompact } from '@/lib/format';
+import { count, rupees, rupeesCompact } from '@/lib/format';
 import type { FundGrowthPoint } from '@/lib/services';
 
 interface TooltipEntry {
@@ -32,6 +32,8 @@ function GrowthTooltip({ active, payload }: { active?: boolean; payload?: Toolti
 export interface FundOverviewProps {
   totals?: FundTotals;
   growth?: FundGrowthPoint[];
+  /** The fund's share of each new booking, in whole percent, from Settings. */
+  fundPercent?: number;
 }
 
 /**
@@ -41,7 +43,7 @@ export interface FundOverviewProps {
  * added, so the top edge is the month's closing balance and a month where the members
  * paid for something shows as a thinner band rather than a mystery dip.
  */
-export function FundOverview({ totals, growth }: FundOverviewProps) {
+export function FundOverview({ totals, growth, fundPercent }: FundOverviewProps) {
   return (
     <div className="grid grid-cols-12 gap-5">
       <Card className="col-span-12 flex flex-col gap-5 p-6 lg:col-span-5">
@@ -60,7 +62,8 @@ export function FundOverview({ totals, growth }: FundOverviewProps) {
             </div>
 
             <p className="font-display text-card-title font-medium leading-relaxed text-ink">
-              Every booking puts {percent(COOP_FUND_SHARE)} here.{' '}
+              Every booking puts{' '}
+              <span className="tabular">{fundPercent === undefined ? '' : `${fundPercent}%`}</span> here.{' '}
               <span className="tabular">{count(totals.memberCount)}</span> workers decide together what
               it pays for.
             </p>

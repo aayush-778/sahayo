@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { Outfit, Plus_Jakarta_Sans } from 'next/font/google';
+import { ServiceWorkerRegistrar } from '@/components/shell/ServiceWorkerRegistrar';
 import './globals.css';
 
 /*
@@ -33,7 +34,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={`${outfit.variable} ${plusJakartaSans.variable}`}>
-      <body className="font-sans text-body">{children}</body>
+      <body className="font-sans text-body">
+        {children}
+        <ServiceWorkerRegistrar />
+      </body>
     </html>
   );
 }

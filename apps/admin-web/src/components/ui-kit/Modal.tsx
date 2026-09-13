@@ -16,7 +16,7 @@ export interface ModalProps {
  * A native <dialog>, opened as a modal when `open` is true.
  *
  * The browser supplies Escape to close, the backdrop, and keeping focus inside while
- * open. The fund page has four dialogs, so the open/close plumbing lives here once.
+ * open. Several pages open dialogs, so the open/close plumbing lives here once.
  */
 export function Modal({ open, onClose, labelledBy, children, className }: ModalProps) {
   const ref = useRef<HTMLDialogElement>(null);

@@ -25,6 +25,7 @@ import {
   setOnline,
   type WorkerFilter,
 } from '@/lib/services';
+import { Button } from '@/components/ui-kit/Button';
 
 /**
  * The worker directory.
@@ -288,7 +289,12 @@ function WorkersDirectory() {
             <EmptyState
               className="px-5 py-6"
               title="No workers match these filters"
-              description="Widen the category, zone, verification or availability filters above, or clear the search box."
+              description="No member matches the search and filters above."
+              action={
+                <Button variant="outline" size="sm" onClick={() => setFilters(EMPTY_FILTERS)}>
+                  Clear filters
+                </Button>
+              }
             />
           }
         />

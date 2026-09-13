@@ -21,6 +21,7 @@ import type { Tint } from '@/components/ui-kit/tint';
 import { rupees } from '@/lib/format';
 import { secondsSinceRequest } from '@/lib/services';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui-kit/Button';
 
 /** An icon and tint per trade, so a queue row is identifiable at a glance. */
 const TRADE: Record<string, { icon: LucideIcon; tint: Tint }> = {
@@ -55,6 +56,8 @@ export interface LiveQueueProps {
   zoneName: (zoneId: string) => string;
   selectedId?: string;
   onSelect: (bookingId: string) => void;
+  /** Puts a request through the dispatcher, offered from the empty state. */
+  onSimulate?: () => void;
 }
 
 /**
@@ -66,7 +69,7 @@ export interface LiveQueueProps {
  * Requests under a minute old get a pulse, because those are the ones a dispatcher
  * can still act on.
  */
-export function LiveQueue({ bookings, zoneName, selectedId, onSelect }: LiveQueueProps) {
+export function LiveQueue({ bookings, zoneName, selectedId, onSelect, onSimulate }: LiveQueueProps) {
   const [tick, setTick] = useState(0);
 
   useEffect(() => {
@@ -94,7 +97,14 @@ export function LiveQueue({ bookings, zoneName, selectedId, onSelect }: LiveQueu
           <EmptyState
             className="p-5"
             title="Nothing in flight"
-            description="Open requests and jobs in progress appear here. Use Simulate request in the header to put one through the dispatcher."
+            description="Open requests and jobs in progress appear here as customers book."
+            action={
+              onSimulate ? (
+                <Button variant="outline" size="sm" onClick={onSimulate}>
+                  Simulate request
+                </Button>
+              ) : undefined
+            }
           />
         ) : (
           <ul className="flex flex-col">

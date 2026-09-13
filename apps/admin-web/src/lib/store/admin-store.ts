@@ -7,11 +7,14 @@ import type {
   KycSubmission,
   LedgerEntry,
   LoanRequest,
+  PlatformSettings,
   Proposal,
+  SettingsChange,
+  TeamMember,
   Zone,
 } from '@sahayo/shared';
 import { create } from 'zustand';
-import { buildSeedDataset } from '@/lib/seed';
+import { DEFAULT_SETTINGS, buildSeedDataset, computeEquityScore } from '@/lib/seed';
 
 /**
  * The in-memory database for the prototype.
@@ -48,6 +51,9 @@ export interface AdminState {
   loanRequests: LoanRequest[];
   kycQueue: KycSubmission[];
   aadhaarAccessLog: AadhaarAccessLogEntry[];
+  settings: PlatformSettings;
+  settingsHistory: SettingsChange[];
+  team: TeamMember[];
 
   /* --- lifecycle ---------------------------------------------------------- */
 
@@ -99,6 +105,16 @@ export interface AdminState {
   /** Adds a booking, newest first. Used by the dispatch simulator. */
   addBooking(booking: AdminBooking): void;
   updateBooking(bookingId: string, patch: Partial<AdminBooking>): void;
+
+  /* --- settings ---------------------------------------------------------- */
+
+  /**
+   * Replaces the settings and records the change, in one write, so a setting can never
+   * move without its audit row. When the dispatch weights change, every worker's stored
+   * equity score is recomputed with the new weights, so the directory, the profile and
+   * the Broadcast Inspector keep agreeing about who ranks where.
+   */
+  applySettings(settings: PlatformSettings, change: SettingsChange): void;
 }
 
 /** Replaces the one item matching `id`, leaving the array's order untouched. */
@@ -123,6 +139,9 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   loanRequests: [],
   kycQueue: [],
   aadhaarAccessLog: [],
+  settings: structuredClone(DEFAULT_SETTINGS),
+  settingsHistory: [],
+  team: [],
 
   hydrate() {
     if (get().hydrated) return;
@@ -195,6 +214,34 @@ export const useAdminStore = create<AdminState>((set, get) => ({
 
   updateBooking(bookingId, patch) {
     set((state) => ({ bookings: patchById(state.bookings, bookingId, patch) }));
+  },
+
+  applySettings(settings, change) {
+    set((state) => {
+      const before = state.settings.dispatch.weights;
+      const after = settings.dispatch.weights;
+      const weightsChanged =
+        before.proximityPercent !== after.proximityPercent ||
+        before.ratingPercent !== after.ratingPercent ||
+        before.inverseAllocationPercent !== after.inverseAllocationPercent;
+      const weights = {
+        proximity: after.proximityPercent / 100,
+        rating: after.ratingPercent / 100,
+        inverseAllocation: after.inverseAllocationPercent / 100,
+      };
+      return {
+        settings,
+        settingsHistory: [change, ...state.settingsHistory],
+        ...(weightsChanged
+          ? {
+              workers: state.workers.map((worker) => ({
+                ...worker,
+                equityScore: computeEquityScore(worker.equityInputs, weights),
+              })),
+            }
+          : {}),
+      };
+    });
   },
 }));
 

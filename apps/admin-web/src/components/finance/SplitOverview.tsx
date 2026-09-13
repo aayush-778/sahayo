@@ -1,7 +1,7 @@
 'use client';
 
 import { Cell, Pie, PieChart, ResponsiveContainer } from 'recharts';
-import { COOP_FUND_SHARE, PLATFORM_SHARE, WORKER_SHARE, type SplitSummary } from '@sahayo/shared';
+import type { SplitSummary } from '@sahayo/shared';
 import { Card } from '@/components/ui-kit/Card';
 import { SectionHeader } from '@/components/ui-kit/SectionHeader';
 import { SegmentedToggle } from '@/components/ui-kit/SegmentedToggle';
@@ -26,7 +26,6 @@ const SEGMENTS = [
   {
     key: 'worker' as const,
     label: 'To workers',
-    share: WORKER_SHARE,
     color: 'hsl(var(--marigold))',
     dot: 'bg-marigold',
     detail: 'Paid to the person who did the job, into their Sahayo balance and then their bank.',
@@ -34,7 +33,6 @@ const SEGMENTS = [
   {
     key: 'platform' as const,
     label: 'To run the platform',
-    share: PLATFORM_SHARE,
     color: 'hsl(var(--muted))',
     dot: 'bg-muted',
     detail: 'Servers, payment fees, support staff and the people who keep dispatch working.',
@@ -42,7 +40,6 @@ const SEGMENTS = [
   {
     key: 'coopFund' as const,
     label: 'To the cooperative fund',
-    share: COOP_FUND_SHARE,
     color: 'hsl(var(--fund-green))',
     dot: 'bg-fund-green',
     detail: 'Owned by every worker together, and spent on what they vote for.',
@@ -137,7 +134,13 @@ export function SplitOverview({ summary, period, onPeriodChange }: SplitOverview
                     <span className="flex items-center gap-2 text-table text-ink">
                       <span aria-hidden className={`h-2.5 w-2.5 flex-none rounded-full ${segment.dot}`} />
                       {segment.label}
-                      <span className="tabular text-pill text-muted">{percent(segment.share)}</span>
+                      {/*
+                        * The share this period was actually paid at, from its own totals, so it
+                        * stays true for past periods after the split is changed in Settings.
+                        */}
+                      <span className="tabular text-pill text-muted">
+                        {summary.gross > 0 ? percent(summary[segment.key] / summary.gross) : '0%'}
+                      </span>
                     </span>
                     <span className="tabular font-display text-card-title font-medium text-ink">
                       {rupees(summary[segment.key])}
@@ -152,7 +155,7 @@ export function SplitOverview({ summary, period, onPeriodChange }: SplitOverview
       </Card>
 
       <Card className="col-span-12 flex flex-col justify-between p-6 lg:col-span-4">
-        <SectionHeader title="On one booking" subtitle="The same split, made concrete" />
+        <SectionHeader title="On one booking" subtitle="The split new bookings are paid at" />
         <p className="mt-4 font-display text-card-title font-medium leading-relaxed text-ink">
           On a <span className="tabular">{rupees(100000)}</span> booking,{' '}
           <span className="tabular">{rupees(example.worker)}</span> goes to the worker,{' '}

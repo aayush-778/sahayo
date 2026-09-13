@@ -38,6 +38,23 @@ if (Math.abs(WORKER_SHARE + PLATFORM_SHARE + COOP_FUND_SHARE - 1) > 1e-9) {
   );
 }
 
+/** The three shares of a booking as fractions summing to 1. */
+export interface SplitShares {
+  worker: number;
+  platform: number;
+  coopFund: number;
+}
+
+/**
+ * The split every seeded booking was paid at. Settings can change the split for
+ * bookings paid from then on; nothing already in the ledger is re-split.
+ */
+export const DEFAULT_SPLIT_SHARES: SplitShares = {
+  worker: WORKER_SHARE,
+  platform: PLATFORM_SHARE,
+  coopFund: COOP_FUND_SHARE,
+};
+
 /**
  * Splits a gross amount three ways, in paise, summing to the gross EXACTLY.
  *
@@ -51,13 +68,16 @@ if (Math.abs(WORKER_SHARE + PLATFORM_SHARE + COOP_FUND_SHARE - 1) > 1e-9) {
  * takes the remainder because it is the smallest share, so a one-paisa
  * adjustment is proportionally least visible there.
  */
-export function splitAmount(gross: Paise): {
+export function splitAmount(
+  gross: Paise,
+  shares: SplitShares = DEFAULT_SPLIT_SHARES,
+): {
   worker: Paise;
   platform: Paise;
   coopFund: Paise;
 } {
-  const worker = Math.round(gross * WORKER_SHARE);
-  const platform = Math.round(gross * PLATFORM_SHARE);
+  const worker = Math.round(gross * shares.worker);
+  const platform = Math.round(gross * shares.platform);
   const coopFund = gross - worker - platform;
   return { worker, platform, coopFund };
 }

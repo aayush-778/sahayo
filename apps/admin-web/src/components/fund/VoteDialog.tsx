@@ -7,7 +7,7 @@ import { Button } from '@/components/ui-kit/Button';
 import { SegmentedToggle } from '@/components/ui-kit/SegmentedToggle';
 import { categoryLabel, listMembersYetToVote } from '@/lib/services';
 import { cn } from '@/lib/utils';
-import { Modal } from './Modal';
+import { Modal } from '@/components/ui-kit/Modal';
 
 type Member = { id: string; name: string; category: string; zoneId: string };
 
@@ -142,7 +142,7 @@ export function VoteDialog({ proposal, direction, zoneName, onClose, onConfirm }
 
           <div className="flex justify-end gap-2">
             <Button variant="ghost" onClick={onClose} disabled={saving}>
-              Cancel
+              Leave without voting
             </Button>
             <Button type="submit" variant={choice === VoteDirection.FOR ? 'approve' : 'outline'} disabled={saving || !memberId}>
               {chosen

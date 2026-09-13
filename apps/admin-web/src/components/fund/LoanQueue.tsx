@@ -11,7 +11,8 @@ import { EmptyState } from '@/components/ui-kit/EmptyState';
 import { SectionHeader } from '@/components/ui-kit/SectionHeader';
 import { StatusPill } from '@/components/ui-kit/StatusPill';
 import { rupees } from '@/lib/format';
-import { Modal } from './Modal';
+import { Modal } from '@/components/ui-kit/Modal';
+import { LinkButton } from '@/components/ui-kit/LinkButton';
 
 export interface LoanQueueProps {
   loans?: LoanRequest[];
@@ -166,6 +167,7 @@ export function LoanQueue({ loans, headroom, busy, onApprove, onReject }: LoanQu
             className="px-5 py-6"
             title="Nobody is waiting on a loan"
             description="New requests arrive from the worker app. Decisions already made are listed below."
+            action={<LinkButton href="/workers">Browse the members</LinkButton>}
           />
         }
       />
