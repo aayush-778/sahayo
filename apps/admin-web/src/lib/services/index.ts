@@ -47,10 +47,22 @@ export {
 } from './workers.service';
 
 export {
+  CANCELLED_STATUSES,
+  LIVE_STATUSES,
+  cancelBooking,
   getBooking,
+  getBookingDetail,
+  getBookingOverview,
   getBookingTimeline,
+  listBookingCategories,
   listBookings,
+  statusGroupOf,
+  type BookingDetail,
   type BookingFilter,
+  type BookingOverview,
+  type BookingPeriod,
+  type BookingStatusGroup,
+  type CancellationRequester,
 } from './bookings.service';
 
 export {

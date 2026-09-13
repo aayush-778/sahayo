@@ -228,10 +228,15 @@ function CustomersSection() {
 
       <Card className="overflow-hidden p-0">
         <DataTable
-          data={customers ?? []}
+          /*
+           * Rows wait for the zone list. The table caches each row's zone name the first
+           * time it reads it, so rows shown before the zones arrive would say "Unknown
+           * zone" for good.
+           */
+          data={zones.length ? (customers ?? []) : []}
           columns={columns}
           caption="Every customer who has booked work, most recently active first"
-          isLoading={!customers}
+          isLoading={!customers || zones.length === 0}
           getRowId={(customer) => customer.id}
           sorting={sorting}
           onSortingChange={setSorting}

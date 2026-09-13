@@ -57,8 +57,8 @@ function RouteSparkline({ points }: { points: { x: number; y: number }[] }) {
 
 export interface TicketTimelineProps {
   nodes: TimelineNode[];
-  /** Scrolls to the full conversation when a message marker is clicked. */
-  onJumpToConversation: () => void;
+  /** Scrolls to the full conversation when a message marker is clicked. Bookings have none. */
+  onJumpToConversation?: () => void;
 }
 
 /**

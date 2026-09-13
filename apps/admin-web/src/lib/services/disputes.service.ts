@@ -112,7 +112,7 @@ export async function postMessage(
 }
 
 /** What a booking actually paid out, which is the ceiling on any refund of it. */
-function postedSplit(bookingId: string): { worker: Paise; platform: Paise; coopFund: Paise } {
+export function postedSplit(bookingId: string): { worker: Paise; platform: Paise; coopFund: Paise } {
   let worker = 0;
   let platform = 0;
   let coopFund = 0;
@@ -415,7 +415,7 @@ function hash(text: string): number {
  * "Route to the job", with no claim to a precise address. In production this reads
  * the worker app's location pings for the booking window.
  */
-function routeFor(bookingId: string): { points: { x: number; y: number }[]; distanceKm: number } {
+export function routeFor(bookingId: string): { points: { x: number; y: number }[]; distanceKm: number } {
   const seed = hash(bookingId);
   const points: { x: number; y: number }[] = [];
   let y = 12 + (seed % 8);
