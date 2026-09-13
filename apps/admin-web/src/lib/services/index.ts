@@ -153,11 +153,17 @@ export {
   categoryLabel,
   getCategoryMix,
   getHeadlineStats,
+  getAnalyticsReport,
   getHiringByCategory,
   getJobsThisWeekByCategory,
   type CategoryJobCount,
+  type AnalyticsPeriod,
+  type AnalyticsReport,
+  type CategoryPerformance,
   type CategorySlice,
   type HeadlineStats,
+  type WorkShare,
+  type ZonePerformance,
 } from './analytics.service';
 
 export {
@@ -231,3 +237,24 @@ export {
   type CustomerOverview,
   type CustomerProfile,
 } from './customers.service';
+
+export {
+  NOTIFICATION_KINDS,
+  NotificationKind,
+  getMutedNotificationKinds,
+  listNotifications,
+  markNotificationsRead,
+  setNotificationKindEnabled,
+  type AdminNotification,
+  type NotificationFeed,
+} from './notifications.service';
+
+export {
+  SEARCH_MIN_LENGTH,
+  searchPortal,
+  type SearchGroup,
+  type SearchGroupKind,
+  type SearchResult,
+} from './search.service';
+
+export { getAccountSummary, type AccountSummary, type MyActivityItem } from './account.service';

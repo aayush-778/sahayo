@@ -1,7 +1,8 @@
 'use client';
 
-import { Bell, ChevronDown, Search, Settings } from 'lucide-react';
-import { usePathname } from 'next/navigation';
+import { BellRing, ChevronDown, LogOut, Settings, UserRound, Users } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
 import { Avatar } from '@/components/ui-kit/Avatar';
 import {
   DropdownMenu,
@@ -13,6 +14,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { findNavItem } from '@/lib/nav/routes';
 import { CURRENT_ADMIN } from '@/lib/nav/session';
+import { cn } from '@/lib/utils';
+import { HeaderSearch } from './HeaderSearch';
+import { NotificationBell } from './NotificationBell';
 
 /**
  * Every header control is a hairline-bordered pill on the white surface. The
@@ -32,7 +36,9 @@ const CONTROL =
  */
 export function Header() {
   const pathname = usePathname();
+  const router = useRouter();
   const active = findNavItem(pathname);
+  const onSettings = pathname.startsWith('/settings');
 
   return (
     <header className="flex h-16 flex-none items-center justify-between gap-6 border-b border-hairline bg-transparent px-8">
@@ -46,35 +52,19 @@ export function Header() {
       </div>
 
       <div className="flex flex-none items-center gap-2">
-        <label className="relative hidden items-center md:inline-flex">
-          <Search
-            size={18}
-            strokeWidth={1.5}
-            aria-hidden
-            className="pointer-events-none absolute left-3 text-muted"
-          />
-          <span className="sr-only">Search workers, bookings, and disputes</span>
-          <input
-            type="search"
-            placeholder="Search"
-            className="h-9 w-56 rounded-pill border border-hairline bg-surface pl-9 pr-3 text-table text-ink placeholder:text-muted"
-          />
-        </label>
+        <HeaderSearch />
 
-        <button type="button" className={`${CONTROL} relative w-9`}>
-          <span className="sr-only">Notifications, unread</span>
-          <Bell size={18} strokeWidth={1.5} aria-hidden />
-          {/* Unread marker. The screen-reader label above carries the same fact. */}
-          <span
-            aria-hidden
-            className="absolute right-2 top-2 h-2 w-2 rounded-full bg-coral ring-2 ring-surface"
-          />
-        </button>
+        <NotificationBell className={CONTROL} />
 
-        <button type="button" className={`${CONTROL} w-9`}>
-          <span className="sr-only">Open settings</span>
+        <Link
+          href="/settings"
+          aria-current={onSettings ? 'page' : undefined}
+          title="Settings"
+          className={cn(CONTROL, 'w-9', onSettings && 'border-marigold bg-marigold-tint text-ink')}
+        >
+          <span className="sr-only">Settings</span>
           <Settings size={18} strokeWidth={1.5} aria-hidden />
-        </button>
+        </Link>
 
         <DropdownMenu>
           <DropdownMenuTrigger className={`${CONTROL} gap-2 pl-1 pr-2.5`}>
@@ -83,14 +73,31 @@ export function Header() {
               {CURRENT_ADMIN.name}
             </span>
             <ChevronDown size={16} strokeWidth={1.5} aria-hidden />
+            <span className="sr-only">Open your account menu</span>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>{CURRENT_ADMIN.role}</DropdownMenuLabel>
+          <DropdownMenuContent align="end" className="w-60">
+            <DropdownMenuLabel className="px-2.5 py-2">
+              <span className="block text-table font-medium text-ink">{CURRENT_ADMIN.name}</span>
+              <span className="block text-pill font-normal text-muted">{CURRENT_ADMIN.role}</span>
+            </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Profile</DropdownMenuItem>
-            <DropdownMenuItem>Preferences</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => router.push('/account')}>
+              <UserRound size={16} strokeWidth={1.5} aria-hidden className="text-muted" />
+              Your account
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => router.push('/account#preferences')}>
+              <BellRing size={16} strokeWidth={1.5} aria-hidden className="text-muted" />
+              Notification preferences
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => router.push('/settings?tab=team')}>
+              <Users size={16} strokeWidth={1.5} aria-hidden className="text-muted" />
+              Team and roles
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Sign out</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => router.push('/signed-out')}>
+              <LogOut size={16} strokeWidth={1.5} aria-hidden className="text-muted" />
+              Sign out
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

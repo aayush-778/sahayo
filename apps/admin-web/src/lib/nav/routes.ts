@@ -135,7 +135,21 @@ export const NAV_ITEMS: NavItem[] = NAV_GROUPS.flatMap((group) => group.items);
  * Workers title in the header.
  */
 export function findNavItem(pathname: string): NavItem | undefined {
-  return NAV_ITEMS.find(
-    (item) => pathname === item.href || pathname.startsWith(`${item.href}/`),
+  return (
+    NAV_ITEMS.find((item) => pathname === item.href || pathname.startsWith(`${item.href}/`)) ??
+    PAGES_OUTSIDE_NAV.find((item) => pathname === item.href)
   );
 }
+
+/**
+ * Pages reached from the header rather than the sidebar. They still need a title in the
+ * header, from the same model, so they are listed here and not in NAV_GROUPS.
+ */
+export const PAGES_OUTSIDE_NAV: NavItem[] = [
+  {
+    href: '/account',
+    label: 'Your account',
+    subtitle: 'Who you are on the team, what you have done, and which alerts you get',
+    icon: UserRound,
+  },
+];

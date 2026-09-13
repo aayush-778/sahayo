@@ -7,7 +7,7 @@ import {
   type BookingEvent,
 } from '@sahayo/shared';
 import { createNameFactory } from './names';
-import { SEEDS, createRng, isoAgo } from './rng';
+import { SEEDS, SEED_NOW, createRng, isoAgo } from './rng';
 import { ZONE_IDS, getZone } from './zones';
 
 /**
@@ -73,6 +73,46 @@ const ASSIGNED_STATUSES: ReadonlySet<AdminBooking['status']> = new Set([
 const STATUSES = STATUS_WEIGHTS.map((s) => s.status);
 const STATUS_WEIGHT_VALUES = STATUS_WEIGHTS.map((s) => s.weight);
 
+/*
+ * When in the day people book, by hour in India Standard Time, from 07:00 to 20:00.
+ *
+ * Inside the service hours set in Settings (07:00 to 21:00), with a morning peak before
+ * work and a second one in the early evening, the way household jobs are actually
+ * booked. An earlier version counted minutes back from SEED_NOW and put every booking
+ * between 2 and 11 in the morning, which the analytics heatmap made plain.
+ */
+const BOOKING_HOURS = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20] as const;
+const BOOKING_HOUR_WEIGHTS = [3, 6, 8, 8, 7, 6, 5, 5, 6, 7, 8, 7, 5, 3] as const;
+
+/** SEED_NOW is 16:00 IST, so an IST hour is this many minutes from it. */
+const SEED_NOW_IST_HOUR = 16;
+
+/**
+ * A day and time for a past job: days back from SEED_NOW, and minutes from SEED_NOW's
+ * time of day.
+ *
+ * Every day, today included, draws from the same hourly pattern. A time today that has
+ * not come yet (after 16:00) belongs to a day that has not finished, so that booking is
+ * moved to another day in the window instead. Today therefore holds exactly the share of
+ * a day that has happened, and the rolling 24-hour count reads as one ordinary day.
+ */
+function pastBookingTime(rng: ReturnType<typeof createRng>): { daysAgo: number; minuteOfDay: number } {
+  let daysAgo = rng.int(0, BOOKING_WINDOW_DAYS - 1);
+  const hour = rng.weighted(BOOKING_HOURS, BOOKING_HOUR_WEIGHTS);
+  if (daysAgo === 0 && hour >= SEED_NOW_IST_HOUR) daysAgo = rng.int(1, BOOKING_WINDOW_DAYS - 1);
+  return { daysAgo, minuteOfDay: (hour - SEED_NOW_IST_HOUR) * 60 + rng.int(0, 59) };
+}
+
+/** The status a job is in when its timeline is cut off at the event it last reached. */
+const STATUS_AT_EVENT: Partial<Record<string, AdminBooking['status']>> = {
+  [BookingEventKind.REQUESTED]: BookingStatus.REQUESTED,
+  [BookingEventKind.BROADCAST]: BookingStatus.BROADCAST,
+  [BookingEventKind.PINGED]: BookingStatus.BROADCAST,
+  [BookingEventKind.ACCEPTED]: BookingStatus.ACCEPTED,
+  [BookingEventKind.STARTED]: BookingStatus.IN_PROGRESS,
+  [BookingEventKind.COMPLETED]: BookingStatus.COMPLETED,
+};
+
 export function isCompletedBooking(booking: AdminBooking): boolean {
   return COMPLETED_STATUSES.has(booking.status);
 }
@@ -109,15 +149,15 @@ export function buildBookings(workers: AdminWorker[]): AdminBooking[] {
   const workerWeights = assignableWorkers.map((worker) => worker.jobsThisWeek + 1);
 
   for (let index = 0; index < BOOKING_COUNT; index += 1) {
-    const status = rng.weighted(STATUSES, STATUS_WEIGHT_VALUES);
+    const drawnStatus = rng.weighted(STATUSES, STATUS_WEIGHT_VALUES);
 
-    const isAssigned = ASSIGNED_STATUSES.has(status);
+    const isAssigned = ASSIGNED_STATUSES.has(drawnStatus);
     /*
      * Weighted by how much work each worker is getting this week, so a worker's booking
      * history agrees with the jobs-this-week figure on their profile. Uniform assignment
      * gave an under-allocated worker as many recent jobs as the busiest one.
      */
-    const worker = isAssigned ? rng.weighted(assignableWorkers, workerWeights) : undefined;
+    const drawnWorker = isAssigned ? rng.weighted(assignableWorkers, workerWeights) : undefined;
     const customer = rng.pick(customers);
 
     /*
@@ -125,11 +165,12 @@ export function buildBookings(workers: AdminWorker[]): AdminBooking[] {
      * plausible state, and the dispatch queue would show it as waiting forever.
      */
     const isLive =
-      status === BookingStatus.REQUESTED ||
-      status === BookingStatus.BROADCAST ||
-      status === BookingStatus.ACCEPTED ||
-      status === BookingStatus.IN_PROGRESS;
-    const daysAgo = isLive ? 0 : rng.int(0, BOOKING_WINDOW_DAYS - 1);
+      drawnStatus === BookingStatus.REQUESTED ||
+      drawnStatus === BookingStatus.BROADCAST ||
+      drawnStatus === BookingStatus.ACCEPTED ||
+      drawnStatus === BookingStatus.IN_PROGRESS;
+    const past = isLive ? undefined : pastBookingTime(rng);
+    const daysAgo = past ? past.daysAgo : 0;
     /*
      * Negative minutes run backwards from SEED_NOW, and the timeline builder adds
      * minutes as the job progresses. Both branches keep enough headroom that the
@@ -137,10 +178,10 @@ export function buildBookings(workers: AdminWorker[]): AdminBooking[] {
      * whose "started" event is in the future would show a negative age in the
      * dispatch queue's seconds-since-broadcast counter.
      */
-    const minuteOfDay = isLive ? -rng.int(80, 180) : -rng.int(300, 14 * 60);
+    const minuteOfDay = past ? past.minuteOfDay : -rng.int(80, 180);
 
     /* A booking sits in its worker's zone; an unassigned one sits in any zone. */
-    const zoneId = worker ? worker.zoneId : rng.pick(ZONE_IDS);
+    const zoneId = drawnWorker ? drawnWorker.zoneId : rng.pick(ZONE_IDS);
     const zone = getZone(zoneId);
 
     /*
@@ -160,7 +201,21 @@ export function buildBookings(workers: AdminWorker[]): AdminBooking[] {
     const amount = rng.int(250, 3200) * 100;
 
     const createdAt = isoAgo(daysAgo, minuteOfDay);
-    const timeline = buildTimeline(rng, status, daysAgo, minuteOfDay, worker?.name);
+    const fullTimeline = buildTimeline(rng, drawnStatus, daysAgo, minuteOfDay, drawnWorker?.name);
+
+    /*
+     * A job requested this afternoon has not had time to finish. Its timeline is cut at
+     * the present, and it takes the status of the last thing that has happened — offered
+     * out, accepted or under way — so the day's bookings run right up to SEED_NOW without
+     * any event landing in the future. Before this, today's jobs were squeezed into the
+     * morning, and the rolling 24-hour count read far above the daily average.
+     */
+    const cutoff = SEED_NOW.toISOString();
+    const timeline = fullTimeline.filter((event) => event.at <= cutoff);
+    const truncated = timeline.length < fullTimeline.length;
+    const lastKind = timeline[timeline.length - 1]?.kind;
+    const status = truncated ? (lastKind ? STATUS_AT_EVENT[lastKind] : undefined) ?? BookingStatus.REQUESTED : drawnStatus;
+    const worker = ASSIGNED_STATUSES.has(status) ? drawnWorker : undefined;
 
     const acceptedEvent = timeline.find((event) => event.kind === BookingEventKind.ACCEPTED);
     const completedEvent = timeline.find((event) => event.kind === BookingEventKind.COMPLETED);

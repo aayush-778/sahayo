@@ -56,6 +56,10 @@ export interface AdminState {
   settings: PlatformSettings;
   settingsHistory: SettingsChange[];
   team: TeamMember[];
+  /** Notification ids the administrator has read. An id changes when its count does. */
+  readNotificationIds: string[];
+  /** Notification kinds switched off in the account preferences. */
+  mutedNotificationKinds: string[];
 
   /* --- lifecycle ---------------------------------------------------------- */
 
@@ -121,6 +125,11 @@ export interface AdminState {
    * the Broadcast Inspector keep agreeing about who ranks where.
    */
   applySettings(settings: PlatformSettings, change: SettingsChange): void;
+
+  /* --- notifications ----------------------------------------------------- */
+
+  markNotificationsRead(ids: string[]): void;
+  setNotificationKindMuted(kind: string, muted: boolean): void;
 }
 
 /** Replaces the one item matching `id`, leaving the array's order untouched. */
@@ -149,6 +158,8 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   settings: structuredClone(DEFAULT_SETTINGS),
   settingsHistory: [],
   team: [],
+  readNotificationIds: [],
+  mutedNotificationKinds: [],
 
   hydrate() {
     if (get().hydrated) return;
@@ -156,7 +167,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   },
 
   reset() {
-    set({ ...buildSeedDataset(), hydrated: true });
+    set({ ...buildSeedDataset(), readNotificationIds: [], mutedNotificationKinds: [], hydrated: true });
   },
 
   setWorkerOnline(workerId, isOnline) {
@@ -225,6 +236,18 @@ export const useAdminStore = create<AdminState>((set, get) => ({
 
   updateCustomer(customerId, patch) {
     set((state) => ({ customers: patchById(state.customers, customerId, patch) }));
+  },
+
+  markNotificationsRead(ids) {
+    set((state) => ({ readNotificationIds: [...new Set([...state.readNotificationIds, ...ids])] }));
+  },
+
+  setNotificationKindMuted(kind, muted) {
+    set((state) => ({
+      mutedNotificationKinds: muted
+        ? [...new Set([...state.mutedNotificationKinds, kind])]
+        : state.mutedNotificationKinds.filter((candidate) => candidate !== kind),
+    }));
   },
 
   applySettings(settings, change) {

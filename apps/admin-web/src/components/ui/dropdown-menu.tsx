@@ -31,6 +31,8 @@ export const DropdownMenuContent = forwardRef<
         sideOffset={sideOffset}
         className={cn(
           'z-50 min-w-[11rem] overflow-hidden rounded-tile border border-hairline bg-surface p-1 shadow-card',
+          /* The highlighted item carries focus; a ring around the whole panel would double it. */
+          'focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0',
           'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
           className,
         )}

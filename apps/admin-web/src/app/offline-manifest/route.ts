@@ -1,4 +1,4 @@
-import { NAV_ITEMS } from '@/lib/nav/routes';
+import { NAV_ITEMS, PAGES_OUTSIDE_NAV } from '@/lib/nav/routes';
 import { listWorkers } from '@/lib/services';
 
 export const dynamic = 'force-static';
@@ -12,6 +12,11 @@ export const dynamic = 'force-static';
  */
 export async function GET(): Promise<Response> {
   const workers = await listWorkers();
-  const routes = [...NAV_ITEMS.map((item) => item.href), ...workers.map((worker) => `/workers/${worker.id}`)];
+  const routes = [
+    ...NAV_ITEMS.map((item) => item.href),
+    ...PAGES_OUTSIDE_NAV.map((item) => item.href),
+    '/signed-out',
+    ...workers.map((worker) => `/workers/${worker.id}`),
+  ];
   return Response.json({ routes });
 }
