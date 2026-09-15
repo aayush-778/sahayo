@@ -1,0 +1,1412 @@
+{
+  "common": {
+    "back": "Back",
+    "next": "Next",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "loading": "Please wait…",
+    "retry": "Retry",
+    "logout": "Log out",
+    "changeLanguage": "Change language",
+    "switchToLanguage": "Switch to {{language}}",
+    "currencySymbol": "₹",
+    "tabs": {
+      "home": "Home",
+      "categories": "Categories",
+      "bookings": "Bookings",
+      "support": "Support",
+      "profile": "Profile"
+    },
+    "languages": {
+      "en": "English",
+      "hi": "हिन्दी"
+    }
+  },
+  "auth": {
+    "nameLabel": "Name",
+    "namePlaceholder": "Aarav Kumar",
+    "nameError": "Please enter your name.",
+    "phoneLabel": "Phone number",
+    "phonePlaceholder": "98765 43210",
+    "phoneError": "Enter a valid 10-digit mobile number.",
+    "continue": "Continue",
+    "termsAgree": "Agree with ",
+    "termsLink": "Terms & Conditions",
+    "signup": {
+      "headerTitle": "Signup",
+      "heading": "Create Account",
+      "subtitle": "Fill your information below to get started",
+      "footerPrompt": "Already have account? ",
+      "footerAction": "Signin"
+    },
+    "login": {
+      "headerTitle": "Login",
+      "heading": "Welcome Back",
+      "subtitle": "Enter your details to continue",
+      "footerPrompt": "Don’t have an account? ",
+      "footerAction": "Signup"
+    }
+  },
+  "home": {
+    "greeting": "Hey, {{name}} 👋",
+    "greetingAnonymous": "Hey there 👋",
+    "notifications": "Notifications",
+    "searchPlaceholder": "Search",
+    "searchFilters": "Filters",
+    "allCategories": "All categories",
+    "viewAll": "View all",
+    "bestServices": "Best services",
+    "percentOff": "{{percent}}% OFF",
+    "liveOrder": "Live order",
+    "liveOrderSubtitle": "{{status}} · {{eta}}",
+    "addToFavourites": "Add to favourites",
+    "removeFromFavourites": "Remove from favourites",
+    "status": {
+      "ACCEPTED": "{{worker}} accepted your booking",
+      "EN_ROUTE": "{{worker}} is on the way",
+      "ARRIVED": "{{worker}} has arrived",
+      "IN_PROGRESS": "{{worker}} is working now"
+    }
+  },
+  "categories": {
+    "title": "All Categories",
+    "searchPlaceholder": "Search categories",
+    "clearSearch": "Clear search",
+    "noResults": "No categories match “{{query}}”",
+    "noResultsHint": "Try a different word, in English or Hindi.",
+    "groups": {
+      "all": "All",
+      "repairs": "Repairs",
+      "upkeep": "Upkeep",
+      "home_support": "Home Support"
+    }
+  },
+  "subcategory": {
+    "searchPlaceholder": "Search in {{category}}",
+    "noResults": "Nothing here matches “{{query}}”",
+    "noResultsHint": "Try a different word, or another chip.",
+    "price": {
+      "from": "From {{price}}",
+      "perUnit": "{{price}} / {{unit}}",
+      "perPeriod": "{{price}} / {{period}}",
+      "minQty": "Min {{qty}} {{unit}}",
+      "freeSurvey": "Free survey",
+      "visitCharge": "Visit charge, adjusted into the final bill",
+      "workshop": "Workshop repair"
+    },
+    "units": {
+      "sqft": "sq ft",
+      "rft": "running ft",
+      "point": "point",
+      "panel": "panel",
+      "roll": "roll",
+      "day": "day",
+      "night": "night",
+      "hour": "hour",
+      "km": "km"
+    },
+    "unitsMany": {
+      "sqft": "sq ft",
+      "rft": "running ft",
+      "point": "points",
+      "panel": "panels",
+      "roll": "rolls",
+      "day": "days",
+      "night": "nights",
+      "hour": "hours",
+      "km": "km"
+    },
+    "periods": {
+      "month": "month",
+      "year": "year"
+    },
+    "badges": {
+      "emergency": "Emergency call-out",
+      "mechanisedOnly": "Machine cleaned — no manual entry",
+      "requiresLicence": "Licensed nurse"
+    },
+    "cta": {
+      "bookNow": "Book now",
+      "bookVisit": "Book visit",
+      "schedule": "Schedule",
+      "survey": "Get free survey"
+    }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Mark all read",
+    "emptyTitle": "All caught up!",
+    "emptyBody": "Time to take a breather.",
+    "time": {
+      "justNow": "just now",
+      "minutes": "{{count}}m ago",
+      "hours": "{{count}}h ago",
+      "days": "{{count}}d ago"
+    },
+    "kind": {
+      "BOOKING_ACCEPTED": {
+        "title": "Booking confirmed",
+        "body": "{{worker}} accepted your {{service}} booking."
+      },
+      "WORKER_EN_ROUTE": {
+        "title": "On the way",
+        "body": "{{worker}} is on the way, about {{eta}} away."
+      },
+      "COOP_FUND_CONTRIBUTION": {
+        "title": "Cooperative fund credited",
+        "body": "{{amount}} from your booking went into the workers’ cooperative fund."
+      },
+      "BOOKING_SETTLED": {
+        "title": "Payment settled",
+        "body": "Your {{service}} booking is settled. {{amount}} paid."
+      }
+    }
+  },
+  "booking": {
+    "now": {
+      "title": "Confirm booking",
+      "mapLabel": "Map showing {{workers}} available workers nearby",
+      "eta": "ETA · {{duration}}",
+      "available": "{{workers}} {{category}} available within {{radius}}",
+      "noDraft": "Pick a service first — there is nothing to book yet.",
+      "fareTitle": "Fare breakdown",
+      "itemPrice": "Item price",
+      "surge": "Surge ({{multiplier}}×)",
+      "itemTotal": "Item total",
+      "includedNote": "Included in the item total",
+      "workerEarns": "Worker receives ({{percent}}%)",
+      "platformFee": "Platform fee ({{percent}}%)",
+      "coopFund": "Community fund ({{percent}}%)",
+      "gst": "GST ({{percent}}%)",
+      "total": "Total payable",
+      "fundStripTitle": "goes to the community fund",
+      "fundStripBody": "Owned by the workers of this cooperative. It costs you nothing extra — it comes out of our share, not your bill.",
+      "confirm": "Confirm and pay {{amount}}",
+      "zoomIn": "Zoom in",
+      "zoomOut": "Zoom out"
+    },
+    "schedule": {
+      "title": "Schedule booking",
+      "selectDate": "Select Date",
+      "selectTime": "Select Time",
+      "today": "Today",
+      "monthCaption": "{{month}} {{year}}",
+      "monthSpan": "{{from}} – {{to}} {{year}}",
+      "noSlots": "No slots left today. Pick another day.",
+      "slotTaken": "{{time}} — already booked",
+      "chosen": "{{day}} {{date}} {{month}}, {{time}}",
+      "confirm": "Confirm and pay {{amount}}",
+      "timeFormat": "{{hour}}:00 {{period}}",
+      "periods": {
+        "morning": "AM",
+        "afternoon": "PM",
+        "evening": "PM",
+        "night": "PM"
+      },
+      "weekdays": {
+        "0": "Sun",
+        "1": "Mon",
+        "2": "Tue",
+        "3": "Wed",
+        "4": "Thu",
+        "5": "Fri",
+        "6": "Sat"
+      },
+      "months": {
+        "0": "January",
+        "1": "February",
+        "2": "March",
+        "3": "April",
+        "4": "May",
+        "5": "June",
+        "6": "July",
+        "7": "August",
+        "8": "September",
+        "9": "October",
+        "10": "November",
+        "11": "December"
+      }
+    },
+    "payment": {
+      "title": "Payment",
+      "orderSummary": "Order summary",
+      "selectMethod": "Select payment method",
+      "surgeApplied": "Peak-time surge",
+      "methods": {
+        "upi": "UPI",
+        "card": "Card",
+        "wallet": "Sahayo Cooperative Wallet",
+        "cash": "Cash on completion"
+      },
+      "walletBalance": "Balance {{amount}}",
+      "walletShort": "Balance {{amount}} — not enough for this booking",
+      "cashNote": "Pay the worker once the job is done",
+      "upiLabel": "UPI ID",
+      "upiInvalid": "Enter a UPI id like name@bank",
+      "cardLabel": "{{brand}} •••• {{last4}}",
+      "cardExpires": "Expires {{expires}}",
+      "isDefault": "Default",
+      "setDefault": "Set as default",
+      "addCard": "Add new card",
+      "cardNumber": "Card number",
+      "cardExpiry": "MM / YY",
+      "cardCvv": "CVV",
+      "cardMockNote": "Mock fields. Nothing is stored or sent anywhere.",
+      "pay": "Pay {{amount}}",
+      "confirmCash": "Confirm booking",
+      "mockNotice": "Demo payment. No real gateway is connected.",
+      "failure": {
+        "declined": "Payment declined. Try another method.",
+        "invalid_amount": "That amount cannot be charged."
+      }
+    },
+    "success": {
+      "title": "Booking confirmed",
+      "paidWith": "Paid · {{method}}",
+      "dueOnCompletion": "Pay {{amount}} in cash when the work is done",
+      "fundTitlePaid": "went into the workers' community fund",
+      "fundTitlePending": "will go into the workers' community fund",
+      "fundBodyPaid": "Owned by the workers of this cooperative, not by us. Your booking just made it bigger.",
+      "fundBodyPending": "Owned by the workers of this cooperative, not by us. It grows the moment you settle the bill.",
+      "reference": "Booking reference",
+      "transaction": "Transaction",
+      "track": "Track booking",
+      "home": "Back to home",
+      "missing": "That booking is no longer in this session."
+    },
+    "status": {
+      "REQUESTED": "Requested",
+      "BROADCAST": "Finding a worker",
+      "ACCEPTED": "Accepted",
+      "EN_ROUTE": "On the way",
+      "ARRIVED": "Arrived",
+      "IN_PROGRESS": "Work in progress",
+      "COMPLETED": "Completed",
+      "SETTLED": "Paid",
+      "CANCELLED_BY_CUSTOMER": "Cancelled by you",
+      "CANCELLED_BY_WORKER": "Cancelled by the worker",
+      "EXPIRED_NO_ACCEPT": "No worker available",
+      "DISPUTED": "Disputed"
+    }
+  },
+  "bookings": {
+    "title": "Bookings",
+    "groups": {
+      "active": "Active ({{n}})",
+      "upcoming": "Upcoming ({{n}})",
+      "past": "Past ({{n}})"
+    },
+    "when": "{{day}} {{month}}, {{time}}",
+    "findingWorker": "Finding a worker nearby",
+    "noWorker": "No worker assigned",
+    "cashPending": "Cash due on completion",
+    "bookAgain": "Book again",
+    "empty": {
+      "active": {
+        "title": "Nothing in progress",
+        "body": "Jobs happening right now show up here."
+      },
+      "upcoming": {
+        "title": "Nothing scheduled",
+        "body": "Bookings you plan ahead wait here."
+      },
+      "past": {
+        "title": "No past bookings",
+        "body": "Finished and cancelled jobs land here."
+      }
+    }
+  },
+  "track": {
+    "title": "Track booking",
+    "missing": "That booking is not in this session.",
+    "finding": "Sending your job to nearby workers",
+    "cancelledNote": "This booking was cancelled.",
+    "jobsDone": "{{n}} jobs done",
+    "fareTitle": "Fare breakdown",
+    "fareEstimate": "Estimated fare",
+    "payNow": "Pay {{amount}} now",
+    "payAfterCompletion": "You pay in cash once the job is done",
+    "hint": {
+      "REQUESTED": "Sending your job to nearby workers",
+      "BROADCAST": "Sending your job to nearby workers",
+      "ACCEPTED": "Getting ready to set off",
+      "EN_ROUTE": "On the way to your address",
+      "ARRIVED": "At your door",
+      "IN_PROGRESS": "Work has started",
+      "COMPLETED": "The job is done",
+      "SETTLED": "Everything is settled",
+      "CANCELLED_BY_CUSTOMER": "This booking was cancelled",
+      "CANCELLED_BY_WORKER": "This booking was cancelled",
+      "EXPIRED_NO_ACCEPT": "Nobody nearby could take it",
+      "DISPUTED": "Under review by the cooperative"
+    }
+  },
+  "profile": {
+    "title": "Profile",
+    "noName": "Guest",
+    "noPhone": "No number saved",
+    "edit": "Edit profile",
+    "passwords": "App lock",
+    "cards": "Saved cards",
+    "addresses": "Saved addresses",
+    "language": "Language",
+    "privacy": "Privacy policy",
+    "terms": "Terms & conditions",
+    "sections": {
+      "account": "ACCOUNT",
+      "preferences": "PREFERENCES",
+      "legal": "LEGAL"
+    },
+    "logoutTitle": "Log out?",
+    "logoutBody": "You will need your number and an OTP to sign back in.",
+    "saveChanges": "Save changes",
+    "saved": "Saved. Your name is updated everywhere in the app.",
+    "nameTooShort": "Enter at least two characters",
+    "phoneInvalid": "Enter all ten digits",
+    "version": "Sahayo · Phase 2 demo build",
+    "resetTitle": "Reset the demo?",
+    "resetBody": "Clears your account, bookings and any draft, and returns to signup. Your language choice is kept.",
+    "resetConfirm": "Reset"
+  },
+  "language": {
+    "intro": "Choose how you want to read Sahayo. The whole app changes straight away, and your choice is remembered the next time you open it.",
+    "subtitle": {
+      "en": "Latin script",
+      "hi": "Devanagari script"
+    },
+    "note": "Prices stay in Latin digits in both languages, the way every payment app in India shows them.",
+    "sampleLabel": "Sample",
+    "sample": "कृपया प्रतीक्षा करें"
+  },
+  "passwords": {
+    "title": "App lock",
+    "intro": "Sahayo signs you in with your phone number and an OTP, so there is no password to change. What you can set here is a four-digit lock for this device.",
+    "current": "Current PIN",
+    "next": "New PIN",
+    "confirm": "Confirm new PIN",
+    "mismatch": "The two PINs do not match",
+    "update": "Update PIN",
+    "saved": "PIN updated on this device.",
+    "mockNote": "Demo build: the PIN is validated but not stored. Phase 5 keeps it in the device keystore."
+  },
+  "cards": {
+    "savedCards": "SAVED CARDS",
+    "walletNote": "Money held inside the cooperative, spendable on any Sahayo service.",
+    "addNote": "Adding and removing cards arrives with the payment gateway in Phase 5. Cards shown here are demo data — no real card number exists anywhere in this app.",
+    "emptyTitle": "No saved cards",
+    "emptyBody": "Cards you use at checkout will be listed here."
+  },
+  "addresses": {
+    "intro": "The address marked default is where a new booking sends the worker.",
+    "default": "Default",
+    "labels": {
+      "home": "Home",
+      "work": "Work",
+      "other": "Other"
+    },
+    "addNote": "Adding and editing addresses arrives with the address picker in Phase 5."
+  },
+  "support": {
+    "title": "Support",
+    "subtitle": "Answers first, and a way to reach a person if they are not enough.",
+    "faqTitle": "COMMON QUESTIONS",
+    "contactTitle": "REACH THE COOPERATIVE",
+    "formTitle": "SEND A MESSAGE",
+    "phoneLabel": "Support line",
+    "emailLabel": "Email",
+    "messageLabel": "Your message",
+    "messagePlaceholder": "Tell us what happened",
+    "messageTooShort": "A little more detail helps us answer faster",
+    "send": "Send message",
+    "sent": "Thanks — we have your message. Someone from the cooperative will call the number above.",
+    "mockNote": "Demo build: the form validates but no ticket is raised. Phase 5 connects it to the support desk.",
+    "faq": {
+      "coopFund": {
+        "q": "What is the community fund?",
+        "a": "Five percent of every booking goes into a fund owned collectively by the workers of the cooperative, not by the platform. It pays for tools, insurance and lean months. It costs you nothing extra — it comes out of the platform's share, not your bill."
+      },
+      "workerShare": {
+        "q": "How much does the worker actually keep?",
+        "a": "Ninety percent of the item price. Five percent is the platform fee and five percent is the community fund. GST is collected on top and remitted to the government; it is never ours to split."
+      },
+      "cancel": {
+        "q": "Can I cancel a booking?",
+        "a": "Yes, up until a worker sets off. Once someone is on the way, cancelling may carry the visit charge, because they have already spent the trip."
+      },
+      "payment": {
+        "q": "How can I pay?",
+        "a": "UPI, card, the Sahayo cooperative wallet, or cash once the job is done. Choosing cash means nothing is charged when you book — you settle from the tracking screen after the work is finished."
+      },
+      "reschedule": {
+        "q": "Can I move a scheduled booking?",
+        "a": "Yes. Open the booking from the Bookings tab and pick a new slot. Slots already taken by other customers are shown struck through."
+      },
+      "verified": {
+        "q": "Are the workers verified?",
+        "a": "Every worker on Sahayo is a member of a registered cooperative and has passed KYC. Their rating and completed job count are shown before you book and again while you track."
+      }
+    }
+  },
+  "privacy": {
+    "title": "Privacy policy",
+    "updated": "Last updated 1 September 2026 · Demo build",
+    "intro": "Sahayo is built by a cooperative, and this policy is written to be read rather than to be survived. It describes what this demo build actually does.",
+    "contact": "Questions about this policy: help@sahayo.in",
+    "sections": {
+      "collect": {
+        "title": "What we collect",
+        "body": "Your name and phone number, the addresses you save, and the bookings you make. In this demo build all of it stays on your phone — there is no server to send it to."
+      },
+      "use": {
+        "title": "How we use it",
+        "body": "To match you with a nearby worker, to show you your bookings, and to settle payments. We do not build advertising profiles and we do not sell anything about you."
+      },
+      "share": {
+        "title": "Who else sees it",
+        "body": "The worker who accepts your booking sees your first name, your address and your phone number, because they have to reach your door. Nobody else on the platform sees your address."
+      },
+      "location": {
+        "title": "Location",
+        "body": "The customer app never asks for background location. It uses your service address to find nearby workers, and that address is one you typed rather than one we tracked."
+      },
+      "store": {
+        "title": "How long we keep it",
+        "body": "Booking records are kept while your account exists so you have a history to look back on. Deleting your account removes them, apart from what tax law requires us to retain."
+      },
+      "rights": {
+        "title": "Your rights",
+        "body": "You can see, correct or delete anything we hold about you. Ask through the Support tab and a person from the cooperative will handle it."
+      }
+    }
+  },
+  "terms": {
+    "title": "Terms & conditions",
+    "updated": "Last updated 1 September 2026 · Demo build",
+    "intro": "These terms cover using Sahayo to book work from members of a registered cooperative.",
+    "contact": "Questions about these terms: help@sahayo.in",
+    "sections": {
+      "service": {
+        "title": "What Sahayo is",
+        "body": "Sahayo connects you with skilled workers who are members of a cooperative. The work is done by that worker; Sahayo arranges the introduction, holds the price, and settles the payment."
+      },
+      "cooperative": {
+        "title": "The cooperative model",
+        "body": "Workers are members, not gig contractors on a rate card. Ninety percent of the item price reaches the worker, five percent is the platform fee, and five percent goes to a fund the members own collectively."
+      },
+      "pricing": {
+        "title": "Prices and tax",
+        "body": "Prices are shown before you book and are exclusive of GST, which is added at checkout and remitted to the government. Fault and workshop jobs quote a visit or intake charge; the repair itself is priced after someone has looked at it."
+      },
+      "cancellation": {
+        "title": "Cancelling",
+        "body": "Cancel free of charge until a worker sets off. After that the visit charge may apply, because the worker has already made the trip."
+      },
+      "conduct": {
+        "title": "How we expect people to behave",
+        "body": "Workers arrive on time, in uniform, with their own tools. Customers provide safe access to the work and pay what was agreed. Abuse of a worker ends the booking and the account."
+      },
+      "liability": {
+        "title": "If something goes wrong",
+        "body": "Raise it through the Support tab within seven days. Disputes are reviewed by the cooperative, and the community fund is what backs any settlement — which is part of why it exists."
+      }
+    }
+  },
+  "worker": {
+    "common": {
+      "goHome": "Go to dashboard",
+      "today": "Today, {{time}}",
+      "tomorrow": "Tomorrow, {{time}}",
+      "yesterday": "Yesterday, {{time}}",
+      "onDate": "{{day}} {{month}}, {{time}}",
+      "dayMonth": "{{day}} {{month}}"
+    },
+    "auth": {
+      "welcomeTitle": "Hi, Welcome",
+      "welcomeSubtitle": "Log in with your mobile number. We will send you a one-time code.",
+      "mobileLabel": "Mobile Number",
+      "mobilePlaceholder": "10-digit mobile number",
+      "sendOtp": "Send OTP",
+      "otpLabel": "One-time code",
+      "otpSentTo": "Code sent to {{phone}}",
+      "changeNumber": "Change",
+      "resendOtp": "Resend code",
+      "verify": "Verify",
+      "verified": "Verified",
+      "login": "Login",
+      "noAccount": "Don’t have an account?",
+      "signUp": "Sign up",
+      "haveAccount": "Already have an account?",
+      "logIn": "Log in",
+      "demoOtp": "Demo build: use code {{code}}",
+      "errors": {
+        "mobileInvalid": "Enter a valid 10-digit mobile number",
+        "otpIncomplete": "Enter all 6 digits of the code",
+        "otpInvalid": "That code is not correct. Try again."
+      }
+    },
+    "onboarding": {
+      "stepOf": "Step {{step}} of {{total}}",
+      "submit": "Submit for Approval",
+      "title": "Complete Your Profile",
+      "subtitle": "Help customers know you better and get more bookings.",
+      "percent": "{{n}}%",
+      "personalHeading": "Personal Information",
+      "fullName": "Full Name",
+      "fullNamePlaceholder": "As written on your Aadhaar",
+      "gender": "Gender",
+      "genderPlaceholder": "Select gender",
+      "genderOptions": {
+        "female": "Female",
+        "male": "Male",
+        "other": "Other",
+        "undisclosed": "Prefer not to say"
+      },
+      "dob": "Date of Birth",
+      "dobPlaceholder": "Select date",
+      "day": "Day",
+      "month": "Month",
+      "year": "Year",
+      "done": "Done",
+      "close": "Close",
+      "mobile": "Mobile Number",
+      "altPhone": "Alternate Phone Number",
+      "optional": "optional",
+      "city": "City / Town",
+      "cityPlaceholder": "Select your city",
+      "next": "Next",
+      "errors": {
+        "nameRequired": "Enter your full name",
+        "genderRequired": "Select your gender",
+        "dobRequired": "Select your date of birth",
+        "underage": "You must be at least {{age}} years old to register",
+        "verifyMobile": "Verify your mobile number with the code to continue",
+        "altInvalid": "Enter a valid 10-digit number",
+        "altSameAsMobile": "Use a different number from your mobile number",
+        "cityRequired": "Select your city or town"
+      },
+      "createAccount": "Create Account",
+      "previous": "Previous",
+      "leave": {
+        "title": "Leave registration?",
+        "body": "You will be logged out, and the details saved on this phone will be cleared.",
+        "stay": "Stay and continue",
+        "logOut": "Log out"
+      },
+      "service": {
+        "heading": "Service Details",
+        "experience": "Years of Experience",
+        "experiencePlaceholder": "Select your experience",
+        "experienceLessThanOne": "Less than 1 year",
+        "experienceOne": "1 year",
+        "experienceMany": "{{n}} years",
+        "experienceMax": "{{n}}+ years",
+        "category": "Primary Service Category",
+        "categoryPlaceholder": "Select your main work",
+        "subHeading": "Sub Services Offered",
+        "subHint": "Tick every job you can do.",
+        "chooseCategoryFirst": "Choose your primary service category to see its services.",
+        "other": "Other",
+        "otherLabel": "Other work",
+        "otherPlaceholder": "Describe the other work you do",
+        "areaHeading": "Service Area",
+        "radius": "Service Area Radius",
+        "radiusHint": "Jobs within this distance of you will be offered to you.",
+        "km": "{{n}} km",
+        "errors": {
+          "experienceRequired": "Select your years of experience",
+          "categoryRequired": "Select your primary service category",
+          "subRequired": "Tick at least one service you offer",
+          "otherRequired": "Describe the other work you do"
+        }
+      },
+      "documents": {
+        "heading": "Verification Documents",
+        "idProof": "Upload Government ID Proof (any one)",
+        "idTypes": {
+          "aadhaar": "Aadhaar Card",
+          "pan": "PAN Card",
+          "drivingLicense": "Driving Licence"
+        },
+        "chooseIdFirst": "Choose which ID you are uploading",
+        "addressProof": "Address Proof Upload",
+        "addressHint": "Electricity bill, ration card or rent agreement",
+        "photo": "Upload Recent Photo",
+        "photoHint": "A selfie or passport-style photo, face clearly visible",
+        "tapToUpload": "Tap to upload",
+        "formats": "PNG, JPG or PDF, up to {{size}}",
+        "uploading": "Uploading…",
+        "uploaded": "Uploaded",
+        "replace": "Replace",
+        "remove": "Remove",
+        "errors": {
+          "idTypeRequired": "Choose your ID type",
+          "required": "Upload this document to continue"
+        }
+      },
+      "availability": {
+        "heading": "Availability & Rates",
+        "hours": "Working Hours",
+        "start": "Start Time",
+        "end": "End Time",
+        "selectTime": "Select time",
+        "clock": "{{hour}}:{{minute}} {{period}}",
+        "periods": {
+          "morning": "AM",
+          "afternoon": "PM",
+          "evening": "PM",
+          "night": "PM"
+        },
+        "days": "Availability Days",
+        "rate": "Base Service Rate",
+        "rateHint": "Your starting charge for one visit, between {{min}} and {{max}}.",
+        "decrease": "Decrease rate by ₹50",
+        "increase": "Increase rate by ₹50",
+        "errors": {
+          "hoursRequired": "Select your start and end time",
+          "endAfterStart": "End time must be after the start time",
+          "daysRequired": "Tick at least one day",
+          "rateRange": "Enter a rate between {{min}} and {{max}}"
+        }
+      },
+      "weekdays": {
+        "mon": "Monday",
+        "tue": "Tuesday",
+        "wed": "Wednesday",
+        "thu": "Thursday",
+        "fri": "Friday",
+        "sat": "Saturday",
+        "sun": "Sunday"
+      },
+      "review": {
+        "statusHeading": "Profile Completion Status",
+        "sections": {
+          "personal": "Personal Information",
+          "service": "Service Details",
+          "documents": "Documentation",
+          "availability": "Availability & Rates"
+        },
+        "complete": "Complete",
+        "incomplete": "Incomplete — tap to finish",
+        "editHint": "Opens this step",
+        "overall": "Overall Completion",
+        "overallValue": "{{done}}/{{total}} Complete",
+        "confirm": "I confirm all the information provided is accurate and genuine.",
+        "confirmNote": "By checking this box, I acknowledge that providing false information may result in account suspension, and I understand that all details will be verified.",
+        "errors": {
+          "confirmRequired": "Tick the box to confirm your details",
+          "incomplete": "Finish every section before submitting"
+        }
+      }
+    },
+    "dashboard": {
+      "tab": "Home",
+      "title": "Dashboard",
+      "pendingTitle": "Your application is with the cooperative",
+      "pendingBody": "You will get job requests once a coordinator approves your documents. This usually takes a day.",
+      "approveDemo": "Approve application (demo)",
+      "activeJob": {
+        "title": "Job in progress"
+      },
+      "greeting": "Hello, {{name}}",
+      "subtitle": "Here’s what’s happening today.",
+      "openProfile": "Open your profile",
+      "availability": {
+        "title": "Available for work",
+        "online": "Online",
+        "offline": "Offline",
+        "radius": "{{km}} km radius",
+        "visible": "You’re visible to customers near you",
+        "hidden": "You’re hidden — customers can’t send you jobs",
+        "hintGoOnline": "Go online and start receiving jobs",
+        "hintGoOffline": "Go offline and stop receiving jobs"
+      },
+      "offlineState": {
+        "title": "You’re offline",
+        "body": "Job requests are paused. Go online to receive work near you.",
+        "action": "Go online"
+      },
+      "requests": {
+        "title": "New Job Requests",
+        "viewAll": "View all ({{n}})",
+        "showLess": "Show less",
+        "empty": "No new requests right now. Stay online — new work near you will appear here."
+      },
+      "request": {
+        "distance": "Distance",
+        "fare": "Fare",
+        "youGet": "You get {{amount}}",
+        "workDetails": "Work details",
+        "accept": "Accept",
+        "reject": "Reject",
+        "expiresIn": "Respond in {{s}}s",
+        "respondNow": "Respond now"
+      },
+      "notice": {
+        "accepted": "Job accepted — {{name}}",
+        "openJob": "Open job",
+        "declined": "Request rejected. Your reason helps us send you better matches.",
+        "gone": "This request is no longer available.",
+        "dismiss": "Dismiss"
+      },
+      "overview": {
+        "title": "Today’s Overview",
+        "jobsToday": "Today’s Jobs",
+        "earningsToday": "Today’s Earnings",
+        "totalCompleted": "Total Completed",
+        "rating": "Avg. Rating"
+      }
+    },
+    "bookings": {
+      "tab": "Bookings",
+      "title": "My Bookings",
+      "tabs": {
+        "all": "All",
+        "pending": "Pending",
+        "ongoing": "Ongoing",
+        "completed": "Completed",
+        "cancelled": "Cancelled"
+      },
+      "viewDetails": "View details",
+      "viewSummary": "View summary",
+      "declineReason": "Reason: {{reason}}",
+      "offline": "You’re offline. Go online to accept requests.",
+      "goOnline": "Go online",
+      "empty": {
+        "all": {
+          "title": "No bookings yet",
+          "body": "Accept a job request and it will show up here.",
+          "action": "Go to dashboard"
+        },
+        "pending": {
+          "title": "No requests waiting",
+          "body": "New job requests near you appear here while you’re online.",
+          "offlineTitle": "You’re offline",
+          "offlineBody": "Go online to start receiving job requests.",
+          "unapprovedTitle": "Waiting for approval",
+          "unapprovedBody": "Job requests start once the cooperative approves your application."
+        },
+        "ongoing": {
+          "title": "No jobs in hand",
+          "body": "Jobs you accept stay here until you complete them.",
+          "action": "See pending requests"
+        },
+        "completed": {
+          "title": "No completed jobs yet",
+          "body": "Finished jobs, with what you earned from each, are listed here."
+        },
+        "cancelled": {
+          "title": "Nothing cancelled",
+          "body": "Jobs a customer cancelled, and requests you rejected, appear here."
+        }
+      }
+    },
+    "earnings": {
+      "tab": "Earnings",
+      "title": "Earnings",
+      "share": "Share statement",
+      "more": "More options",
+      "receivedSince": "Received since last settlement",
+      "lastSettled": "Last settled {{when}} · {{reference}}",
+      "neverSettled": "Nothing settled yet",
+      "settleNow": "Settle now",
+      "settling": "Settling…",
+      "showData": "Show data",
+      "nothingToSettle": "Nothing is waiting — every job so far has been paid out.",
+      "settled": "{{amount}} sent to your UPI account. Reference {{reference}}.",
+      "today": "Today’s earning",
+      "fund": "Fund contribution",
+      "fundCaption": "This month · see where it goes",
+      "periods": {
+        "this_month": "This month",
+        "last_month": "Last month",
+        "three_months": "3 months"
+      },
+      "summaryTitle": "Earnings summary",
+      "total": "Total earnings",
+      "jobs": "Jobs completed",
+      "average": "Average per job",
+      "pending": "Waiting for settlement",
+      "dailyTitle": "Last 7 days",
+      "dailyA11y": "{{day}}: {{amount}}",
+      "listTabs": {
+        "transactions": "Transactions",
+        "settlements": "Settlements"
+      },
+      "monthHeader": "{{month}} {{year}}",
+      "paid": "Paid",
+      "pendingBadge": "Pending",
+      "settlementRow": "{{n}} jobs · UPI · {{reference}}",
+      "emptyTransactions": "No earnings in this period yet. Completed jobs appear here.",
+      "emptySettlements": "No settlements yet. Tap Settle now when money is waiting.",
+      "unsettledTitle": "Waiting for settlement",
+      "unsettledEmpty": "Nothing is waiting right now.",
+      "unsettledTotal": "Total",
+      "shareFailed": "Couldn’t open sharing on this phone.",
+      "menu": {
+        "howTitle": "How payouts work",
+        "howBody": "When you complete a job, {{worker}}% of the fare is yours and {{fund}}% goes to our cooperative fund. Your share waits here. Settle now sends everything waiting to your UPI account in one transfer.",
+        "openFund": "Our cooperative fund"
+      },
+      "statement": {
+        "title": "Sahayo Partner — earnings statement",
+        "period": "Period: {{period}}",
+        "total": "Total earned: {{amount}}",
+        "jobs": "Jobs: {{n}} · Average: {{amount}}",
+        "pending": "Waiting for settlement: {{amount}}",
+        "fund": "Given to the cooperative fund so far: {{amount}}",
+        "jobsHeading": "Jobs",
+        "settlementsHeading": "Settlements",
+        "row": "{{date}} · {{name}} · {{amount}} · {{status}}",
+        "settlementLine": "{{date}} · {{reference}} · {{amount}}",
+        "generated": "Generated {{when}}"
+      }
+    },
+    "chat": {
+      "tab": "Chat",
+      "title": "Chat",
+      "subtitle": "Every chat belongs to a booking",
+      "empty": {
+        "title": "No chats yet",
+        "body": "Open a job and tap Chat — you talk to that job’s customer here."
+      },
+      "you": "You: {{text}}",
+      "typing": "typing…",
+      "yesterday": "Yesterday",
+      "closed": "Closed",
+      "noMessages": "No messages yet",
+      "thread": {
+        "open": "Chat with {{name}}",
+        "viewJob": "View job",
+        "call": "Call {{name}}",
+        "placeholder": "Type a message",
+        "send": "Send",
+        "quickTitle": "Quick replies",
+        "start": "Send {{name}} a message in one tap with a quick reply below.",
+        "closedFinished": "This chat closed 24 hours after the job was completed.",
+        "closedCancelled": "This chat is closed because the job was cancelled or rejected.",
+        "today": "Today",
+        "sendFailed": "Couldn’t send. This chat is closed.",
+        "notFound": "This chat no longer exists."
+      },
+      "quick": {
+        "on_my_way": "On my way",
+        "reached": "I’ve reached your location",
+        "late_10": "I’ll be 10 minutes late",
+        "call_you": "I’ll call you in a minute",
+        "send_photo": "Could you send a photo of the problem?",
+        "work_done": "The work is done, please check it once"
+      }
+    },
+    "coop": {
+      "title": "Cooperative Fund",
+      "hero": {
+        "inFund": "In our fund today",
+        "grew": "{{amount}} added this month",
+        "shrank": "{{amount}} less this month",
+        "members": "{{n}} members · {{amount}} spent helping members so far",
+        "chartA11y": "Fund at the end of {{month}}: {{amount}}"
+      },
+      "mine": {
+        "title": "Your part in it",
+        "share": "That is {{pct}}% of everything members have put in.",
+        "thisMonth": "This month: {{amount}}",
+        "how": "{{pct}}% of the fare from every job you do comes here — the same for every member."
+      },
+      "votes": {
+        "title": "Your vote is needed",
+        "subtitle": "We decide together, as members, where our money goes.",
+        "empty": "Nothing is being voted on right now.",
+        "voted": "You said \"{{choice}}\"",
+        "voteNow": "Vote now"
+      },
+      "help": {
+        "title": "Need help?",
+        "loanTitle": "Interest-free tool loan",
+        "loanBody": "Up to ₹5,000, paid back in small monthly amounts",
+        "claimTitle": "Emergency help or insurance claim",
+        "claimBody": "An accident, illness or loss that stops your work"
+      },
+      "requests": {
+        "title": "Your requests",
+        "empty": "You haven’t asked for help yet. Whenever you need it, the fund is here.",
+        "kinds": {
+          "loan": "Tool loan",
+          "claim": "Help claim"
+        },
+        "sentOn": "Sent {{when}}",
+        "repaid": "{{repaid}} of {{amount}} paid back",
+        "status": {
+          "submitted": "Sent",
+          "under_review": "Being reviewed",
+          "approved": "Approved",
+          "repaying": "Paying back",
+          "paid": "Paid to you",
+          "declined": "Not approved",
+          "closed": "Fully paid back"
+        }
+      },
+      "done": {
+        "title": "What our fund has done",
+        "empty": "No decisions yet."
+      },
+      "status": {
+        "active": "Voting open",
+        "passed": "Approved",
+        "rejected": "Not approved"
+      },
+      "timeLeft": {
+        "days": "{{n}} days left",
+        "oneDay": "1 day left",
+        "hours": "{{n}} hours left",
+        "oneHour": "1 hour left",
+        "minutes": "{{n}} minutes left",
+        "closed": "Voting closed"
+      },
+      "choice": {
+        "yes": "Yes",
+        "no": "No",
+        "abstain": "No opinion"
+      },
+      "amount": "{{amount}} from the fund",
+      "tally": {
+        "yes": "Yes {{n}}",
+        "no": "No {{n}}",
+        "turnout": "{{cast}} of {{total}} members have voted"
+      },
+      "proposal": {
+        "title": "Proposal",
+        "proposedBy": "Proposed by {{name}} · {{when}}",
+        "asking": "Asking for",
+        "fundToday": "In the fund today",
+        "points": "The details",
+        "outcomeTitle": "What happened",
+        "votesTitle": "How members are voting",
+        "rule": "Voting closes {{when}}. Whichever side has more votes then decides.",
+        "voteTitle": "Your vote",
+        "votePrompt": "Every member gets one vote, and it can’t be changed once cast.",
+        "recorded": "Your vote is recorded",
+        "recordedBody": "You said \"{{choice}}\". Your vote is counted in the numbers above.",
+        "closedNoVote": "Voting has closed. You didn’t vote on this one.",
+        "confirmTitle": "Vote \"{{choice}}\"?",
+        "confirmBody": "\"{{title}}\". Once cast, your vote can’t be changed.",
+        "confirm": "Yes, record my vote",
+        "cancel": "Wait, go back",
+        "notFound": "This proposal no longer exists.",
+        "errors": {
+          "closed": "Voting on this proposal has closed.",
+          "already_voted": "You have already voted on this proposal.",
+          "not_found": "This proposal no longer exists."
+        }
+      },
+      "form": {
+        "loanTitle": "Tool loan",
+        "claimTitle": "Help claim",
+        "loanIntro": "Borrow up to ₹5,000 to buy or repair tools. No interest — you pay back only what you borrow, and what you pay back is lent to the next member.",
+        "claimIntro": "For an accident, illness or loss that stops you working. A coordinator looks at every claim personally and will call you.",
+        "amount": "How much do you need?",
+        "amountHint": "Between {{min}} and {{max}}",
+        "purpose": "What is it for?",
+        "purposePlaceholder": "Choose one",
+        "months": "Pay it back over",
+        "monthsOption": "{{n}} months",
+        "instalment": "{{amount}} a month",
+        "details": "Tell us a little more",
+        "detailsLoanPlaceholder": "For example: a new drill, my old one burnt out",
+        "detailsClaimPlaceholder": "What happened, and when?",
+        "claimType": "What happened?",
+        "submit": "Send request",
+        "loanOpen": "You already have a loan in progress. You can ask for another once it is paid back.",
+        "doneTitle": "Request sent",
+        "doneBody": "Your coordinator will look at it within two working days. You can follow it in Our Cooperative Fund.",
+        "backToFund": "Back to the fund",
+        "errors": {
+          "amount_out_of_range": "Enter an amount between {{min}} and {{max}}",
+          "details_required": "Write a line about what the money is for",
+          "invalid_purpose": "Choose what it is for",
+          "invalid_months": "Choose how many months to pay it back",
+          "loan_open": "You already have a loan in progress."
+        },
+        "purposes": {
+          "tools": "Buying tools",
+          "repair": "Repairing tools",
+          "vehicle": "Repairing the two-wheeler I work with",
+          "other": "Something else for my work"
+        },
+        "claimTypes": {
+          "accident": "Accident or injury at work",
+          "illness": "Illness or a hospital stay",
+          "tools_lost": "Tools lost or stolen",
+          "disaster": "Flood, fire or another disaster"
+        }
+      }
+    },
+    "profile": {
+      "tab": "Profile",
+      "title": "Profile",
+      "header": {
+        "verified": "Verified by the cooperative",
+        "pending": "Waiting for verification",
+        "jobs": "({{n}} jobs)",
+        "edit": "Edit profile"
+      },
+      "state": {
+        "online": "Online",
+        "offline": "Offline",
+        "radius": "{{km}} km work area"
+      },
+      "rows": {
+        "documents": "Documents & Verification",
+        "documentsAllVerified": "All verified",
+        "documentsNeedAttention": "{{n}} need your attention",
+        "documentsUnderReview": "Being checked",
+        "services": "Services Offered",
+        "servicesSub": "{{category}} · {{n}} services",
+        "availability": "Work Area & Availability",
+        "ratings": "My Ratings",
+        "ratingsSub": "{{avg}} from {{n}} customers",
+        "ratingsEmpty": "No ratings yet",
+        "payout": "Payout Details",
+        "payoutSub": "UPI: {{upi}}",
+        "payoutMissing": "Add your UPI ID",
+        "language": "Language",
+        "coop": "Our Cooperative Fund",
+        "coopSub": "{{amount}} in the fund",
+        "help": "Help & Support",
+        "helpSub": "Common questions, call your coordinator"
+      },
+      "sections": {
+        "work": "Your work",
+        "app": "App & cooperative"
+      },
+      "logout": {
+        "button": "Log out",
+        "title": "Log out?",
+        "body": "You will need your mobile number and a one-time code to log in again.",
+        "confirm": "Log out",
+        "cancel": "Stay logged in"
+      },
+      "edit": {
+        "title": "Edit Profile",
+        "photoNote": "Your photo comes from your verification documents.",
+        "mobileLocked": "Your login number can’t be changed here. Ask your coordinator.",
+        "save": "Save changes",
+        "saved": "Saved."
+      },
+      "documents": {
+        "title": "My Documents",
+        "intro": "The cooperative checks these before you get jobs. If one isn’t accepted, upload a clearer copy.",
+        "kinds": {
+          "idProof": "Government ID",
+          "addressProof": "Address proof",
+          "photo": "Recent photo"
+        },
+        "status": {
+          "verified": "Verified",
+          "uploaded": "Being checked",
+          "rejected": "Not accepted",
+          "missing": "Not uploaded"
+        },
+        "rejectedNote": "The cooperative couldn’t verify this one. Upload a clear, recent copy — all four corners visible.",
+        "reupload": "Re-upload",
+        "upload": "Upload",
+        "uploadedOn": "Uploaded {{when}}",
+        "reuploaded": "Uploaded. The cooperative will check it again.",
+        "idType": "ID: {{type}}"
+      },
+      "services": {
+        "title": "Services Offered",
+        "trade": "Your trade",
+        "tradeNote": "Changing your trade means the cooperative verifies you again. Ask your coordinator.",
+        "save": "Save services",
+        "saved": "Services saved. New job offers will match these."
+      },
+      "availability": {
+        "title": "Work Area & Hours",
+        "radiusHint": "Jobs within this distance are offered to you. The dashboard uses the same setting.",
+        "scheduleTitle": "When you work",
+        "save": "Save working hours",
+        "saved": "Working hours saved.",
+        "approvalNote": "You can go online once the cooperative approves your application."
+      },
+      "payout": {
+        "title": "Payout Details",
+        "intro": "Settlements from your earnings are sent to this UPI ID.",
+        "upi": "UPI ID",
+        "upiPlaceholder": "name@bank",
+        "holder": "Account holder",
+        "save": "Save UPI ID",
+        "saved": "UPI ID saved.",
+        "error": "Enter a UPI ID like name@bank"
+      },
+      "language": {
+        "title": "Language",
+        "intro": "The whole app changes straight away, and stays that way after you close it.",
+        "sample": {
+          "en": "The app will be in English.",
+          "hi": "ऐप हिन्दी में दिखेगा।"
+        }
+      },
+      "ratings": {
+        "title": "My Ratings",
+        "outOf": "out of 5",
+        "count": "{{n}} customer ratings",
+        "howTitle": "What decides who gets a job",
+        "howIntro": "Jobs are shared out by the cooperative’s rules, the same for every member.",
+        "factors": {
+          "distance": {
+            "title": "Distance",
+            "body": "Members closest to the customer are asked first."
+          },
+          "fair": {
+            "title": "Fair share this week",
+            "body": "Members who have had fewer jobs this week move up the list, so work is spread across everyone."
+          },
+          "rating": {
+            "title": "Your rating",
+            "body": "The average of your recent ratings. One bad rating on its own doesn’t decide anything."
+          }
+        },
+        "week": {
+          "title": "Your week",
+          "jobs": "Your jobs this week",
+          "average": "Member average",
+          "fewer": "You’ve had fewer jobs than most members this week, so you’ll be offered work earlier.",
+          "about": "You’re close to the member average this week.",
+          "more": "You’ve had more jobs than most members this week, so members with fewer get a turn first."
+        },
+        "reassurance": "A lower rating never stops offers. Fair share keeps work coming to every member.",
+        "tipsTitle": "What helps your rating",
+        "tips": {
+          "onTime": "Reach on time. If you’re running late, send \"I’ll be 10 minutes late\" from chat.",
+          "explain": "Explain the problem and the price before you start.",
+          "clean": "Clean up after the work."
+        },
+        "recentTitle": "What customers said",
+        "empty": "No ratings yet."
+      },
+      "help": {
+        "title": "Help & Support",
+        "coordinatorTitle": "Your coordinator",
+        "call": "Call {{name}}",
+        "office": "Cooperative office",
+        "faqTitle": "Common questions",
+        "faqs": {
+          "paid": {
+            "q": "When do I get paid?",
+            "a": "Your earnings wait in the Earnings tab. Tap Settle now to send everything waiting to your UPI account."
+          },
+          "fund": {
+            "q": "Why does {{pct}}% of each fare go to the fund?",
+            "a": "It builds the fund all members own. Members vote on how it is spent — loans, insurance, training."
+          },
+          "rating": {
+            "q": "Will a low rating stop my jobs?",
+            "a": "No. Members with fewer jobs this week move up the list, whatever their rating."
+          },
+          "language": {
+            "q": "How do I change the language?",
+            "a": "Tap the language button at the top of any screen, or open Profile, Language."
+          },
+          "safety": {
+            "q": "I feel unsafe at a job. What do I do?",
+            "a": "Leave, then call your coordinator. After the job you can also report the customer when you rate them."
+          }
+        }
+      }
+    },
+    "job": {
+      "title": "New Job Request",
+      "customer": {
+        "title": "Customer Info",
+        "away": "{{distance}} away",
+        "viewOnMap": "View on Map",
+        "call": "Call {{name}}",
+        "addressLater": "The full address is shared after you accept.",
+        "openFailed": "Couldn’t open that on this phone."
+      },
+      "service": {
+        "title": "Service Details",
+        "asap": "As soon as possible",
+        "scheduledToday": "Today at {{time}}",
+        "scheduledTomorrow": "Tomorrow at {{time}}",
+        "scheduledOn": "{{date}} at {{time}}",
+        "duration": "Takes about {{duration}}",
+        "notes": "Service Notes",
+        "noNotes": "No notes from the customer."
+      },
+      "pay": {
+        "title": "Pricing & Payment",
+        "netLabel": "Your net payout",
+        "netNote": "After the platform fee and cooperative fund are taken out of the fare",
+        "breakdown": "Fare breakdown",
+        "gross": "Customer pays",
+        "deducted": "Taken out of the fare",
+        "platformFee": "Platform fee ({{pct}}%)",
+        "coopFund": "Cooperative fund ({{pct}}%)",
+        "fundLink": "What is the cooperative fund?"
+      },
+      "offline": {
+        "body": "You’re offline. Go online to accept this job."
+      },
+      "errors": {
+        "offline": "Go online to accept jobs.",
+        "not_approved": "Your application is still waiting for approval.",
+        "gone": "Someone else took this job, or it has expired."
+      },
+      "notFound": {
+        "title": "This request is no longer available",
+        "body": "Another partner may have accepted it, or it was rejected."
+      },
+      "decline": {
+        "title": "Why are you rejecting?",
+        "subtitle": "Choose one. It helps us send you better jobs.",
+        "confirm": "Reject job",
+        "reasons": {
+          "too_far": "Too far",
+          "rate_too_low": "Rate too low",
+          "already_busy": "Already busy",
+          "wrong_service": "Not my kind of work"
+        }
+      }
+    },
+    "status": {
+      "REQUESTED": "Requested",
+      "BROADCAST": "New request",
+      "PENDING_REQUEST": "Pending",
+      "ACCEPTED": "Accepted",
+      "EN_ROUTE": "On the way",
+      "ARRIVED": "Arrived",
+      "IN_PROGRESS": "In progress",
+      "COMPLETED": "Completed",
+      "SETTLED": "Paid out",
+      "CANCELLED_BY_CUSTOMER": "Cancelled by customer",
+      "CANCELLED_BY_WORKER": "Cancelled by you",
+      "EXPIRED_NO_ACCEPT": "Expired",
+      "DISPUTED": "Disputed",
+      "DECLINED": "Rejected"
+    },
+    "active": {
+      "title": "Current Job",
+      "completedTitle": "Job Completed",
+      "cancelledTitle": "Job Cancelled",
+      "mapLabel": "Map of your location and the customer’s",
+      "hint": {
+        "ACCEPTED": "Check the address, then start your journey.",
+        "EN_ROUTE": "Head to the customer, and confirm when you reach.",
+        "ARRIVED": "Ask the customer for their 4-digit start code.",
+        "IN_PROGRESS": "Finish the work, then mark the job complete."
+      },
+      "actions": {
+        "startJourney": "Start journey",
+        "arrived": "I’ve arrived",
+        "startWork": "Start work",
+        "markComplete": "Mark complete",
+        "backToDashboard": "Return to Dashboard",
+        "backToBookings": "Back to bookings",
+        "navigate": "Navigate"
+      },
+      "customer": {
+        "title": "Customer"
+      },
+      "route": {
+        "distance": "Distance",
+        "eta": "Reach in",
+        "awayEta": "{{distance}} · {{eta}}"
+      },
+      "payout": {
+        "youEarn": "You’ll earn",
+        "fare": "Fare {{amount}}"
+      },
+      "code": {
+        "title": "Enter start code",
+        "body": "Ask {{name}} for the 4-digit code in their app. Work can only start with the right code.",
+        "label": "Start code",
+        "demo": "Demo build: the customer’s code is {{code}}",
+        "wrong": "That code doesn’t match. Ask the customer to read it again.",
+        "incomplete": "Enter all 4 digits"
+      },
+      "working": {
+        "elapsed": "Time on this job"
+      },
+      "complete": {
+        "title": "Mark this job complete?",
+        "body": "Confirm only when the work is done. {{amount}} will be added to your earnings.",
+        "confirm": "Yes, the job is done",
+        "cancel": "Not yet"
+      },
+      "summary": {
+        "jobId": "Job ID: {{id}}",
+        "duration": "Took {{duration}}",
+        "charges": "Charges Overview",
+        "addedToEarnings": "Added to your earnings. It will be paid in your next settlement.",
+        "paidOut": "Paid out to your account.",
+        "openEarnings": "Open earnings",
+        "fundTitle": "goes to your cooperative fund",
+        "fundBody": "{{pct}}% of every fare is kept for members, and members vote on how it is spent.",
+        "feedbackTitle": "Customer Feedback",
+        "noFeedback": "The customer hasn’t rated this job yet.",
+        "yourRatingTitle": "Your rating of the customer",
+        "ratePrompt": "How was this customer? You can flag a problem too.",
+        "rateCta": "Rate {{name}}"
+      },
+      "cancelled": {
+        "body": "This job was cancelled. Nothing is due for it.",
+        "reason": "Reason: {{reason}}"
+      },
+      "cancelReasons": {
+        "customer_fixed_it": "The customer fixed it themselves",
+        "rescheduled_elsewhere": "The customer booked someone else",
+        "outside_radius": "Outside your service area"
+      },
+      "stale": "This job’s status has changed. Go back and open it again.",
+      "notFound": {
+        "title": "Job not found",
+        "body": "It may have been cancelled or removed."
+      }
+    },
+    "rate": {
+      "title": "Rate Customer",
+      "question": "How was working with {{name}}?",
+      "starLabel": {
+        "1": "Very bad",
+        "2": "Bad",
+        "3": "Okay",
+        "4": "Good",
+        "5": "Excellent"
+      },
+      "starA11y": "{{n}} of 5 stars",
+      "flagsTitle": "Report a problem (optional)",
+      "flags": {
+        "abusive": "Rude or abusive",
+        "non_payment": "Did not pay",
+        "unsafe": "Felt unsafe",
+        "misleading": "Job was different from the booking"
+      },
+      "comment": "Comment (optional)",
+      "commentPlaceholder": "Anything your cooperative should know?",
+      "flagNote": "Flags go to your cooperative coordinator for review. The customer is not told who reported them.",
+      "submit": "Submit rating",
+      "done": "You rated this customer",
+      "errors": {
+        "starsRequired": "Choose a star rating",
+        "not_found": "This job no longer exists.",
+        "not_finished": "You can rate a customer once the job is complete.",
+        "invalid_stars": "Choose between 1 and 5 stars.",
+        "already_rated": "You have already rated this customer for this job."
+      }
+    },
+    "demo": {
+      "open": "Demo tools",
+      "title": "Demo tools",
+      "note": "Development builds only — not shown in a release build.",
+      "reset": {
+        "title": "Start over as a new worker",
+        "body": "Clears this phone’s account and opens Create Account. The language stays as it is."
+      },
+      "jump": {
+        "title": "Jump to an approved worker",
+        "body": "Suresh Yadav — approved, online, with job requests waiting."
+      }
+    }
+  }
+}

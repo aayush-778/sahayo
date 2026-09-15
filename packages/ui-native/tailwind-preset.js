@@ -9,7 +9,7 @@
  * Colour values live in ./tokens.js, which TypeScript also reads. Do not
  * write a hex literal here.
  */
-const { brandColors, fontFamilies } = require('./tokens');
+const { brandColors, workerColors, fontFamilies } = require('./tokens');
 
 /**
  * Every step is exactly 1.5x leading.
@@ -56,7 +56,11 @@ module.exports = {
   content: [],
   theme: {
     extend: {
-      colors: { brand: brandColors },
+      // Two named palettes, not one swapped per app. Both apps compile this
+      // preset through byte-identical tailwind configs, so replacing the
+      // `brand` values would recolour the customer app as well. Primitives pick
+      // a palette through ThemeProvider — see src/theme.tsx.
+      colors: { brand: brandColors, worker: workerColors },
       fontFamily,
       fontSize,
     },

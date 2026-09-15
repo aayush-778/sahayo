@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Animated, View } from 'react-native';
+import { useThemeClasses } from './theme';
 
 /**
  * A loading placeholder.
@@ -16,6 +17,7 @@ import { Animated, View } from 'react-native';
  * no Reanimated, no extra native wiring.
  */
 export function Skeleton({ className = '' }: { className?: string }) {
+  const themed = useThemeClasses();
   const pulse = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -31,7 +33,7 @@ export function Skeleton({ className = '' }: { className?: string }) {
 
   return (
     <Animated.View
-      className={`bg-brand-border ${className}`}
+      className={`${themed.dividerBg} ${className}`}
       // Opacity cannot come from a class here: it is a live animated value,
       // which is exactly the case the NativeWind rule carves out.
       style={{ opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.45, 0.9] }) }}
@@ -48,8 +50,12 @@ export function Skeleton({ className = '' }: { className?: string }) {
  * happens to share — a booking row, a worker row, a search result.
  */
 export function SkeletonCard({ className = '' }: { className?: string }) {
+  const themed = useThemeClasses();
+
   return (
-    <View className={`rounded-2xl border border-brand-border bg-brand-surface p-4 ${className}`}>
+    <View
+      className={`rounded-2xl border ${themed.dividerBorder} ${themed.surfaceBg} p-4 ${className}`}
+    >
       <View className="flex-row items-center">
         <Skeleton className="h-10 w-10 rounded-xl" />
         <View className="ml-3 flex-1">

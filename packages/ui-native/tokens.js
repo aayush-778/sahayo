@@ -52,6 +52,51 @@ const brandColors = {
 };
 
 /**
+ * The worker app's palette, built on #6CB0FF.
+ *
+ * #6CB0FF is the theme colour, and it is too light to carry white text: white
+ * on it is 2.26:1, which fails WCAG even for large text (3:1). That is the
+ * same trap the logo's own greens set for the customer app, and it is solved
+ * the same way — keep the hue, and derive darker steps of it for anything that
+ * sits behind or in front of text.
+ *
+ * The worker app is used outdoors, in sunlight, one-handed. So body and helper
+ * text are held to 7:1 (WCAG AAA) rather than the customer app's 4.5:1, and
+ * control outlines to the 3:1 that WCAG 1.4.11 requires for the edge of an
+ * input. The customer app's warm border is decorative and does not meet it.
+ *
+ * Every figure below was measured, not estimated. Hue 212°, saturation 100%.
+ */
+const workerColors = {
+  // --- the blue family ----------------------------------------------------
+  primary: '#0A5FC2', // 6.12:1 white — buttons, the active tab, links
+  'primary-dark': '#084C9B', // 8.34:1 white — pressed state
+  'primary-soft': '#D6E9FF', // disabled button ground; muted text on it 6.14:1
+  'primary-tint': '#E5F1FF', // selected row / chip ground; primary text on it 5.35:1
+  sky: '#6CB0FF', // THE theme colour. Decorative, or a fill behind ink (6.67:1). Never behind white.
+  'sky-light': '#99C8FF', // decorative; ink on it 8.66:1
+
+  // --- structure ----------------------------------------------------------
+  ink: '#04264E', // text and headings — 14.11:1 on ground, 15.08:1 on surface
+  ground: '#F2F8FF', // screen background, the lightest step of the hue
+  surface: '#FFFFFF', // cards and inputs
+  muted: '#3D5670', // helper text — 7.11:1 on ground, 7.60:1 on surface (AAA)
+  outline: '#6E90B6', // the edge of a control — 3.32:1 against surface (WCAG 1.4.11)
+  border: '#D8E6F5', // decorative dividers ONLY — never the outline of an input
+
+  // --- status -------------------------------------------------------------
+  // The customer app's status colours, re-measured on the worker ground:
+  // success 5.00:1, warning 4.93:1, danger 6.12:1. Taken by reference, so the
+  // two apps cannot come to mean different things by "succeeded" and "failed".
+  success: brandColors.success,
+  'success-soft': brandColors['success-soft'],
+  warning: brandColors.warning,
+  'warning-soft': brandColors['warning-soft'],
+  danger: brandColors.danger,
+  'danger-soft': brandColors['danger-soft'],
+};
+
+/**
  * Font family names, per script and weight.
  *
  * These strings are the keys the fonts are registered under by `useFonts`,
@@ -80,4 +125,4 @@ const fontFamilies = {
   },
 };
 
-module.exports = { brandColors, fontFamilies };
+module.exports = { brandColors, workerColors, fontFamilies };

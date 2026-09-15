@@ -15,14 +15,22 @@
     "lint": "eslint ."
   },
   "peerDependencies": {
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "expo-localization": "~57.0.2",
+    "i18next": "^26.4.2",
     "nativewind": "4.2.6",
     "react": "19.2.3",
+    "react-i18next": "^17.0.13",
     "react-native": "0.86.3"
   },
   "devDependencies": {
+    "@react-native-async-storage/async-storage": "2.2.0",
     "@types/react": "~19.2.2",
+    "expo-localization": "~57.0.2",
+    "i18next": "^26.4.2",
     "nativewind": "4.2.6",
     "react": "19.2.3",
+    "react-i18next": "^17.0.13",
     "react-native": "0.86.3",
     "typescript": "^5.7.2"
   }

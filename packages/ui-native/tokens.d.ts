@@ -25,8 +25,30 @@ export type BrandColorName =
   | 'danger'
   | 'danger-soft';
 
+/** The worker app's palette. Role names, not colour names — see tokens.js. */
+export type WorkerColorName =
+  | 'primary'
+  | 'primary-dark'
+  | 'primary-soft'
+  | 'primary-tint'
+  | 'sky'
+  | 'sky-light'
+  | 'ink'
+  | 'ground'
+  | 'surface'
+  | 'muted'
+  | 'outline'
+  | 'border'
+  | 'success'
+  | 'success-soft'
+  | 'warning'
+  | 'warning-soft'
+  | 'danger'
+  | 'danger-soft';
+
 export type FontScript = 'latin' | 'devanagari';
 export type FontWeightName = 'regular' | 'medium' | 'semibold' | 'bold';
 
 export declare const brandColors: Record<BrandColorName, string>;
+export declare const workerColors: Record<WorkerColorName, string>;
 export declare const fontFamilies: Record<FontScript, Record<FontWeightName, string>>;

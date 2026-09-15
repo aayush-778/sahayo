@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
+import { useThemeClasses, useThemeMetrics } from './theme';
 
 export interface CheckboxProps {
   checked: boolean;
@@ -33,6 +34,9 @@ export function Checkbox({
   accessibilityLabel,
   className = '',
 }: CheckboxProps) {
+  const themed = useThemeClasses();
+  const { checkboxHitSlop } = useThemeMetrics();
+
   return (
     <View className={`flex-row items-center ${className}`}>
       <Pressable
@@ -40,11 +44,11 @@ export function Checkbox({
         accessibilityRole="checkbox"
         accessibilityState={{ checked }}
         accessibilityLabel={accessibilityLabel}
-        // Enlarges the touch target to a usable size without enlarging the
-        // 20pt box the design calls for.
-        hitSlop={10}
+        // Enlarges the touch target without enlarging the 20pt box the design
+        // calls for: 40pt in the customer app, the required 48dp in the worker.
+        hitSlop={checkboxHitSlop}
         className={`h-5 w-5 items-center justify-center rounded-md border ${
-          checked ? 'border-brand-primary bg-brand-primary-tint' : 'border-brand-border'
+          checked ? `${themed.primaryBorder} ${themed.primaryTintBg}` : themed.controlBorder
         }`}
       >
         {checked ? checkIcon : null}

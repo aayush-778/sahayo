@@ -4,6 +4,7 @@ import { View } from 'react-native';
 import type { AppLocale } from './format';
 import { formatPaise } from './format';
 import { Text } from './Text';
+import { useThemeClasses } from './theme';
 
 /**
  * The fare breakdown, shared by every screen that quotes a price.
@@ -55,17 +56,11 @@ export interface FarePanelProps {
   className?: string;
 }
 
-const LABEL_TONE: Record<FareRowTone, string> = {
-  default: 'text-brand-navy',
-  muted: 'text-brand-muted',
-  fund: 'text-brand-success',
-};
-
-const AMOUNT_TONE: Record<FareRowTone, string> = {
-  default: 'text-brand-navy',
-  muted: 'text-brand-muted',
-  fund: 'text-brand-success',
-};
+/** Tone → text colour, per theme. Label and amount share one map — they
+ *  always did carry identical values. */
+function toneClasses(themed: ReturnType<typeof useThemeClasses>): Record<FareRowTone, string> {
+  return { default: themed.ink, muted: themed.muted, fund: themed.successText };
+}
 
 const AMOUNT_WEIGHT = {
   default: 'medium',
@@ -81,11 +76,14 @@ export function FarePanel({
   locale,
   className = '',
 }: FarePanelProps) {
+  const themed = useThemeClasses();
+  const TONE = toneClasses(themed);
+
   return (
     <View
-      className={`rounded-2xl border border-brand-border bg-brand-surface p-4 ${className}`}
+      className={`rounded-2xl border ${themed.dividerBorder} ${themed.surfaceBg} p-4 ${className}`}
     >
-      <Text weight="bold" className="text-base text-brand-navy">
+      <Text weight="bold" className={`${themed.bodySize} ${themed.ink}`}>
         {title}
       </Text>
 
@@ -95,14 +93,14 @@ export function FarePanel({
             return (
               <View
                 key={row.key}
-                className={`my-1 h-px ${row.strong ? 'bg-brand-navy/20' : 'bg-brand-border'}`}
+                className={`my-1 h-px ${row.strong ? themed.inkFaintBg : themed.dividerBg}`}
               />
             );
           }
 
           if (row.kind === 'caption') {
             return (
-              <Text key={row.key} className="mt-2 text-xs uppercase text-brand-muted">
+              <Text key={row.key} className={`mt-2 ${themed.captionSize} uppercase ${themed.muted}`}>
                 {row.label}
               </Text>
             );
@@ -121,14 +119,14 @@ export function FarePanel({
                 {row.icon}
                 <Text
                   weight={tone === 'fund' ? 'medium' : 'regular'}
-                  className={`flex-1 text-sm ${row.icon ? 'ml-1.5' : ''} ${LABEL_TONE[tone]}`}
+                  className={`flex-1 ${themed.labelSize} ${row.icon ? 'ml-1.5' : ''} ${TONE[tone]}`}
                 >
                   {row.label}
                 </Text>
               </View>
               <Text
                 weight={AMOUNT_WEIGHT[tone]}
-                className={`ml-3 text-sm ${AMOUNT_TONE[tone]}`}
+                className={`ml-3 ${themed.labelSize} ${TONE[tone]}`}
               >
                 {formatPaise(row.amount, locale)}
               </Text>
@@ -136,13 +134,13 @@ export function FarePanel({
           );
         })}
 
-        <View className="mt-1 h-px bg-brand-navy/20" />
+        <View className={`mt-1 h-px ${themed.inkFaintBg}`} />
 
         <View className="flex-row items-center justify-between pt-2">
-          <Text weight="bold" className="flex-1 text-base text-brand-navy">
+          <Text weight="bold" className={`flex-1 ${themed.bodySize} ${themed.ink}`}>
             {totalLabel}
           </Text>
-          <Text weight="bold" className="ml-3 text-xl text-brand-navy">
+          <Text weight="bold" className={`ml-3 ${themed.titleSize} ${themed.ink}`}>
             {formatPaise(totalAmount, locale)}
           </Text>
         </View>
@@ -184,8 +182,10 @@ export function FundHighlight({
   icon,
   className = '',
 }: FundHighlightProps) {
+  const themed = useThemeClasses();
+
   return (
-    <View className={`overflow-hidden rounded-2xl bg-brand-success ${className}`}>
+    <View className={`overflow-hidden rounded-2xl ${themed.successBg} ${className}`}>
       <View className="flex-row items-center p-4">
         {icon ? (
           <View className="h-12 w-12 items-center justify-center rounded-full bg-white/20">

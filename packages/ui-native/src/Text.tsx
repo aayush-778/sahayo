@@ -1,6 +1,7 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import { Text as RNText, type TextProps } from 'react-native';
 import type { FontScript, FontWeightName } from '../tokens';
+import { useThemeClasses } from './theme';
 
 /**
  * The active script, provided by the app from its i18n language.
@@ -105,17 +106,21 @@ export interface TextComponentProps extends TextProps {
  *      caller sets none — bare React Native Text has no lineHeight at all,
  *      which is where conjuncts get clipped.
  *
+ * The default size and colour come from the active theme: `text-base` in
+ * both apps, in the customer app's navy and the worker app's ink.
+ *
  * Import this rather than `Text` from react-native.
  */
 export function Text({ weight = 'regular', className, ...rest }: TextComponentProps) {
   const script = useFontScript();
+  const themed = useThemeClasses();
   const given = className ?? '';
   const { hasSize, hasColor } = classifyGivenClasses(given);
 
   const classes = [
     FAMILY_CLASS[script][weight],
-    hasSize ? '' : 'text-base',
-    hasColor ? '' : 'text-brand-navy',
+    hasSize ? '' : themed.bodySize,
+    hasColor ? '' : themed.ink,
     given,
   ]
     .filter(Boolean)

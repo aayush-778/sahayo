@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { TextInput, View, type TextInputProps } from 'react-native';
-import { brandColors } from '../tokens';
 import { Text } from './Text';
+import { useThemeClasses, useThemeColors } from './theme';
 
 export interface FormFieldProps extends TextInputProps {
   /** Already translated by the caller. This package never touches i18n. */
@@ -14,6 +14,12 @@ export interface FormFieldProps extends TextInputProps {
    * both apps for the sake of one glyph.
    */
   accessory?: ReactNode;
+  /**
+   * Leading element inside the field's border, before the input — a fixed
+   * "+91" in front of a mobile number, so the country code is shown but can
+   * never be typed over or deleted.
+   */
+  prefix?: ReactNode;
   /** Shown under the field and turns the border red. Falsy means no error. */
   error?: string;
   /** Applied to the outer wrapper, for spacing between stacked fields. */
@@ -27,36 +33,44 @@ export interface FormFieldProps extends TextInputProps {
  * caller's own `onFocus`/`onBlur` still fire — the field is used both for
  * plain entry and for validate-on-blur, and swallowing those handlers would
  * make the second impossible.
+ *
+ * The idle border is the theme's `controlBorder`. In the worker app that is
+ * an outline measured at 3:1 against the card, which WCAG 1.4.11 requires for
+ * the edge of an input — a field you cannot find in sunlight is not a field.
  */
 export function FormField({
   label,
   accessory,
+  prefix,
   error,
   containerClassName = '',
   onFocus,
   onBlur,
   ...inputProps
 }: FormFieldProps) {
+  const themed = useThemeClasses();
+  const colors = useThemeColors();
   const [focused, setFocused] = useState(false);
 
   const borderClass = error
-    ? 'border-brand-danger'
+    ? themed.dangerBorder
     : focused
-      ? 'border-brand-primary'
-      : 'border-brand-border';
+      ? themed.primaryBorder
+      : themed.controlBorder;
 
   return (
     <View className={containerClassName}>
-      <Text weight="semibold" className="mb-2 text-sm text-brand-navy">
+      <Text weight="semibold" className={`mb-2 ${themed.labelSize} ${themed.ink}`}>
         {label}
       </Text>
 
       <View
-        className={`flex-row items-center rounded-xl border bg-brand-surface ${borderClass}`}
+        className={`flex-row items-center rounded-xl border ${themed.surfaceBg} ${borderClass}`}
       >
+        {prefix ? <View className="pl-4">{prefix}</View> : null}
         <TextInput
-          className="flex-1 px-4 py-4 text-base text-brand-navy"
-          placeholderTextColor={brandColors.muted}
+          className={`flex-1 ${prefix ? 'pl-2 pr-4' : 'px-4'} py-4 ${themed.bodySize} ${themed.ink}`}
+          placeholderTextColor={colors.muted}
           onFocus={(event) => {
             setFocused(true);
             onFocus?.(event);
@@ -70,7 +84,7 @@ export function FormField({
         {accessory ? <View className="pr-4">{accessory}</View> : null}
       </View>
 
-      {error ? <Text className="mt-2 text-sm text-brand-danger">{error}</Text> : null}
+      {error ? <Text className={`mt-2 ${themed.labelSize} ${themed.dangerText}`}>{error}</Text> : null}
     </View>
   );
 }

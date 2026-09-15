@@ -1,3 +1,4 @@
+export * from './theme';
 export * from './Screen';
 export * from './Text';
 export * from './Avatar';
@@ -8,4 +9,5 @@ export * from './FarePanel';
 export * from './Skeleton';
 export * from './Checkbox';
 export * from './format';
+export * from './i18n';
 export * from './tokens';

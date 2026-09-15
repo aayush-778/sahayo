@@ -1,5 +1,6 @@
 import { View } from 'react-native';
 import { Text } from './Text';
+import { useThemeClasses } from './theme';
 
 export interface AvatarProps {
   /** The person's name. Initials are derived from it. */
@@ -45,15 +46,16 @@ const TEXT_CLASS = {
  * Initials at least change with the person.
  */
 export function Avatar({ name, size = 'md', className = '' }: AvatarProps) {
+  const themed = useThemeClasses();
   const initials = initialsFor(name);
 
   return (
     <View
-      className={`items-center justify-center rounded-full bg-brand-primary-tint ${SIZE_CLASS[size]} ${className}`}
+      className={`items-center justify-center rounded-full ${themed.primaryTintBg} ${SIZE_CLASS[size]} ${className}`}
       accessibilityRole="image"
       accessibilityLabel={name}
     >
-      <Text weight="bold" className={`text-brand-primary ${TEXT_CLASS[size]}`}>
+      <Text weight="bold" className={`${themed.primaryText} ${TEXT_CLASS[size]}`}>
         {initials}
       </Text>
     </View>

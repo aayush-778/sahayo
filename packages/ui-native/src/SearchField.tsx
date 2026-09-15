@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { TextInput, View } from 'react-native';
-import { brandColors } from '../tokens';
 import { Text } from './Text';
+import { useThemeClasses, useThemeColors } from './theme';
 
 export interface SearchFieldProps {
   /** Already translated by the caller. This package never touches i18n. */
@@ -30,6 +30,8 @@ export interface SearchFieldProps {
  * Shared so the two cannot drift: Home's is presentational for now and
  * Categories' filters live, but a user moving between the tabs should not see
  * the control change shape.
+ *
+ * 48dp tall in the customer app and 56dp in the worker app.
  */
 export function SearchField({
   placeholder,
@@ -41,25 +43,28 @@ export function SearchField({
   accessibilityLabel,
   className = '',
 }: SearchFieldProps) {
+  const themed = useThemeClasses();
+  const colors = useThemeColors();
+
   return (
     <View
-      className={`h-12 flex-row items-center rounded-2xl border border-brand-border bg-brand-surface px-4 ${className}`}
+      className={`${themed.searchHeight} flex-row items-center rounded-2xl border ${themed.controlBorder} ${themed.surfaceBg} px-4 ${className}`}
       accessibilityRole="search"
       accessibilityLabel={accessibilityLabel}
     >
       {leadingIcon}
 
       {readOnly ? (
-        <Text className="ml-3 flex-1 text-base text-brand-muted" numberOfLines={1}>
+        <Text className={`ml-3 flex-1 ${themed.bodySize} ${themed.muted}`} numberOfLines={1}>
           {placeholder}
         </Text>
       ) : (
         <TextInput
-          className="ml-3 flex-1 text-base text-brand-navy"
+          className={`ml-3 flex-1 ${themed.bodySize} ${themed.ink}`}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          placeholderTextColor={brandColors.muted}
+          placeholderTextColor={colors.muted}
           autoCapitalize="none"
           autoCorrect={false}
           returnKeyType="search"
