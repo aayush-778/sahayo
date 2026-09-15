@@ -1,8 +1,11 @@
 import { z } from 'zod';
 import {
+  BookingEventKind,
   BookingStatus,
+  type AdminBooking,
   type Booking,
   type BookingAddress,
+  type BookingEvent,
   type BookingFare,
 } from '../types/booking';
 import { geoPointSchema, idSchema, isoDateTimeSchema, paiseSchema } from './common';
@@ -39,3 +42,33 @@ export const bookingSchema = z.object({
   createdAt: isoDateTimeSchema,
   updatedAt: isoDateTimeSchema,
 }) satisfies z.ZodType<Booking>;
+
+export const bookingEventKindSchema = z.nativeEnum(BookingEventKind);
+
+export const bookingEventSchema = z.object({
+  id: idSchema,
+  kind: bookingEventKindSchema,
+  at: isoDateTimeSchema,
+  detail: z.string().min(1).max(300),
+  workersPinged: z.number().int().nonnegative().optional(),
+  equityRank: z.number().int().positive().optional(),
+  disputed: z.boolean().optional(),
+}) satisfies z.ZodType<BookingEvent>;
+
+export const adminBookingSchema = z.object({
+  id: idSchema,
+  reference: z.string().regex(/^BKG-\d{5}$/),
+  customerId: idSchema,
+  customerName: z.string().min(1),
+  workerId: idSchema.optional(),
+  workerName: z.string().min(1).optional(),
+  category: z.string().min(1),
+  zoneId: idSchema,
+  location: geoPointSchema,
+  status: bookingStatusSchema,
+  amount: paiseSchema,
+  createdAt: isoDateTimeSchema,
+  acceptedAt: isoDateTimeSchema.optional(),
+  completedAt: isoDateTimeSchema.optional(),
+  timeline: z.array(bookingEventSchema),
+}) satisfies z.ZodType<AdminBooking>;

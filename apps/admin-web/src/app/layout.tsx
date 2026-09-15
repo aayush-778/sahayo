@@ -1,19 +1,43 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
-import { BOOKING_STATUSES } from '@sahayo/shared';
+import { Outfit, Plus_Jakarta_Sans } from 'next/font/google';
+import { ServiceWorkerRegistrar } from '@/components/shell/ServiceWorkerRegistrar';
 import './globals.css';
+
+/*
+ * Two families, loaded once here, with strictly separated jobs. Outfit is
+ * geometric and round and takes every heading and large display number; Plus
+ * Jakarta Sans takes body, tables, labels and controls. Neither is loaded at
+ * weight 700 — that weight is banned product-wide, so shipping it would only
+ * invite its use. Do not add a third family or a Devanagari face; the product
+ * is English throughout.
+ */
+const outfit = Outfit({
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  variable: '--font-display',
+  display: 'swap',
+});
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  variable: '--font-sans',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'Sahayo Admin',
-  // BOOKING_STATUSES is imported purely to prove @sahayo/shared resolves and
-  // executes through transpilePackages at runtime. Phase 1 probe only.
-  description: `Cooperative Gig Services Platform — administration (${BOOKING_STATUSES.length} booking states)`,
+  description: 'Cooperative Gig Services Platform — administration',
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
-      <body>{children}</body>
+    <html lang="en" className={`${outfit.variable} ${plusJakartaSans.variable}`}>
+      <body className="font-sans text-body">
+        {children}
+        <ServiceWorkerRegistrar />
+      </body>
     </html>
   );
 }
