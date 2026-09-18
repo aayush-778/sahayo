@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
-import { View } from 'react-native';
-import { Stack, useRouter, useSegments } from 'expo-router';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Pressable, View } from 'react-native';
+import { Stack, useRouter, useSegments, type ErrorBoundaryProps } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaInsetsContext, SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
 
@@ -15,10 +15,12 @@ import { NotoSansDevanagari_500Medium } from '@expo-google-fonts/noto-sans-devan
 import { NotoSansDevanagari_600SemiBold } from '@expo-google-fonts/noto-sans-devanagari/600SemiBold';
 import { NotoSansDevanagari_700Bold } from '@expo-google-fonts/noto-sans-devanagari/700Bold';
 
-import { brandColors, FontScriptProvider, SCRIPT_FOR_LOCALE } from '@sahayo/ui-native';
+import { brandColors, FontScriptProvider, SCRIPT_FOR_LOCALE, Text } from '@sahayo/ui-native';
 
 import '../global.css';
 import { initI18n } from '../src/i18n';
+import { ConnectionBanner, useConnectionNotice } from '../src/components/ConnectionBanner';
+import { useRealtimeSession } from '../src/services/live';
 import { useAuthStore } from '../src/store/auth';
 
 /**
@@ -77,6 +79,9 @@ export default function RootLayout() {
   const router = useRouter();
   const segments = useSegments();
 
+  // The live connection opens while someone is signed in, and closes on sign-out.
+  useRealtimeSession();
+
   useEffect(() => {
     let cancelled = false;
     initI18n()
@@ -129,18 +134,69 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <FontScriptProvider script={SCRIPT_FOR_LOCALE[language]}>
-        <View className="flex-1" onLayout={onLayoutRootView}>
-          <StatusBar style="dark" />
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              // React Navigation styles its own container; there is no
-              // className for it. The value is a token, never a hex literal.
-              contentStyle: { backgroundColor: brandColors.cream },
-            }}
-          />
-        </View>
+        <AppShell onLayout={onLayoutRootView} />
       </FontScriptProvider>
     </SafeAreaProvider>
+  );
+}
+
+/**
+ * Everything under the safe-area provider: the connection strip, and the navigator below it.
+ *
+ * Its own component because the insets can only be read inside the provider, and because
+ * the strip changes what the screens under it should use: while it is up it has already
+ * covered the status bar, so the screens must not add that inset a second time — they
+ * would sit a status bar's height too low. Zeroing the top inset here is what keeps every
+ * screen in the same place whether the strip is showing or not.
+ */
+function AppShell({ onLayout }: { onLayout: () => void }) {
+  const notice = useConnectionNotice();
+  const insets = useSafeAreaInsets();
+  const belowBanner = useMemo(() => (notice ? { ...insets, top: 0 } : insets), [notice, insets]);
+
+  return (
+    <View className="flex-1" onLayout={onLayout}>
+      <StatusBar style="dark" />
+      <ConnectionBanner notice={notice} />
+      <SafeAreaInsetsContext.Provider value={belowBanner}>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            // React Navigation styles its own container; there is no
+            // className for it. The value is a token, never a hex literal.
+            contentStyle: { backgroundColor: brandColors.cream },
+          }}
+        />
+      </SafeAreaInsetsContext.Provider>
+    </View>
+  );
+}
+
+/**
+ * The last line of defence: a screen that throws shows this card instead of a red box of
+ * stack trace. Retry remounts the route, which is enough for anything transient — and on
+ * stage it is a card a judge can look at rather than a wall of file paths.
+ */
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  return (
+    <View className="flex-1 items-center justify-center bg-brand-cream px-8">
+      <Text weight="bold" className="text-center text-lg text-brand-navy">
+        Something went wrong
+      </Text>
+      <Text className="mt-2 text-center text-sm text-brand-muted">
+        This screen could not be shown. Your bookings are safe.
+      </Text>
+      <Text className="mt-3 text-center text-xs text-brand-muted">{error.message}</Text>
+      <Pressable
+        className="mt-6 h-12 items-center justify-center rounded-xl bg-brand-primary px-6"
+        onPress={() => void retry()}
+        accessibilityRole="button"
+        accessibilityLabel="Try again"
+      >
+        <Text weight="semibold" className="text-base text-white">
+          Try again
+        </Text>
+      </Pressable>
+    </View>
   );
 }

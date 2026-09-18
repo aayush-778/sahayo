@@ -9,6 +9,9 @@
       "@sahayo/shared": [
         "../../packages/shared/src/index.ts"
       ],
+      "@sahayo/shared/seed": ["../../packages/shared/src/seed/index.ts"],
+      "@sahayo/shared/seed/*": ["../../packages/shared/src/seed/*"],
+      "@sahayo/shared/service-items": ["../../packages/shared/src/service-items/index.ts"],
       "@sahayo/ui-native": [
         "../../packages/ui-native/src/index.ts"
       ]

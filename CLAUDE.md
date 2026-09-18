@@ -181,6 +181,11 @@ src/lib/store     zustand, the database   <- only services read this
 src/lib/services  async functions         <- the UI reads ONLY this
 ```
 
+`src/lib/seed` is a one-line re-export of `@sahayo/shared/seed`, where the generator
+lives, so the backend builds exactly the dataset the portal shows. The lint rule
+blocks `@sahayo/shared/seed` in the UI too; only `@sahayo/shared/seed/clock`, which
+carries no data, is open, and `src/lib/dates.ts` re-exports it.
+
 A React component imports from `@/lib/services` and never from `@/lib/store`,
 `@/lib/seed`, or `zustand` directly. This is enforced by `no-restricted-imports`
 in `apps/admin-web/eslint.config.mjs`, so a violation fails lint — the comment
@@ -198,7 +203,7 @@ three read derived state from the one store.
 
 ### The seed is deterministic, and must stay that way
 
-Nothing under `src/lib/seed` may call `Math.random()`, `Date.now()`, or `crypto`.
+Nothing under `packages/shared/src/seed` may call `Math.random()`, `Date.now()`, or `crypto`.
 Every figure comes from `createRng(seed)`, and every date is computed backwards
 from the fixed `SEED_NOW` constant. A dataset that drifts with the wall clock is
 not deterministic: "12,000 bookings over 90 days" would silently re-bucket overnight
@@ -209,6 +214,29 @@ adding a worker would shift every booking, ledger entry and dispute after it.
 
 `buildSeedDataset()` is idempotent and byte-identical across calls, which is what
 the "Reset demo data" action relies on.
+
+### One dataset, three apps: the demo cast
+
+The mobile apps are demonstrated with named people and the portal with generated
+ones, and all three must show the same platform. `packages/shared/src/seed/demo-cast/`
+holds the one copy of the named records — the customer app's 48 workers and its demo
+customer, the worker app's partner (Suresh Yadav, `wrk_suresh`) and his 12 customers,
+the addresses, and the 22 hand-written bookings — importable as
+`@sahayo/shared/seed/cast` without loading the generator. The mobile apps' `mocks/`
+re-export them; the seed lays them over its generated records in `cast-overlay.ts`, so
+Ramesh Kumar is `wrk_ramesh` in all three apps.
+
+- Hand-written bookings are written against a `CastClock`: the apps pass
+  `createDeviceClock(Date.now)`, the seed `createAnchoredClock(SEED_NOW)`.
+- A cast worker keeps their identity, trades, position, availability and verification;
+  the generated member they replace supplies ratings, job counts, earnings and equity.
+- The overlay asserts itself on every build: every cast id present under its own name,
+  no generated record sharing a cast name, and the fund balance unchanged to the paisa.
+- Trades are the catalogue's ten worker types (`WorkerCategory`, mapped to `cat_*` ids
+  by `CATEGORY_ID_BY_WORKER_CATEGORY`). Label them with `workerCategoryLabel`, never by
+  re-casing the constant.
+- The priced item catalogue is `@sahayo/shared/service-items`, kept off the package root
+  so the worker app does not bundle it.
 
 ### Money
 
@@ -263,7 +291,7 @@ which must print nothing. Use `-w`: without it the grep matches `CREDIT`.
 
 ### The cooperative fund keeps one record, not two
 
-`src/lib/seed/fund-programmes.ts` is the single source for what the members have
+`packages/shared/src/seed/fund-programmes.ts` is the single source for what the members have
 voted on and what the fund has spent. A PASSED programme produces the ledger
 disbursement for exactly the amount approved, dated just after its vote closed;
 nothing else in the seed spends from the fund. The proposals and the ledger used to

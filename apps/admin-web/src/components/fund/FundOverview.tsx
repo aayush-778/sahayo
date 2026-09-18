@@ -5,6 +5,7 @@ import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YA
 import type { FundTotals } from '@sahayo/shared';
 import { AXIS, GRID } from '@/components/dashboard/chart-theme';
 import { Card } from '@/components/ui-kit/Card';
+import { CountUp } from '@/components/ui-kit/CountUp';
 import { IconTile } from '@/components/ui-kit/IconTile';
 import { SectionHeader } from '@/components/ui-kit/SectionHeader';
 import { Skeleton } from '@/components/ui-kit/Skeleton';
@@ -55,9 +56,11 @@ export function FundOverview({ totals, growth, fundPercent }: FundOverviewProps)
               <IconTile icon={HandCoins} tint="fund-green" />
               <div>
                 <p className="text-table text-muted">The cooperative fund holds</p>
-                <p className="tabular font-display text-hero font-medium text-fund-green">
-                  {rupees(totals.balance)}
-                </p>
+                <CountUp
+                  value={totals.balance}
+                  format={rupees}
+                  className="tabular block font-display text-hero font-medium text-fund-green"
+                />
               </div>
             </div>
 

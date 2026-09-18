@@ -1,6 +1,8 @@
 import type {
   AadhaarAccessLogEntry,
   AdminBooking,
+  BroadcastRecord,
+  GeoPoint,
   AdminCustomer,
   AdminWorker,
   Dispute,
@@ -60,6 +62,24 @@ export interface AdminState {
   readNotificationIds: string[];
   /** Notification kinds switched off in the account preferences. */
   mutedNotificationKinds: string[];
+
+  /* --- the live server -------------------------------------------------------- */
+
+  /** Whether the portal is receiving the backend's events. 'offline' means the seed alone. */
+  liveMode: LiveMode;
+  /** When a dropped connection last came back, for a brief note. */
+  liveRestoredAt: number | null;
+  /**
+   * A counter per kind of live change. Pages add the one they show to their effect
+   * dependencies and re-read through their services when it moves.
+   */
+  liveVersions: Record<LiveTopic, number>;
+  /** Real dispatch records from the backend, by booking. The Broadcast Inspector prefers these. */
+  liveBroadcasts: Record<string, BroadcastRecord>;
+  /** Ledger rows that arrived live, newest last, so the Finance page can mark them. */
+  freshLedgerIds: string[];
+  /** The completion that just moved the fund, for the finale card. */
+  fundFinale: FundFinale | null;
 
   /* --- lifecycle ---------------------------------------------------------- */
 
@@ -130,6 +150,54 @@ export interface AdminState {
 
   markNotificationsRead(ids: string[]): void;
   setNotificationKindMuted(kind: string, muted: boolean): void;
+
+  /* --- live ----------------------------------------------------------------- */
+
+  setLiveMode(mode: LiveMode, restoredAt?: number | null): void;
+  /** Applies workers' live fields: online, on a job, where they are, this week's jobs, verification. */
+  applyLiveWorkers(patches: LiveWorkerPatch[]): void;
+  /** Adds a booking or replaces the one with its id. */
+  upsertBooking(booking: AdminBooking): void;
+  applyLiveBroadcast(record: BroadcastRecord): void;
+  /** Appends live ledger rows, skipping any already held. Never rewrites a row. */
+  appendLiveLedger(entries: LedgerEntry[]): void;
+  showFundFinale(finale: FundFinale): void;
+  dismissFundFinale(): void;
+}
+
+export type LiveMode = 'idle' | 'connecting' | 'live' | 'reconnecting' | 'offline';
+export type LiveTopic = 'workers' | 'bookings' | 'ledger' | 'dispatch' | 'kyc';
+
+export interface LiveWorkerPatch {
+  id: string;
+  isOnline?: boolean;
+  isOnJob?: boolean;
+  location?: GeoPoint;
+  jobsThisWeek?: number;
+  kycStatus?: KycStatus;
+}
+
+/** A finished job's money arriving: the three shares, and the fund before and after. */
+export interface FundFinale {
+  id: string;
+  bookingId?: string;
+  reference?: string;
+  workerName?: string;
+  gross: number;
+  workerShare: number;
+  platformShare: number;
+  fundShare: number;
+  fundBefore: number;
+  fundAfter: number;
+  at: number;
+}
+
+const NO_VERSIONS: Record<LiveTopic, number> = { workers: 0, bookings: 0, ledger: 0, dispatch: 0, kyc: 0 };
+
+function bump(versions: Record<LiveTopic, number>, ...topics: LiveTopic[]): Record<LiveTopic, number> {
+  const next = { ...versions };
+  for (const topic of topics) next[topic] += 1;
+  return next;
 }
 
 /** Replaces the one item matching `id`, leaving the array's order untouched. */
@@ -160,6 +228,12 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   team: [],
   readNotificationIds: [],
   mutedNotificationKinds: [],
+  liveMode: 'idle',
+  liveRestoredAt: null,
+  liveVersions: NO_VERSIONS,
+  liveBroadcasts: {},
+  freshLedgerIds: [],
+  fundFinale: null,
 
   hydrate() {
     if (get().hydrated) return;
@@ -167,7 +241,17 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   },
 
   reset() {
-    set({ ...buildSeedDataset(), readNotificationIds: [], mutedNotificationKinds: [], hydrated: true });
+    set((state) => ({
+      ...buildSeedDataset(),
+      readNotificationIds: [],
+      mutedNotificationKinds: [],
+      liveBroadcasts: {},
+      freshLedgerIds: [],
+      fundFinale: null,
+      /* Every page re-reads, so nothing keeps showing the discarded session. */
+      liveVersions: bump(state.liveVersions, 'workers', 'bookings', 'ledger', 'dispatch', 'kyc'),
+      hydrated: true,
+    }));
   },
 
   setWorkerOnline(workerId, isOnline) {
@@ -248,6 +332,64 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         ? [...new Set([...state.mutedNotificationKinds, kind])]
         : state.mutedNotificationKinds.filter((candidate) => candidate !== kind),
     }));
+  },
+
+  setLiveMode(mode, restoredAt) {
+    set((state) => ({ liveMode: mode, liveRestoredAt: restoredAt === undefined ? state.liveRestoredAt : restoredAt }));
+  },
+
+  applyLiveWorkers(patches) {
+    if (patches.length === 0) return;
+    set((state) => {
+      const byId = new Map(patches.map((patch) => [patch.id, patch]));
+      const kycChanged = patches.some((patch) => patch.kycStatus !== undefined && state.workers.find((w) => w.id === patch.id)?.kycStatus !== patch.kycStatus);
+      return {
+        workers: state.workers.map((worker) => {
+          const patch = byId.get(worker.id);
+          /* The patch carries the same id, so spreading it over the worker changes only the live fields. */
+          return patch ? { ...worker, ...patch } : worker;
+        }),
+        liveVersions: kycChanged ? bump(state.liveVersions, 'workers', 'kyc') : bump(state.liveVersions, 'workers'),
+      };
+    });
+  },
+
+  upsertBooking(booking) {
+    set((state) => {
+      const exists = state.bookings.some((candidate) => candidate.id === booking.id);
+      return {
+        bookings: exists ? state.bookings.map((candidate) => (candidate.id === booking.id ? booking : candidate)) : [booking, ...state.bookings],
+        liveVersions: bump(state.liveVersions, 'bookings'),
+      };
+    });
+  },
+
+  applyLiveBroadcast(record) {
+    set((state) => ({
+      liveBroadcasts: { ...state.liveBroadcasts, [record.bookingId]: record },
+      liveVersions: bump(state.liveVersions, 'dispatch'),
+    }));
+  },
+
+  appendLiveLedger(entries) {
+    set((state) => {
+      const held = new Set(state.ledger.slice(-500).map((entry) => entry.id));
+      const fresh = entries.filter((entry) => !held.has(entry.id));
+      if (fresh.length === 0) return {};
+      return {
+        ledger: [...state.ledger, ...fresh],
+        freshLedgerIds: [...state.freshLedgerIds, ...fresh.map((entry) => entry.id)].slice(-60),
+        liveVersions: bump(state.liveVersions, 'ledger'),
+      };
+    });
+  },
+
+  showFundFinale(finale) {
+    set({ fundFinale: finale });
+  },
+
+  dismissFundFinale() {
+    set({ fundFinale: null });
   },
 
   applySettings(settings, change) {

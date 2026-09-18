@@ -77,7 +77,19 @@ export interface JobRequest {
   distanceM: number;
   /** How long the job usually takes, as the dispatcher quotes it. */
   estimatedMinutes: number;
+  /**
+   * When the offer runs out, on THIS phone's clock. A live offer's server deadline is
+   * converted on arrival — see realtime/mappers.ts — so the countdown is right even when
+   * the phone's clock is not.
+   */
   expiresAt: IsoDateTime;
+  /** 'live' for an offer from the dispatcher; absent for the offline demo dispatcher's. */
+  source?: 'live';
+  /**
+   * Booked ahead: no countdown, answered from the Scheduled requests list, and open
+   * until the slot rather than for thirty seconds. Absent on an instant offer.
+   */
+  scheduled?: true;
 }
 
 /**

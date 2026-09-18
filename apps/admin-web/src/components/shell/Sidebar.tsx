@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { NAV_GROUPS } from '@/lib/nav/routes';
 import { CURRENT_ADMIN } from '@/lib/nav/session';
 import { Avatar } from '@/components/ui-kit/Avatar';
+import { Wordmark } from '@/components/ui-kit/Wordmark';
 
 /**
  * Fixed-width navigation rail. It never scrolls with the page and it never
@@ -27,13 +28,8 @@ export function Sidebar() {
 
   return (
     <aside className="relative z-10 flex h-full w-64 flex-none flex-col border-r border-hairline bg-transparent">
-      <div className="flex h-16 flex-none items-center gap-2.5 px-4">
-        {/*
-         * The wordmark glyph: a marigold diamond, drawn as a rotated square so
-         * it needs no asset and stays crisp at any zoom.
-         */}
-        <span aria-hidden className="h-3.5 w-3.5 rotate-45 rounded-[2px] bg-marigold" />
-        <span className="font-display text-card-title font-medium text-ink">Sahayo</span>
+      <div className="flex h-16 flex-none items-center px-4">
+        <Wordmark />
       </div>
 
       <nav aria-label="Main" className="scroll-hidden flex-1 overflow-y-auto px-3 pb-4">
@@ -77,13 +73,21 @@ export function Sidebar() {
         ))}
       </nav>
 
-      <div className="flex flex-none items-center gap-3 border-t border-hairline px-4 py-3.5">
+      <Link
+        href="/account"
+        aria-current={pathname === '/account' ? 'page' : undefined}
+        className={cn(
+          'flex flex-none items-center gap-3 border-t border-hairline px-4 py-3.5 transition-colors hover:bg-marigold-tint/40',
+          pathname === '/account' && 'bg-marigold-tint/60',
+        )}
+      >
         <Avatar name={CURRENT_ADMIN.name} src={CURRENT_ADMIN.avatarUrl} size={32} />
         <div className="min-w-0">
           <p className="truncate text-table font-medium text-ink">{CURRENT_ADMIN.name}</p>
           <p className="truncate text-pill text-muted">{CURRENT_ADMIN.role}</p>
         </div>
-      </div>
+        <span className="sr-only">Open your account</span>
+      </Link>
     </aside>
   );
 }

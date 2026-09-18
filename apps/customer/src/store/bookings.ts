@@ -2,10 +2,19 @@ import { useMemo } from 'react';
 import { create } from 'zustand';
 import {
   BookingStatus,
+  GST_RATE,
+  KycStatus,
+  UserRole,
+  WorkerAvailability,
+  etaMinutesFor,
+  metresBetween,
   type Booking,
   type BookingFare,
+  type BookingRecord,
+  type GeoPoint,
   type Id,
   type Paise,
+  type PublicWorkerSummary,
 } from '@sahayo/shared';
 
 import {
@@ -20,6 +29,7 @@ import {
   findParentCategory,
   findServiceItem,
   findServiceSkuById,
+  findSubCategoryById,
   findSubCategoryIdForSku,
   findWorkerById,
   workersNear,
@@ -45,8 +55,9 @@ import type { FareBreakdown } from '../lib/fare';
  * stays exactly as written and a restart returns to a known state — which is
  * what you want when the same demo is given twice.
  *
- * IN MEMORY, deliberately. Phase 5 replaces the whole store with what the
- * backend returns over the socket.
+ * IN MEMORY, deliberately. Connected, `live` holds the server's bookings, kept current
+ * by the socket; the demo sources above are what the app shows when it cannot reach the
+ * server.
  */
 
 export interface CreatedBooking {
@@ -66,13 +77,33 @@ export interface CreatedBooking {
   amountChargedPaise: Paise;
 }
 
+/**
+ * A booking as the server has it, and what has arrived about it over the socket since.
+ *
+ * Server bookings replace the demo data rather than sitting beside it: a seeded booking
+ * the server also holds shows the server's copy.
+ */
+export interface LiveBooking {
+  record: BookingRecord;
+  /** The priced item it was booked from, when this app booked it. The record only carries the sub-category. */
+  serviceItemId?: Id;
+  /** The worker's latest reported position, from worker:moved. */
+  workerLocation?: { point: GeoPoint; at: string };
+}
+
 interface BookingsState {
   created: CreatedBooking[];
+  /** Server bookings by id. Empty until the app has reached the server. */
+  live: Record<Id, LiveBooking>;
   statusOverrides: Record<Id, BookingStatus>;
   workerOverrides: Record<Id, Id>;
   paymentOverrides: Record<Id, BookingPayment>;
 
   add: (entry: CreatedBooking) => void;
+  /** Replaces every server booking, as a fresh connection does. */
+  setLive: (records: BookingRecord[]) => void;
+  /** Merges an update into one server booking, creating it if this is the first word of it. */
+  upsertLive: (bookingId: Id, update: (current: LiveBooking | undefined) => LiveBooking) => void;
   setStatus: (bookingId: Id, status: BookingStatus) => void;
   assignWorker: (bookingId: Id, workerId: Id) => void;
   setPayment: (bookingId: Id, payment: BookingPayment) => void;
@@ -81,18 +112,30 @@ interface BookingsState {
 
 export const useBookingsStore = create<BookingsState>((set) => ({
   created: [],
+  live: {},
   statusOverrides: {},
   workerOverrides: {},
   paymentOverrides: {},
 
   add: (entry) => set((state) => ({ created: [entry, ...state.created] })),
+  setLive: (records) =>
+    set((state) => ({
+      live: Object.fromEntries(
+        records.map((record) => [
+          record.booking.id,
+          { ...state.live[record.booking.id], record },
+        ]),
+      ),
+    })),
+  upsertLive: (bookingId, update) =>
+    set((state) => ({ live: { ...state.live, [bookingId]: update(state.live[bookingId]) } })),
   setStatus: (bookingId, status) =>
     set((state) => ({ statusOverrides: { ...state.statusOverrides, [bookingId]: status } })),
   assignWorker: (bookingId, workerId) =>
     set((state) => ({ workerOverrides: { ...state.workerOverrides, [bookingId]: workerId } })),
   setPayment: (bookingId, payment) =>
     set((state) => ({ paymentOverrides: { ...state.paymentOverrides, [bookingId]: payment } })),
-  reset: () => set({ created: [], statusOverrides: {}, workerOverrides: {}, paymentOverrides: {} }),
+  reset: () => set({ created: [], live: {}, statusOverrides: {}, workerOverrides: {}, paymentOverrides: {} }),
 }));
 
 let sequence = 0;
@@ -194,10 +237,12 @@ export function settleBooking(bookingId: Id, method: PaymentMethod, transactionI
 /** The slice of store state a view is derived from. */
 type BookingSources = Pick<
   BookingsState,
-  'created' | 'statusOverrides' | 'workerOverrides' | 'paymentOverrides'
+  'created' | 'live' | 'statusOverrides' | 'workerOverrides' | 'paymentOverrides'
 >;
 
 export interface BookingView {
+  /** True for a booking the server holds: it moves by itself, and is paid through the server. */
+  live?: boolean;
   booking: Booking;
   /** The status after any session change — always use this, not booking.status. */
   status: BookingStatus;
@@ -223,14 +268,62 @@ function serviceNameOf(serviceCategoryId: Id): string {
   return (
     findServiceItem(serviceCategoryId)?.name ??
     findServiceSkuById(serviceCategoryId)?.name ??
+    findSubCategoryById(serviceCategoryId)?.name ??
     serviceCategoryId
   );
+}
+
+/** Statuses in which the worker is still on the way, so an ETA means something. */
+const TRAVELLING = new Set<BookingStatus>([BookingStatus.ACCEPTED, BookingStatus.EN_ROUTE]);
+
+/** The assigned worker, in the shape the booking screens were built on. */
+function workerFromSummary(summary: PublicWorkerSummary, location: GeoPoint, jobPoint: GeoPoint, at: string): MockWorker {
+  return {
+    user: { id: summary.id, phone: '', name: summary.name, role: UserRole.WORKER, avatarUrl: summary.avatarUrl, createdAt: at, updatedAt: at },
+    profile: {
+      id: summary.id,
+      userId: summary.id,
+      serviceCategoryIds: [],
+      kycStatus: KycStatus.VERIFIED,
+      availability: WorkerAvailability.ON_JOB,
+      lastLocation: location,
+      lastLocationAt: at,
+      ratingAvg: summary.rating,
+      ratingCount: summary.ratingCount,
+      completedJobs: summary.lifetimeJobs,
+      createdAt: at,
+      updatedAt: at,
+    },
+    distanceM: Math.round(metresBetween(location, jobPoint)),
+  };
+}
+
+/** A server booking as the screens see it. */
+function toLiveView(entry: LiveBooking): BookingView {
+  const { booking, worker: summary, payment } = entry.record;
+  const location = entry.workerLocation?.point ?? summary?.location;
+  const worker = summary && location ? workerFromSummary(summary, location, booking.address.point, booking.updatedAt) : undefined;
+  const itemTotal = booking.fare?.total;
+  return {
+    live: true,
+    booking,
+    status: booking.status,
+    worker,
+    serviceName: serviceNameOf(entry.serviceItemId ?? booking.serviceCategoryId),
+    subCategoryId: findServiceItem(entry.serviceItemId ?? '')?.subCategoryId ?? booking.serviceCategoryId,
+    fare: booking.fare,
+    payment: payment ? { method: payment.method, paid: true, transactionId: payment.transactionId } : { method: 'upi', paid: false },
+    etaMinutes: worker && TRAVELLING.has(booking.status) ? etaMinutesFor(worker.distanceM) : undefined,
+    amountChargedPaise: payment?.amount ?? (itemTotal === undefined ? undefined : itemTotal + Math.round(itemTotal * GST_RATE)),
+  };
 }
 
 function resolveBooking(
   bookingId: Id,
   state: BookingSources,
 ): BookingView | undefined {
+  const live = state.live[bookingId];
+  if (live) return toLiveView(live);
   const created = state.created.find((entry) => entry.booking.id === bookingId);
   const seeded = created ? undefined : mockBookings.find((entry) => entry.id === bookingId);
   const booking: Booking | undefined = created?.booking ?? seeded;
@@ -277,42 +370,46 @@ function toView(
  */
 function useBookingSources() {
   const created = useBookingsStore((state) => state.created);
+  const live = useBookingsStore((state) => state.live);
   const statusOverrides = useBookingsStore((state) => state.statusOverrides);
   const workerOverrides = useBookingsStore((state) => state.workerOverrides);
   const paymentOverrides = useBookingsStore((state) => state.paymentOverrides);
-  return { created, statusOverrides, workerOverrides, paymentOverrides };
+  return { created, live, statusOverrides, workerOverrides, paymentOverrides };
 }
 
 /** Every booking, newest first. Session bookings lead the seeded history. */
 export function useBookingViews(): BookingView[] {
   const sources = useBookingSources();
 
-  const { created, statusOverrides, workerOverrides, paymentOverrides } = sources;
+  const { created, live, statusOverrides, workerOverrides, paymentOverrides } = sources;
 
   return useMemo(() => {
-    const state = { created, statusOverrides, workerOverrides, paymentOverrides };
+    const state = { created, live, statusOverrides, workerOverrides, paymentOverrides };
     const views = [
+      ...Object.values(live).map(toLiveView),
       ...created.map((entry) => toView(entry.booking, entry, state)),
-      ...mockBookings.map((booking) => toView(booking, undefined, state)),
+      // A seeded booking the server also holds is shown once, as the server's copy.
+      ...mockBookings.filter((booking) => !live[booking.id]).map((booking) => toView(booking, undefined, state)),
     ];
     return views.sort(
       (a, b) => new Date(b.booking.createdAt).getTime() - new Date(a.booking.createdAt).getTime(),
     );
-  }, [created, statusOverrides, workerOverrides, paymentOverrides]);
+  }, [created, live, statusOverrides, workerOverrides, paymentOverrides]);
 }
 
 export function useBookingView(bookingId: string | undefined): BookingView | undefined {
   const sources = useBookingSources();
 
-  const { created, statusOverrides, workerOverrides, paymentOverrides } = sources;
+  const { created, live, statusOverrides, workerOverrides, paymentOverrides } = sources;
 
   return useMemo(() => {
     if (!bookingId) return undefined;
     return resolveBooking(bookingId, {
       created,
+      live,
       statusOverrides,
       workerOverrides,
       paymentOverrides,
     });
-  }, [bookingId, created, statusOverrides, workerOverrides, paymentOverrides]);
+  }, [bookingId, created, live, statusOverrides, workerOverrides, paymentOverrides]);
 }

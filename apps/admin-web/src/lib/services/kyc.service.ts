@@ -10,6 +10,7 @@ import { CURRENT_ADMIN } from '@/lib/nav/session';
 import { SEED_NOW } from '@/lib/seed';
 import { adminState } from '@/lib/store';
 import { respond, settle } from './latency';
+import { pushKycDecision } from './live.service';
 import { compareIso } from '@/lib/dates';
 
 /** How long a revealed Aadhaar stays on screen before it is cleared. */
@@ -92,6 +93,8 @@ export async function approveKyc(submissionId: string): Promise<KycSubmission> {
     rejectionReason: undefined,
     rejectionNote: undefined,
   });
+  /* Connected, the worker's own app hears the decision the moment it is made. */
+  void pushKycDecision(submission.workerId, 'VERIFIED');
 
   const updated = adminState().kycQueue.find((candidate) => candidate.id === submissionId);
   return respond(updated as KycSubmission);
@@ -125,6 +128,7 @@ export async function rejectKyc(
     rejectionReason: reason,
     ...(note ? { rejectionNote: note } : {}),
   });
+  void pushKycDecision(submission.workerId, 'REJECTED', note ?? reason);
 
   const updated = adminState().kycQueue.find((candidate) => candidate.id === submissionId);
   return respond(updated as KycSubmission);

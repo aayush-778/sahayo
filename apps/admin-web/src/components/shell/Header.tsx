@@ -16,6 +16,7 @@ import { findNavItem } from '@/lib/nav/routes';
 import { CURRENT_ADMIN } from '@/lib/nav/session';
 import { cn } from '@/lib/utils';
 import { HeaderSearch } from './HeaderSearch';
+import { LiveStatus } from './LiveStatus';
 import { NotificationBell } from './NotificationBell';
 
 /**
@@ -52,6 +53,7 @@ export function Header() {
       </div>
 
       <div className="flex flex-none items-center gap-2">
+        <LiveStatus className={CONTROL} />
         <HeaderSearch />
 
         <NotificationBell className={CONTROL} />

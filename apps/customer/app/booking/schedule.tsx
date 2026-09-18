@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,7 +16,7 @@ import {
 
 import { DateStrip } from '../../src/components/booking/DateStrip';
 import { TimeSlots, useSlotLabel } from '../../src/components/booking/TimeSlots';
-import { calculateFare } from '../../src/lib/fare';
+import { bookLive, useFareQuote, useServerBacked } from '../../src/services/live';
 import {
   buildSchedule,
   firstBookableDay,
@@ -35,11 +35,12 @@ function percent(share: number): string {
 /**
  * Schedule — pick a day and a slot, then the same fare as booking now.
  *
- * NO SURGE. `calculateFare` is called with surge off, deliberately and not as
- * an oversight: surge is a statement about demand right now, and charging
- * Friday afternoon at today's 1.5× is not defensible. A scheduled booking
- * quotes the flat fare, so the total here is lower than the same item booked
- * immediately.
+ * NO SURGE. A scheduled booking is quoted with a `scheduledFor`, which the server
+ * prices with no urgency, weather or demand term, deliberately and not as an
+ * oversight: those are statements about right now, and charging Friday afternoon
+ * at today's multiplier is not defensible. So the total here is lower than the
+ * same item booked immediately. Offline, the local estimate is taken without
+ * surge for the same reason.
  *
  * NO MAP. Which worker takes a job three days out is not decided now, so a
  * map of who happens to be online this minute would be telling the customer
@@ -58,6 +59,15 @@ export default function ScheduleScreen() {
 
   const item = useDraftedServiceItem();
   const setSchedule = useBookingDraftStore((state) => state.setSchedule);
+  const draftSlot = useBookingDraftStore((state) => state.scheduledFor);
+  const serverBacked = useServerBacked();
+  const [booking, setBooking] = useState(false);
+  const [bookError, setBookError] = useState<string | null>(null);
+
+  // Any slot prices the same, so the quote is taken for a stand-in slot until one is
+  // chosen — never for "now", which would show a surge a scheduled job does not pay.
+  const standInSlot = useMemo(() => new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), []);
+  const quote = useFareQuote(item, draftSlot ?? standInSlot);
 
   // Built once per mount, from the device clock. Rebuilding on every render
   // would let the strip shift under the customer's finger at a slot boundary.
@@ -86,7 +96,7 @@ export default function ScheduleScreen() {
     setSelectedHour(stillFree ? selectedHour : (firstBookableHour(day) ?? null));
   }
 
-  if (!item) {
+  if (!item || !quote) {
     return (
       <View className="flex-1 items-center justify-center bg-brand-cream px-6">
         <Ionicons name="calendar-outline" size={32} color={brandColors.muted} />
@@ -107,9 +117,26 @@ export default function ScheduleScreen() {
     );
   }
 
-  const fare = calculateFare(item, false);
+  const { fare } = quote;
   const totalLabel = formatPaise(fare.total, locale);
-  const ready = selectedDay !== undefined && selectedHour !== null;
+  const ready = selectedDay !== undefined && selectedHour !== null && !(serverBacked && quote.loading) && !booking;
+  const ctaLabel = serverBacked
+    ? t('booking.schedule.bookNow', { amount: totalLabel })
+    : t('booking.schedule.confirm', { amount: totalLabel });
+
+  async function book() {
+    if (!item || !selectedDay || selectedHour === null) return;
+    if (!serverBacked) {
+      router.push('/booking/payment');
+      return;
+    }
+    setBooking(true);
+    setBookError(null);
+    const result = await bookLive(item, slotToIso(selectedDay, selectedHour));
+    setBooking(false);
+    if (result.ok) router.replace(`/track/${result.bookingId}`);
+    else setBookError(result.message);
+  }
 
   const rows: FareRow[] = [
     { kind: 'amount', key: 'item', label: t('booking.now.itemPrice'), amount: fare.base },
@@ -120,6 +147,15 @@ export default function ScheduleScreen() {
       label: t('booking.now.itemTotal'),
       amount: fare.itemTotal,
     },
+    ...(quote.source === 'estimate'
+      ? ([
+          {
+            kind: 'caption',
+            key: 'estimate',
+            label: quote.loading ? t('booking.now.quoting') : t('booking.now.offlineEstimate'),
+          },
+        ] as FareRow[])
+      : []),
     { kind: 'caption', key: 'included', label: t('booking.now.includedNote') },
     {
       kind: 'amount',
@@ -245,18 +281,23 @@ export default function ScheduleScreen() {
             ready ? 'bg-brand-primary' : 'bg-brand-primary-soft'
           }`}
           disabled={!ready}
-          onPress={() => router.push('/booking/payment')}
+          onPress={() => void book()}
           accessibilityRole="button"
-          accessibilityState={{ disabled: !ready }}
-          accessibilityLabel={t('booking.schedule.confirm', { amount: totalLabel })}
+          accessibilityState={{ disabled: !ready, busy: booking }}
+          accessibilityLabel={ctaLabel}
         >
-          <Text
-            weight="semibold"
-            className={`text-base ${ready ? 'text-white' : 'text-brand-muted'}`}
-          >
-            {t('booking.schedule.confirm', { amount: totalLabel })}
-          </Text>
+          {booking ? (
+            <ActivityIndicator color={brandColors.surface} />
+          ) : (
+            <Text
+              weight="semibold"
+              className={`text-base ${ready ? 'text-white' : 'text-brand-muted'}`}
+            >
+              {ctaLabel}
+            </Text>
+          )}
         </Pressable>
+        {bookError ? <Text className="mt-3 text-center text-sm text-brand-danger">{bookError}</Text> : null}
       </View>
     </ScrollView>
   );

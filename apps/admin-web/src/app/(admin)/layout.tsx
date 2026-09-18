@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Header } from '@/components/shell/Header';
+import { LiveBridge } from '@/components/shell/LiveBridge';
 import { Sidebar } from '@/components/shell/Sidebar';
 
 /**
@@ -29,6 +30,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           {children}
         </main>
       </div>
+
+      {/* The backend's admin room, and the fund finale it raises over any page. */}
+      <LiveBridge />
     </div>
   );
 }

@@ -6,4 +6,12 @@
  * want data, add or call a service function instead — that is the seam the real
  * backend swaps into.
  */
-export { adminState, useAdminStore, type AdminState } from './admin-store';
+export {
+  adminState,
+  useAdminStore,
+  type AdminState,
+  type FundFinale,
+  type LiveMode,
+  type LiveTopic,
+  type LiveWorkerPatch,
+} from './admin-store';

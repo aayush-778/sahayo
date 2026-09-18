@@ -10,7 +10,7 @@ import {
   type User,
 } from '@sahayo/shared';
 
-import { findCustomer } from '../mocks';
+import { findCustomer } from './people';
 import { useSessionStore } from '../store/session';
 import type { EarningsPeriod, Settlement } from '../types';
 

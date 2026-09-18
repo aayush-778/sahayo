@@ -1,6 +1,7 @@
 import { LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { IconTile } from '@/components/ui-kit/IconTile';
+import { Wordmark } from '@/components/ui-kit/Wordmark';
 import { CURRENT_ADMIN } from '@/lib/nav/session';
 
 /**
@@ -14,10 +15,7 @@ export default function SignedOutPage() {
     <div className="relative flex h-screen items-center justify-center p-6">
       <div aria-hidden className="canvas pointer-events-none fixed inset-0 z-0" />
       <main className="relative z-10 w-full max-w-[440px] rounded-card border border-hairline bg-surface p-8 shadow-card">
-        <div className="flex items-center gap-2">
-          <span aria-hidden className="h-3.5 w-3.5 rotate-45 rounded-[2px] bg-marigold" />
-          <span className="font-display text-card-title font-medium text-ink">Sahayo</span>
-        </div>
+        <Wordmark size="sm" />
         <IconTile icon={LogOut} tint="marigold" className="mt-8" />
         <h1 className="mt-4 font-display text-page-title font-medium text-ink">You have signed out</h1>
         <p className="mt-2 text-table text-muted">

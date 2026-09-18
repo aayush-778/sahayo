@@ -1,4 +1,5 @@
 import { DEMO_PARTNER } from '../mocks';
+import { startRealtime, stopRealtime } from '../realtime';
 import { reseedSession } from '../store/session';
 import { EMPTY_DOCUMENTS, ONBOARDING_SUBMITTED, useWorkerStore } from '../store/worker';
 import type { Gender } from '../types';
@@ -78,6 +79,8 @@ export async function signIn(mobile: string, otp: string): Promise<AuthResult> {
  * and the demo shortcut (online, with requests waiting).
  */
 export function restoreDemoPartner({ phone = DEMO_PARTNER.phone, online }: { phone?: string; online: boolean }): void {
+  // A fresh session: close any connection first, and open one again once the partner is restored.
+  stopRealtime();
   const store = useWorkerStore.getState();
   store.reset();
   store.patch({
@@ -94,10 +97,12 @@ export function restoreDemoPartner({ phone = DEMO_PARTNER.phone, online }: { pho
     isAuthenticated: true,
   });
   reseedSession();
+  void startRealtime(phone);
 }
 
 /** Clears the partner record and the session. The chosen language is kept. */
 export async function signOut(): Promise<void> {
+  stopRealtime();
   useWorkerStore.getState().reset();
   reseedSession();
 }

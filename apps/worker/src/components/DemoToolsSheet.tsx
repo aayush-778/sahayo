@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Text, useThemeColors } from '@sahayo/ui-native';
 
-import { jumpToApprovedWorker, resetDemo } from '../services';
+import { jumpToApprovedWorker, resetDemo, signInAsPendingMember } from '../services';
 import { Sheet } from './Sheet';
 
 type IoniconName = ComponentProps<typeof Ionicons>['name'];
@@ -20,7 +20,8 @@ type IoniconName = ComponentProps<typeof Ionicons>['name'];
 export function DemoToolsSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const { t } = useTranslation();
   const router = useRouter();
-  const [busy, setBusy] = useState<'reset' | 'jump' | null>(null);
+  const [busy, setBusy] = useState<'reset' | 'jump' | 'pending' | null>(null);
+  const [pendingError, setPendingError] = useState<string | null>(null);
 
   async function startOver() {
     setBusy('reset');
@@ -34,6 +35,19 @@ export function DemoToolsSheet({ visible, onClose }: { visible: boolean; onClose
     setBusy('jump');
     await jumpToApprovedWorker();
     setBusy(null);
+    onClose();
+    setTimeout(() => (router.canDismiss() ? router.dismissTo('/') : router.replace('/')), 80);
+  }
+
+  async function pending() {
+    setBusy('pending');
+    setPendingError(null);
+    const result = await signInAsPendingMember();
+    setBusy(null);
+    if (!result.ok) {
+      setPendingError(t(`worker.demo.pending.${result.reason}`));
+      return;
+    }
     onClose();
     setTimeout(() => (router.canDismiss() ? router.dismissTo('/') : router.replace('/')), 80);
   }
@@ -57,6 +71,14 @@ export function DemoToolsSheet({ visible, onClose }: { visible: boolean; onClose
           busy={busy === 'jump'}
           disabled={busy !== null}
           onPress={() => void jump()}
+        />
+        <DemoAction
+          icon="shield-checkmark-outline"
+          title={t('worker.demo.pending.title')}
+          body={pendingError ?? t('worker.demo.pending.body')}
+          busy={busy === 'pending'}
+          disabled={busy !== null}
+          onPress={() => void pending()}
         />
       </View>
     </Sheet>

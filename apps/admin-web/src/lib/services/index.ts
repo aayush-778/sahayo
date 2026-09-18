@@ -143,6 +143,7 @@ export {
   secondsSinceRequest,
   simulateRequest,
   type Broadcast,
+  type LiveDispatch,
   type LiveMap,
   type MappedWorker,
   type RankedCandidate,
@@ -258,3 +259,14 @@ export {
 } from './search.service';
 
 export { getAccountSummary, type AccountSummary, type MyActivityItem } from './account.service';
+
+export {
+  dismissFundFinale,
+  joinAdminRoom,
+  useFreshLedgerIds,
+  useFundFinale,
+  useLatestLiveDispatch,
+  useLiveMode,
+  useLiveVersion,
+} from './live.service';
+export type { FundFinale, LiveMode, LiveTopic } from '@/lib/store';

@@ -2,7 +2,7 @@
 
 import { Radio } from 'lucide-react';
 import dynamic from 'next/dynamic';
-import { Suspense, useCallback, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import type { AdminBooking, Zone } from '@sahayo/shared';
 import { Button } from '@/components/ui-kit/Button';
@@ -20,6 +20,8 @@ import {
   getZoneDemand,
   reassignBooking,
   simulateRequest,
+  useLatestLiveDispatch,
+  useLiveVersion,
   type Broadcast,
   type LiveMap,
   type ZoneDemandPoint,
@@ -77,6 +79,7 @@ function DispatchConsole() {
   });
   const [selectedId, setSelectedId] = useState<string>();
   const [broadcast, setBroadcast] = useState<Broadcast>();
+  const broadcastFor = useRef<string | undefined>(undefined);
   const [inspectorLoading, setInspectorLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string>();
@@ -87,9 +90,19 @@ function DispatchConsole() {
     setZoneDemand(demand);
   }, []);
 
+  /* Workers moving, requests arriving and jobs being accepted on the live platform. */
+  const mapVersion = useLiveVersion('workers', 'bookings');
+  const dispatchVersion = useLiveVersion('dispatch', 'bookings');
+  const latestDispatch = useLatestLiveDispatch();
+
   useEffect(() => {
     void reload();
-  }, [reload]);
+  }, [reload, mapVersion]);
+
+  /* A request the backend has just broadcast opens in the inspector, unless one is already open. */
+  useEffect(() => {
+    if (latestDispatch) setSelectedId((current) => current ?? latestDispatch);
+  }, [latestDispatch]);
 
   /* The dashboard's "View in dispatch" links arrive with a zone in the query. */
   const focusZone = searchParams.get('zone') ?? undefined;
@@ -107,7 +120,9 @@ function DispatchConsole() {
       return;
     }
     let cancelled = false;
-    setInspectorLoading(true);
+    /* A live update re-reads the inspector in place; only a new selection shows the skeleton. */
+    setInspectorLoading((loading) => loading || broadcastFor.current !== selectedId);
+    broadcastFor.current = selectedId;
     void getBroadcast(selectedId)
       .then((result) => {
         if (!cancelled) setBroadcast(result);
@@ -118,7 +133,7 @@ function DispatchConsole() {
     return () => {
       cancelled = true;
     };
-  }, [selectedId]);
+  }, [selectedId, dispatchVersion]);
 
   const zoneName = useCallback(
     (zoneId: string) =>

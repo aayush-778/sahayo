@@ -1,4 +1,4 @@
-import { createRng } from '@/lib/seed/rng';
+import { createRng } from '@sahayo/shared/seed/rng';
 
 /**
  * The artificial delay every service call awaits.

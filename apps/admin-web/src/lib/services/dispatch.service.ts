@@ -1,6 +1,7 @@
 import {
   BookingEventKind,
   BookingStatus,
+  workerCategoryLabel,
   type AdminBooking,
   type AdminWorker,
   type EquityScoreInputs,
@@ -92,6 +93,32 @@ export interface Broadcast {
   pingTimeoutSeconds: number;
   /** The split this booking pays out at. */
   shares: SplitShares;
+  /**
+   * Present when the backend actually dispatched this booking: what it did, rather than a
+   * reconstruction. Every round, who was offered the job, whose app was open, and how it
+   * ended.
+   */
+  live?: LiveDispatch;
+}
+
+export interface LiveDispatch {
+  round: number;
+  /**
+   * Set when the customer booked ahead: the slot the request is open until. Such a
+   * request goes to every matching worker nearby at once, with no thirty-second window.
+   */
+  scheduledFor?: string;
+  rounds: number;
+  /** Workers the job was offered to in the round shown. */
+  offeredIds: string[];
+  /** Workers whose app was connected when the offer went out. */
+  connectedIds: string[];
+  /** Available workers in the radius who ranked below the offer line. */
+  belowLine: number;
+  outcome?: 'ACCEPTED' | 'EXPIRED' | 'WITHDRAWN';
+  acceptedBy?: string;
+  /** From the request to the outcome, in milliseconds. */
+  elapsedMs?: number;
 }
 
 /** Great-circle distance in kilometres. */
@@ -118,23 +145,16 @@ function maxJobsThisWeek(workers: AdminWorker[]): number {
 /**
  * Where a worker is standing.
  *
- * `AdminWorker` carries no live position — in production that arrives over the
- * socket from the worker app's background location. Here it is derived
- * deterministically from the worker's zone centroid, offset by two stable values
- * from their own record, so a worker sits in the same place on every reload and
- * the distances the Broadcast Inspector prints do not change between looks.
+ * The record's own `location`: a fixed point in the seed, and in production the
+ * worker app's last location update. A worker in a zone the portal no longer
+ * serves has no place on the map.
  */
 function workerPosition(
   worker: AdminWorker,
   zones: Zone[],
 ): { lat: number; lng: number } | undefined {
-  const zone = zones.find((candidate) => candidate.id === worker.zoneId);
-  if (!zone) return undefined;
-  /* ±0.02 degrees is roughly ±2km, which fits inside a broadcast radius. */
-  return {
-    lat: zone.centroid.lat + (worker.equityInputs.proximity - 0.5) * 0.04,
-    lng: zone.centroid.lng + (worker.equityInputs.rating - 0.5) * 0.04,
-  };
+  if (!zones.some((zone) => zone.id === worker.zoneId)) return undefined;
+  return worker.location;
 }
 
 /**
@@ -150,9 +170,54 @@ function workerPosition(
  * same either way.
  */
 export async function getBroadcast(bookingId: string): Promise<Broadcast | undefined> {
-  const { bookings, workers, zones } = adminState();
+  const { bookings, workers, zones, liveBroadcasts } = adminState();
   const booking = bookings.find((candidate) => candidate.id === bookingId);
   if (!booking) return respond(undefined);
+
+  /* A booking the backend dispatched: show exactly what it did. */
+  const live = liveBroadcasts[bookingId];
+  const round = live?.rounds[live.rounds.length - 1];
+  if (live && round) {
+    const offered = round.candidates.filter((candidate) => candidate.offered);
+    const byId = new Map(workers.map((worker) => [worker.id, worker]));
+    const inZone = workers.filter((worker) => worker.zoneId === booking.zoneId && worker.kycStatus === 'VERIFIED');
+    return respond({
+      booking,
+      radiusKm: round.radiusM / 1000,
+      candidates: round.candidates.flatMap((candidate) => {
+        const worker = byId.get(candidate.workerId);
+        return worker
+          ? [{
+              worker: { ...worker, rating: candidate.rating, jobsThisWeek: candidate.jobsThisWeek },
+              distanceKm: Math.round(candidate.distanceM / 10) / 100,
+              inputs: candidate.inputs,
+              score: candidate.score,
+              rank: candidate.rank,
+              accepted: live.resolution?.workerId === candidate.workerId,
+            }]
+          : [];
+      }),
+      zoneAverageJobs: inZone.length ? Math.round(inZone.reduce((sum, worker) => sum + worker.jobsThisWeek, 0) / inZone.length) : 0,
+      weights: round.weights,
+      pingTimeoutSeconds: Math.round((Date.parse(round.expiresAt) - Date.parse(round.offeredAt)) / 1000),
+      shares: currentSplitShares(),
+      live: {
+        round: round.round,
+        rounds: live.rounds.length,
+        ...(round.kind === 'SCHEDULED' ? { scheduledFor: round.expiresAt } : {}),
+        offeredIds: offered.map((candidate) => candidate.workerId),
+        connectedIds: round.candidates.filter((candidate) => candidate.connected).map((candidate) => candidate.workerId),
+        belowLine: round.candidates.length - offered.length,
+        ...(live.resolution
+          ? {
+              outcome: live.resolution.outcome,
+              ...(live.resolution.workerName ? { acceptedBy: live.resolution.workerName } : {}),
+              elapsedMs: live.resolution.elapsedMs,
+            }
+          : {}),
+      },
+    });
+  }
 
   /* Outer bound of a broadcast, from Settings. Proximity is normalised against it. */
   const { broadcastRadiusKm, pingTimeoutSeconds } = currentDispatchSettings();
@@ -339,7 +404,7 @@ export async function simulateRequest(zoneId?: string): Promise<AdminBooking> {
     reference: `BKG-${String(bookings.length + 1).padStart(5, '0')}`,
     customerId: sourceBooking?.customerId ?? 'sim-customer',
     customerName: sourceBooking?.customerName ?? 'A customer',
-    category: eligible[0].category.charAt(0) + eligible[0].category.slice(1).toLowerCase(),
+    category: workerCategoryLabel(eligible[0].category),
     zoneId: targetZoneId,
     location: {
       lat: Math.round((zone.centroid.lat + 0.004) * 1e5) / 1e5,

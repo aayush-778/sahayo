@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,7 +9,6 @@ import {
   DEFAULT_RADIUS_M,
   GST_RATE,
   PLATFORM_SHARE,
-  SURGE_MULTIPLIER,
 } from '@sahayo/shared';
 import {
   brandColors,
@@ -27,7 +27,8 @@ import {
   mockServiceLocation,
   workersNear,
 } from '../../src/mocks';
-import { calculateFare, DEMO_SURGE_ACTIVE, etaMinutesFor } from '../../src/lib/fare';
+import { etaMinutesFor } from '../../src/lib/fare';
+import { bookLive, useFareQuote, useServerBacked } from '../../src/services/live';
 import { useAuthStore } from '../../src/store/auth';
 import { useBookingDraftStore, useDraftedServiceItem } from '../../src/store/bookingDraft';
 
@@ -57,6 +58,11 @@ function percent(share: number): string {
  *
  * Every percentage is read from @sahayo/shared. There is no literal 5, 18 or
  * 1.5 anywhere in this file.
+ *
+ * THE PRICE IS THE SERVER'S. Connected, the fare comes from /pricing/quote — urgency,
+ * weather and demand, capped — and Book creates the booking there and goes straight to
+ * tracking; the customer pays once the job is done. Offline, the old local calculation
+ * stands in, marked as an estimate, and the demo flow through payment runs as before.
  */
 export default function BookNowScreen() {
   const { t } = useTranslation();
@@ -66,13 +72,17 @@ export default function BookNowScreen() {
 
   const subCategoryId = useBookingDraftStore((state) => state.subCategoryId);
   const item = useDraftedServiceItem();
+  const quote = useFareQuote(item, null);
+  const serverBacked = useServerBacked();
+  const [booking, setBooking] = useState(false);
+  const [bookError, setBookError] = useState<string | null>(null);
 
   const category = subCategoryId ? findParentCategory(subCategoryId) : undefined;
   const nearby = category ? workersNear(category.id) : [];
   const etaMinutes = nearby.length > 0 ? etaMinutesFor(nearby[0].distanceM) : undefined;
 
   // Reachable only by opening /booking/now directly, with no row tapped.
-  if (!item || !category) {
+  if (!item || !category || !quote) {
     return (
       <View className="flex-1 items-center justify-center bg-brand-cream px-6">
         <Ionicons name="cart-outline" size={32} color={brandColors.muted} />
@@ -93,8 +103,22 @@ export default function BookNowScreen() {
     );
   }
 
-  const fare = calculateFare(item, DEMO_SURGE_ACTIVE);
+  const { fare } = quote;
   const totalLabel = formatPaise(fare.total, locale);
+
+  async function book() {
+    if (!item) return;
+    if (!serverBacked) {
+      router.push('/booking/payment');
+      return;
+    }
+    setBooking(true);
+    setBookError(null);
+    const result = await bookLive(item, null);
+    setBooking(false);
+    if (result.ok) router.replace(`/track/${result.bookingId}`);
+    else setBookError(result.message);
+  }
 
   const rows: FareRow[] = [
     { kind: 'amount', key: 'item', label: t('booking.now.itemPrice'), amount: fare.base },
@@ -103,7 +127,7 @@ export default function BookNowScreen() {
           {
             kind: 'amount',
             key: 'surge',
-            label: t('booking.now.surge', { multiplier: SURGE_MULTIPLIER }),
+            label: t('booking.now.surge', { multiplier: quote.multiplier }),
             amount: fare.surge,
           },
         ] as FareRow[])
@@ -150,7 +174,18 @@ export default function BookNowScreen() {
       label: t('booking.now.gst', { percent: percent(GST_RATE) }),
       amount: fare.gst,
     },
+    ...(quote.source === 'estimate'
+      ? ([
+          {
+            kind: 'caption',
+            key: 'estimate',
+            label: quote.loading ? t('booking.now.quoting') : t('booking.now.offlineEstimate'),
+          },
+        ] as FareRow[])
+      : []),
   ];
+
+  const ctaLabel = serverBacked ? t('booking.now.bookNow', { amount: totalLabel }) : t('booking.now.confirm', { amount: totalLabel });
 
   return (
     <ScrollView
@@ -221,15 +256,25 @@ export default function BookNowScreen() {
           icon={<Ionicons name="people" size={24} color={brandColors.surface} />}
         />
 
+        {bookError ? (
+          <Text className="mt-4 text-center text-sm text-brand-danger">{bookError}</Text>
+        ) : null}
+
         <Pressable
           className="mt-5 h-14 flex-row items-center justify-center rounded-xl bg-brand-primary"
-          onPress={() => router.push('/booking/payment')}
+          onPress={() => void book()}
+          disabled={booking || (serverBacked && quote.loading)}
           accessibilityRole="button"
-          accessibilityLabel={t('booking.now.confirm', { amount: totalLabel })}
+          accessibilityState={{ disabled: booking || (serverBacked && quote.loading), busy: booking }}
+          accessibilityLabel={ctaLabel}
         >
-          <Text weight="semibold" className="text-base text-white">
-            {t('booking.now.confirm', { amount: totalLabel })}
-          </Text>
+          {booking ? (
+            <ActivityIndicator color={brandColors.surface} />
+          ) : (
+            <Text weight="semibold" className="text-base text-white">
+              {ctaLabel}
+            </Text>
+          )}
         </Pressable>
       </View>
     </ScrollView>

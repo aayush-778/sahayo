@@ -1,182 +1,53 @@
+import { COOP_FUND_SHARE, PLATFORM_SHARE, WORKER_SHARE, type Booking } from '@sahayo/shared';
 import {
-  BookingStatus,
-  COOP_FUND_SHARE,
-  PLATFORM_SHARE,
-  WORKER_SHARE,
-  type Booking,
-} from '@sahayo/shared';
+  buildCustomerCastBookings,
+  castPlaces,
+  createDeviceClock,
+  demoCustomer,
+} from '@sahayo/shared/seed/cast';
 
 /**
- * Five bookings for the signed-in customer: two in flight, three in the past.
+ * The demo customer's bookings: two in flight, one scheduled, three finished and
+ * one called off.
  *
- * `fare` is deliberately absent on the live ones. `BookingFare` is documented
- * as being computed at settlement, and inventing a settled split for a job
- * that has not happened would teach the UI to trust a number the backend will
- * not send. A live booking shows an estimate derived from the service item's
- * `baseFare` instead.
+ * The records are the demo cast's, in @sahayo/shared, built against this device's
+ * clock — the backend's seed places the same records, under the same ids, at the
+ * dataset's fixed instant. `fare` is deliberately absent on the live ones: it is
+ * computed at settlement, and inventing a settled split for a job that has not
+ * happened would teach the UI to trust a number the backend will not send.
  *
- * Every split below is exact integer paise: worker 90%, platform 5%,
- * cooperative fund 5%, summing to `total` with nothing lost to rounding. The
- * assertion at the bottom of this file enforces that.
+ * Every split is exact integer paise: worker 90%, platform 5%, cooperative fund
+ * 5%, summing to `total` with nothing lost to rounding. The assertion at the
+ * bottom of this file enforces that.
  */
 
 /** The signed-in demo customer. Exported so a booking created at payment
  *  time carries the same identity as the seeded history. */
-export const CUSTOMER_ID = 'usr_cust_demo';
+export const CUSTOMER_ID = demoCustomer.id;
 
 /** The customer's default service address, matching `mocks/location.ts`. */
-export const RAJENDRA_NAGAR = {
-  line1: 'Flat 3B, Shivam Apartment',
-  line2: 'Road No. 4, Rajendra Nagar',
-  city: 'Patna',
-  state: 'Bihar',
-  pincode: '800016',
-  point: { lat: 25.6013, lng: 85.1553 },
-};
+export const RAJENDRA_NAGAR = castPlaces.demoCustomerHome;
 
-const KANKARBAGH = {
-  line1: 'House 27, Lane 2',
-  line2: 'Kankarbagh Colony',
-  city: 'Patna',
-  state: 'Bihar',
-  pincode: '800020',
-  point: { lat: 25.5905, lng: 85.159 },
-};
-
-/**
- * An instant relative to now, so the demo never shows a stale calendar.
- *
- * The seeded history keeps its fixed dates — those are the past and the past
- * does not move. Only the scheduled booking is relative, because a booking
- * "upcoming" in August is not upcoming any more.
- */
-function daysFromNow(days: number, hour: number): string {
-  const at = new Date();
-  at.setDate(at.getDate() + days);
-  at.setHours(hour, 0, 0, 0);
-  return at.toISOString();
-}
+const cast = buildCustomerCastBookings(createDeviceClock(Date.now));
 
 /** In flight right now — these are what `track/[bookingId]` renders. */
-export const liveBookings = [
-  {
-    id: 'bkg_live_ac',
-    customerId: CUSTOMER_ID,
-    workerId: 'wrk_rakesh',
-    serviceCategoryId: 'svc_ac_service',
-    status: BookingStatus.EN_ROUTE,
-    address: RAJENDRA_NAGAR,
-    notes: 'Second floor, no lift. Please call on arrival.',
-    createdAt: '2026-09-08T09:05:00.000Z',
-    updatedAt: '2026-09-08T09:18:00.000Z',
-  },
-  {
-    id: 'bkg_live_bathroom',
-    customerId: CUSTOMER_ID,
-    workerId: 'wrk_sunita',
-    serviceCategoryId: 'svc_bathroom_deep',
-    status: BookingStatus.IN_PROGRESS,
-    address: KANKARBAGH,
-    createdAt: '2026-09-08T07:40:00.000Z',
-    updatedAt: '2026-09-08T08:55:00.000Z',
-  },
-] satisfies Booking[];
+export const liveBookings: Booking[] = cast.live;
+
+/** Accepted, but not today. These fill the Upcoming tab. */
+export const scheduledBookings: Booking[] = cast.scheduled;
 
 /** Finished work. Two settled, one completed and awaiting settlement. */
-export const pastBookings = [
-  {
-    id: 'bkg_past_tap',
-    customerId: CUSTOMER_ID,
-    workerId: 'wrk_ramesh',
-    serviceCategoryId: 'svc_tap_repair',
-    status: BookingStatus.SETTLED,
-    address: RAJENDRA_NAGAR,
-    fare: {
-      total: 19900,
-      workerShare: 17910,
-      platformShare: 995,
-      coopFundShare: 995,
-    },
-    createdAt: '2026-08-24T05:20:00.000Z',
-    updatedAt: '2026-08-24T07:02:00.000Z',
-  },
-  {
-    id: 'bkg_past_fan',
-    customerId: CUSTOMER_ID,
-    workerId: 'wrk_irfan',
-    serviceCategoryId: 'svc_fan_repair',
-    status: BookingStatus.SETTLED,
-    address: KANKARBAGH,
-    notes: 'Bedroom fan making noise at high speed.',
-    fare: {
-      total: 34900,
-      workerShare: 31410,
-      platformShare: 1745,
-      coopFundShare: 1745,
-    },
-    createdAt: '2026-08-11T10:15:00.000Z',
-    updatedAt: '2026-08-11T12:40:00.000Z',
-  },
-  {
-    id: 'bkg_past_kitchen',
-    customerId: CUSTOMER_ID,
-    workerId: 'wrk_pooja',
-    serviceCategoryId: 'svc_kitchen_deep',
-    status: BookingStatus.COMPLETED,
-    address: RAJENDRA_NAGAR,
-    scheduledFor: '2026-09-02T04:30:00.000Z',
-    fare: {
-      total: 129900,
-      workerShare: 116910,
-      platformShare: 6495,
-      coopFundShare: 6495,
-    },
-    createdAt: '2026-08-30T14:05:00.000Z',
-    updatedAt: '2026-09-02T09:10:00.000Z',
-  },
-] satisfies Booking[];
-
-/**
- * Accepted, but not today. These fill the Upcoming tab.
- *
- * `scheduledFor` is what separates upcoming from active: a booking can be
- * ACCEPTED and still be three days away, and showing it beside a worker who
- * is on their way right now would be wrong.
- */
-export const scheduledBookings = [
-  {
-    id: 'bkg_soon_painting',
-    customerId: CUSTOMER_ID,
-    workerId: 'wrk_bipin',
-    serviceCategoryId: 'svc_paint_room',
-    status: BookingStatus.ACCEPTED,
-    address: RAJENDRA_NAGAR,
-    scheduledFor: daysFromNow(3, 11),
-    createdAt: daysFromNow(-1, 18),
-    updatedAt: daysFromNow(-1, 18),
-  },
-] satisfies Booking[];
+export const pastBookings: Booking[] = cast.past;
 
 /** Called off. One row, so the Past tab has a status chip worth reading. */
-export const cancelledBookings = [
-  {
-    id: 'bkg_cancelled_carpentry',
-    customerId: CUSTOMER_ID,
-    serviceCategoryId: 'svc_door_align',
-    status: BookingStatus.CANCELLED_BY_WORKER,
-    address: RAJENDRA_NAGAR,
-    cancellationReason: 'worker_unavailable',
-    createdAt: '2026-08-19T07:20:00.000Z',
-    updatedAt: '2026-08-19T08:05:00.000Z',
-  },
-] satisfies Booking[];
+export const cancelledBookings: Booking[] = cast.cancelled;
 
-export const mockBookings = [
+export const mockBookings: Booking[] = [
   ...liveBookings,
   ...scheduledBookings,
   ...pastBookings,
   ...cancelledBookings,
-] satisfies Booking[];
+];
 
 /**
  * Minutes until the worker arrives, or until the job is done.

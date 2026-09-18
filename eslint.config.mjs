@@ -36,6 +36,28 @@ export default tseslint.config(
     },
   },
   {
+    // The backend's in-memory state is read and written only by its repositories.
+    // Their function bodies are the one layer a real database would replace, and a
+    // route or socket handler reaching into the maps would be the call site that
+    // silently breaks when it does.
+    files: ['apps/backend/src/**/*.ts'],
+    ignores: ['apps/backend/src/repositories/**', 'apps/backend/src/store/**'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/store', '**/store/*'],
+              importNames: ['state', 'resetState', 'seedState'],
+              message: 'Only src/repositories may touch the in-memory state. Call a repository function instead.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     rules: {
       '@typescript-eslint/no-unused-vars': [
         'warn',

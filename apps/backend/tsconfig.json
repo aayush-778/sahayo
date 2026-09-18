@@ -6,8 +6,11 @@
     // No rootDir: we consume @sahayo/shared as TypeScript source from outside
     // this directory, and rootDir is meaningless under noEmit anyway.
     "paths": {
-      "@sahayo/shared": ["../../packages/shared/src/index.ts"]
+      "@sahayo/shared": ["../../packages/shared/src/index.ts"],
+      "@sahayo/shared/seed": ["../../packages/shared/src/seed/index.ts"],
+      "@sahayo/shared/seed/*": ["../../packages/shared/src/seed/*"],
+      "@sahayo/shared/service-items": ["../../packages/shared/src/service-items/index.ts"]
     }
   },
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*.ts", "test/**/*.ts", "scripts/**/*.ts"]
 }

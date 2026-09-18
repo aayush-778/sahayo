@@ -53,6 +53,9 @@ export interface Proposal {
   title: string;
   /** Plain language. What the money would do, in words a member would use. */
   description: string;
+  /** The title in other languages, keyed by language code. The worker app reads `hi`. */
+  titleLocalized?: Record<string, string>;
+  descriptionLocalized?: Record<string, string>;
   amountRequested: Paise;
   proposerId: Id;
   proposerName: string;

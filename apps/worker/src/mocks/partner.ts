@@ -1,4 +1,5 @@
 import type { Id } from '@sahayo/shared';
+import { demoPartner } from '@sahayo/shared/seed/cast';
 
 import type {
   DocumentKind,
@@ -22,8 +23,8 @@ import { places } from './places';
  * screens — log in and you land on the tabs; complete your profile instead and
  * you land in onboarding.
  */
-export const DEMO_WORKER_ID: Id = 'wrk_suresh';
-export const DEMO_COOPERATIVE_ID: Id = 'coop_patna_central';
+export const DEMO_WORKER_ID: Id = demoPartner.profile.id;
+export const DEMO_COOPERATIVE_ID: Id = demoPartner.profile.cooperativeId;
 
 /**
  * Where the demo partner sets out from: Rajendra Nagar, which is also the
@@ -63,10 +64,10 @@ export const DEMO_PARTNER: {
   baseRatePaise: number;
   upiId: string;
 } = {
-  name: 'Suresh Yadav',
+  name: demoPartner.user.name,
   gender: 'male',
   dob: '1988-04-17',
-  phone: '+919431012845',
+  phone: demoPartner.user.phone,
   alternatePhone: '+917654321987',
   city: 'patna',
   yearsExperience: 9,

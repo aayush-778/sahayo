@@ -7,7 +7,7 @@
  * keeps typecheck honest in CI.
  *
  * Metro resolves these imports to an asset module id at bundle time, which is
- * what <Image source={...}> expects.
+ * what <Image source={...}> and expo-audio's players expect.
  */
 declare module '*.png' {
   const asset: number;
@@ -25,6 +25,11 @@ declare module '*.jpeg' {
 }
 
 declare module '*.svg' {
+  const asset: number;
+  export default asset;
+}
+
+declare module '*.wav' {
   const asset: number;
   export default asset;
 }

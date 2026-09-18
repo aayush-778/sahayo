@@ -1,11 +1,11 @@
-import { WORKER_CATEGORIES, type WorkerCategory } from '@sahayo/shared';
+import { WORKER_CATEGORIES, WORKER_CATEGORY_LABEL, workerCategoryFromLabel, type WorkerCategory } from '@sahayo/shared';
 import { DAY_MS, SEED_NOW } from '@/lib/seed';
 import { adminState } from '@/lib/store';
 import { respond } from './latency';
 
-/** A readable label for a category constant. */
+/** A readable label for a category constant: "Domestic helper", not "DOMESTIC_HELPER". */
 export function categoryLabel(category: WorkerCategory | string): string {
-  return category.charAt(0) + category.slice(1).toLowerCase();
+  return WORKER_CATEGORY_LABEL[category as WorkerCategory] ?? category.charAt(0) + category.slice(1).toLowerCase();
 }
 
 export interface CategorySlice {
@@ -28,7 +28,7 @@ export async function getHiringByCategory(topN = 5): Promise<CategorySlice[]> {
 
   const counts = new Map<string, number>();
   for (const booking of bookings) {
-    const key = booking.category.toUpperCase();
+    const key = workerCategoryFromLabel(booking.category) ?? booking.category.toUpperCase();
     counts.set(key, (counts.get(key) ?? 0) + 1);
   }
 

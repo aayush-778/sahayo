@@ -6,6 +6,7 @@ import {
   type Paise,
 } from '@sahayo/shared';
 
+import { bookableBasePaise } from '@sahayo/shared/service-items';
 import type { ServiceItem } from '../types/service-item';
 
 /**
@@ -20,34 +21,10 @@ import type { ServiceItem } from '../types/service-item';
 export const DEMO_SURGE_ACTIVE = true;
 
 /**
- * What a "book now" actually charges for, per pricing mode.
- *
- * This is not always the number on the item row. A `fault` item's row shows
- * "From ₹199" but what the customer is committing to is the diagnostic visit,
- * and a `workshop` item's is the intake charge — booking either does not
- * commit anyone to the repair, whose price is not known until someone looks
- * at the appliance. A `unit` item bills its minimum quantity, which is the
- * least the customer can end up paying.
- *
- * `quote` returns 0, and no fare is shown for it: those rows have no "Book
- * now" at all, only "Get free survey", which routes to scheduling. The branch
- * exists so the union stays exhaustive rather than because it is reachable.
+ * What a "book now" actually charges for, per pricing mode — defined beside the item
+ * catalogue in @sahayo/shared, because the backend prices bookings with it.
  */
-export function bookableBasePaise(item: ServiceItem): Paise {
-  switch (item.mode) {
-    case 'fixed':
-    case 'retainer':
-      return item.priceP;
-    case 'unit':
-      return item.ratePerUnitP * item.minQty;
-    case 'fault':
-      return item.visitChargeP;
-    case 'workshop':
-      return item.intakeChargeP;
-    case 'quote':
-      return 0;
-  }
-}
+export { bookableBasePaise } from '@sahayo/shared/service-items';
 
 /**
  * Every line of the fare panel, in integer paise.
@@ -140,16 +117,7 @@ export function fareFromItemTotal(itemTotal: Paise): FareBreakdown {
 }
 
 /**
- * Minutes until the nearest available worker could be at the door.
- *
- * Straight-line distance at an assumed city speed, plus a fixed overhead for
- * accepting the job and setting off. Phase 5 replaces the whole function with
- * a routing call; the constants are named so it is obvious they are guesses.
+ * Minutes until the nearest available worker could be at the door — defined in
+ * @sahayo/shared, because the tracker quotes the same ETA from a live position.
  */
-const CITY_SPEED_KMPH = 15;
-const DISPATCH_OVERHEAD_MIN = 4;
-
-export function etaMinutesFor(nearestMetres: number): number {
-  const travel = (nearestMetres / 1000 / CITY_SPEED_KMPH) * 60;
-  return Math.max(1, Math.round(travel + DISPATCH_OVERHEAD_MIN));
-}
+export { etaMinutesFor } from '@sahayo/shared';

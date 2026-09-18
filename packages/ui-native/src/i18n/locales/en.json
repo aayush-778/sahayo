@@ -183,7 +183,10 @@
       "fundStripBody": "Owned by the workers of this cooperative. It costs you nothing extra — it comes out of our share, not your bill.",
       "confirm": "Confirm and pay {{amount}}",
       "zoomIn": "Zoom in",
-      "zoomOut": "Zoom out"
+      "zoomOut": "Zoom out",
+      "bookNow": "Book now · {{amount}}, pay after the job",
+      "offlineEstimate": "Offline estimate. The price is confirmed when you are back online.",
+      "quoting": "Getting today’s price…"
     },
     "schedule": {
       "title": "Schedule booking",
@@ -225,7 +228,8 @@
         "9": "October",
         "10": "November",
         "11": "December"
-      }
+      },
+      "bookNow": "Book for {{amount}}, pay after the job"
     },
     "payment": {
       "title": "Payment",
@@ -339,7 +343,14 @@
       "CANCELLED_BY_WORKER": "This booking was cancelled",
       "EXPIRED_NO_ACCEPT": "Nobody nearby could take it",
       "DISPUTED": "Under review by the cooperative"
-    }
+    },
+    "notifying": "Notifying nearby workers",
+    "notifyingScheduled": "Sent to workers free at that time",
+    "startCode": {
+      "title": "Your start code",
+      "body": "Tell {{name}} this code when they arrive. The job cannot start without it."
+    },
+    "payAfterJob": "You pay once the job is done"
   },
   "profile": {
     "title": "Profile",
@@ -798,6 +809,12 @@
           "title": "Nothing cancelled",
           "body": "Jobs a customer cancelled, and requests you rejected, appear here."
         }
+      },
+      "sections": {
+        "today": "Today",
+        "upcoming": "Upcoming",
+        "count": "{{count}} jobs",
+        "count_one": "{{count}} job"
       }
     },
     "earnings": {
@@ -1406,7 +1423,82 @@
       "jump": {
         "title": "Jump to an approved worker",
         "body": "Suresh Yadav — approved, online, with job requests waiting."
+      },
+      "pending": {
+        "title": "Sign in as a member awaiting verification",
+        "body": "The first member in the cooperative’s verification queue. Approve them in the admin portal and this phone changes at once.",
+        "unreachable": "Needs the server: the verification queue lives there. Check the connection and try again.",
+        "queue_empty": "Nobody is waiting for verification right now."
+      }
+    },
+    "offer": {
+      "title": "New job near you",
+      "subtitle": "Offered to you and a few other members nearby. The first to accept gets it.",
+      "taken": "Taken by another worker",
+      "takenBody": "Someone accepted this job a moment before you. The next one may be yours.",
+      "openFailed": "This job could not be accepted. It may have been taken or run out of time."
+    },
+    "connection": {
+      "connecting": "Connecting to the cooperative…",
+      "reconnecting": "Connection lost. Reconnecting…",
+      "reconnectingAttempt": "Connection lost. Reconnecting (try {{n}})…",
+      "offline": "Offline: showing demo data. Still trying to connect.",
+      "restored": "Back online"
+    },
+    "scheduled": {
+      "title": "Scheduled requests",
+      "waiting": "{{count}} waiting",
+      "entry": {
+        "title": "Scheduled requests",
+        "next": "Next: {{when}}",
+        "none": "None waiting"
+      },
+      "filters": {
+        "all": "All",
+        "tomorrow": "Tomorrow",
+        "week": "This week"
+      },
+      "day": {
+        "today": "Today",
+        "tomorrow": "Tomorrow"
+      },
+      "fare": "Fare",
+      "net": "You get",
+      "accept": "Accept",
+      "decline": "Decline",
+      "review": "Review clash",
+      "clash": "Overlaps your {{time}} {{service}} in {{locality}} by {{minutes}} min.",
+      "clash_other": "Overlaps {{count}} jobs you have taken, from {{time}}.",
+      "empty": {
+        "title": "Nothing booked ahead",
+        "body": "Jobs customers book for a later day wait here. No countdown — take your time."
+      },
+      "notice": {
+        "declined": "Declined. It stays open for other members.",
+        "gone": "That job is no longer open. Someone took it, or the slot has passed.",
+        "offline": "No connection. Try again once you are back online.",
+        "not_approved": "The cooperative has not approved your application yet."
+      },
+      "conflict": {
+        "title": "This overlaps a job you took",
+        "have": "You have",
+        "new": "New",
+        "overlap": "{{minutes}} minutes overlap.",
+        "travel": "{{locality}} is {{distance}} away, about {{minutes}} min on a bike.",
+        "keep": "Keep my day",
+        "anyway": "Accept anyway"
+      },
+      "reminder": {
+        "title": "{{service}} in {{minutes}} min",
+        "now": "{{service}} starts now",
+        "directions": "Directions"
       }
     }
+  },
+  "connection": {
+    "reconnecting": "Connection lost. Reconnecting…",
+    "reconnectingAttempt": "Connection lost. Reconnecting (try {{n}})…",
+    "offline": "Offline: showing demo bookings. Still trying to connect.",
+    "restored": "Back online"
   }
 }

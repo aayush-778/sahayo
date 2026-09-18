@@ -1,6 +1,6 @@
 'use client';
 
-import { Check, X } from 'lucide-react';
+import { Check, Radio, Smartphone, X } from 'lucide-react';
 import { Avatar } from '@/components/ui-kit/Avatar';
 import { Button } from '@/components/ui-kit/Button';
 import { Skeleton } from '@/components/ui-kit/Skeleton';
@@ -153,14 +153,18 @@ export function BroadcastInspector({
               ))}
             </ul>
 
-            <p className="mt-4 text-table text-muted">
-              Offered to{' '}
-              <span className="tabular text-ink">{count(broadcast.candidates.length)}</span>{' '}
-              workers within{' '}
-              <span className="tabular text-ink">{broadcast.radiusKm}km</span>, ranked by equity
-              score. Each offer stays open for{' '}
-              <span className="tabular text-ink">{broadcast.pingTimeoutSeconds} seconds</span>.
-            </p>
+            {broadcast.live ? (
+              <LiveDispatchSummary broadcast={broadcast} />
+            ) : (
+              <p className="mt-4 text-table text-muted">
+                Offered to{' '}
+                <span className="tabular text-ink">{count(broadcast.candidates.length)}</span>{' '}
+                workers within{' '}
+                <span className="tabular text-ink">{broadcast.radiusKm}km</span>, ranked by equity
+                score. Each offer stays open for{' '}
+                <span className="tabular text-ink">{broadcast.pingTimeoutSeconds} seconds</span>.
+              </p>
+            )}
 
             <ol className="mt-3 flex flex-col gap-2">
               {broadcast.candidates.map((candidate) => (
@@ -185,6 +189,16 @@ export function BroadcastInspector({
                       <div className="flex items-baseline justify-between gap-2">
                         <span className="flex items-center gap-1.5 truncate text-table font-medium text-ink">
                           {candidate.worker.name}
+                          {broadcast.live?.connectedIds.includes(candidate.worker.id) ? (
+                            <span title="Had the worker app open when the offer went out" className="inline-flex items-center text-muted">
+                              <Smartphone size={12} strokeWidth={1.75} aria-label="App open" />
+                            </span>
+                          ) : null}
+                          {broadcast.live?.offeredIds.includes(candidate.worker.id) && !candidate.accepted ? (
+                            <span className="inline-flex items-center gap-1 rounded-pill bg-marigold-tint px-1.5 py-0.5 text-[11px] font-medium text-ink">
+                              Offered
+                            </span>
+                          ) : null}
                           {candidate.accepted ? (
                             <span className="inline-flex items-center gap-1 rounded-pill bg-fund-green/15 px-1.5 py-0.5 text-[11px] font-medium text-fund-green">
                               <Check size={11} strokeWidth={2} aria-hidden />
@@ -238,5 +252,67 @@ export function BroadcastInspector({
         )}
       </div>
     </aside>
+  );
+}
+
+/**
+ * What the backend actually did with this booking: offered at once to the top of the
+ * ranking, who had the app open, and how it ended — with the time it took.
+ */
+function LiveDispatchSummary({ broadcast }: { broadcast: Broadcast }) {
+  const live = broadcast.live!;
+  const seconds = live.elapsedMs === undefined ? undefined : (live.elapsedMs / 1000).toFixed(1);
+  /* A booked-ahead request can sit for hours, where "9,412.6 seconds" says nothing. */
+  const took =
+    live.elapsedMs !== undefined && live.elapsedMs >= 120_000 ? `${Math.round(live.elapsedMs / 60_000)} minutes` : `${seconds} seconds`;
+  return (
+    <div className="mt-4 rounded-tile border border-hairline bg-ground p-3">
+      <p className="flex items-center gap-2 text-table font-medium text-ink">
+        <Radio size={14} strokeWidth={1.75} aria-hidden className="text-marigold" />
+        {live.scheduledFor ? 'Booked ahead' : 'Live dispatch'}
+        {live.rounds > 1 ? `, round ${live.round} of ${live.rounds}` : ''}
+      </p>
+      {live.scheduledFor ? (
+        <p className="mt-1 text-table text-muted">
+          For{' '}
+          <span className="text-ink">
+            {new Date(live.scheduledFor).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' })}
+          </span>
+          . It waits in every matching worker&rsquo;s Scheduled requests list until then, rather than ringing for thirty seconds.
+        </p>
+      ) : null}
+      <p className="mt-1 text-table text-muted">
+        Offered to <span className="tabular text-ink">{count(live.offeredIds.length)}</span> workers at once within{' '}
+        <span className="tabular text-ink">{broadcast.radiusKm}km</span>
+        {live.belowLine > 0 ? (
+          <>
+            , with <span className="tabular text-ink">{count(live.belowLine)}</span> more ranked below the line
+          </>
+        ) : null}
+        . <span className="tabular text-ink">{count(live.connectedIds.filter((id) => live.offeredIds.includes(id)).length)}</span> had the app
+        open.{' '}
+        {live.scheduledFor ? null : (
+          <>
+            Each offer stayed open <span className="tabular text-ink">{broadcast.pingTimeoutSeconds} seconds</span>.
+          </>
+        )}
+      </p>
+      <p className="mt-2 text-table">
+        {live.outcome === 'ACCEPTED' ? (
+          <span className="text-fund-green">
+            {live.acceptedBy} took it <span className="tabular">{took}</span> after the request.
+          </span>
+        ) : live.outcome === 'EXPIRED' ? (
+          <span className="text-coral">
+            Nobody took it. It expired after <span className="tabular">{took}</span>
+            {live.scheduledFor ? ', when the slot came round' : ''}.
+          </span>
+        ) : live.outcome === 'WITHDRAWN' ? (
+          <span className="text-muted">The customer cancelled while it was being offered.</span>
+        ) : (
+          <span className="text-muted">Waiting for someone to accept.</span>
+        )}
+      </p>
+    </div>
   );
 }

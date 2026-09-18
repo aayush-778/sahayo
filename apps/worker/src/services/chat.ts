@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import type { Booking, Id, User } from '@sahayo/shared';
 
-import { CUSTOMER_REPLIES, findCustomer } from '../mocks';
+import { CUSTOMER_REPLIES } from '../mocks';
+import { findCustomer } from './people';
 import { useSessionStore, type SessionState } from '../store/session';
 import { QUICK_REPLIES, type ChatMessage, type ChatThread, type JobRequest, type QuickReplyKey } from '../types';
 import { COMPLETED_STATUSES, PENDING_STATUSES } from './bookings';

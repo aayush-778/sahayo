@@ -17,3 +17,4 @@ export { Skeleton, type SkeletonProps } from './Skeleton';
 export { StatBlock, type StatBlockProps } from './StatBlock';
 export { STATUS_VARIANTS, StatusPill, type StatusPillProps, type StatusVariant } from './StatusPill';
 export { TINTS, TINT_PILL, TINT_TILE, type Tint } from './tint';
+export { Wordmark } from './Wordmark';

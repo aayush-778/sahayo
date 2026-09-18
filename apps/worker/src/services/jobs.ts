@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react';
 import { BookingStatus, GIG_OFFER_TIMEOUT_MS, type Booking, type Id } from '@sahayo/shared';
 
 import { DEMO_WORKER_ID, mockJobRequests } from '../mocks';
+import { isLive, isServerBacked, liveWorkerId, sendAccept, sendDecline } from '../realtime';
 import { startCodeFor, useSessionStore } from '../store/session';
 import { useWorkerStore } from '../store/worker';
 import type { DeclineReason, DeclineRecord, JobRequest } from '../types';
@@ -34,6 +35,26 @@ export function useJobFeed(): JobRequest[] {
   return useMemo(() => soonestFirst(requests), [requests]);
 }
 
+export interface LiveOffer {
+  request: JobRequest;
+  /** Another worker accepted it first; it is on screen only to say so. */
+  taken: boolean;
+}
+
+/**
+ * The live offer to put in front of the worker now: the one from the dispatcher closest
+ * to running out. The offline demo's offers stay on the dashboard cards and never
+ * interrupt.
+ */
+export function useLiveOffer(): LiveOffer | undefined {
+  const requests = useSessionStore((state) => state.jobRequests);
+  const taken = useSessionStore((state) => state.takenOfferIds);
+  return useMemo(() => {
+    const request = soonestFirst(requests.filter((entry) => entry.source === 'live'))[0];
+    return request ? { request, taken: Boolean(taken[request.id]) } : undefined;
+  }, [requests, taken]);
+}
+
 export function getJobRequest(id: Id): JobRequest | undefined {
   return useSessionStore.getState().jobRequests.find((entry) => entry.id === id);
 }
@@ -62,6 +83,9 @@ export async function acceptJob(requestId: Id): Promise<AcceptResult> {
   const request = getJobRequest(requestId);
   // Its thirty seconds are up: the offer has gone to someone else.
   if (!request || new Date(request.expiresAt).getTime() <= Date.now()) return { ok: false, reason: 'gone' };
+  if (useSessionStore.getState().takenOfferIds[requestId]) return { ok: false, reason: 'gone' };
+
+  if (request.source === 'live') return acceptLiveOffer(request);
 
   const booking: Booking = {
     ...request.booking,
@@ -80,6 +104,34 @@ export async function acceptJob(requestId: Id): Promise<AcceptResult> {
   return { ok: true, bookingId: booking.id };
 }
 
+/**
+ * A live offer: the server decides. Five workers may have been offered it and the first
+ * accept wins, so the answer is whatever the dispatcher's lock says — never assumed here.
+ */
+async function acceptLiveOffer(request: JobRequest): Promise<AcceptResult> {
+  const workerId = liveWorkerId();
+  if (!isLive() || !workerId) return { ok: false, reason: 'gone' };
+
+  const ack = await sendAccept({ workerId, bookingId: request.booking.id, offerId: request.id });
+  if (!ack?.ok || !ack.booking) {
+    useSessionStore.setState((state) => ({
+      jobRequests: ack?.reason === 'TAKEN' ? state.jobRequests : state.jobRequests.filter((entry) => entry.id !== request.id),
+      takenOfferIds: ack?.reason === 'TAKEN' ? { ...state.takenOfferIds, [request.id]: true } : state.takenOfferIds,
+    }));
+    return { ok: false, reason: 'gone' };
+  }
+
+  const booking = ack.booking;
+  useSessionStore.setState((state) => ({
+    jobRequests: state.jobRequests.filter((entry) => entry.id !== request.id),
+    bookings: [booking, ...state.bookings.filter((entry) => entry.id !== booking.id)],
+    customers: { ...state.customers, [request.customer.id]: state.customers[request.customer.id] ?? request.customer },
+    startCodes: { ...state.startCodes, [booking.id]: startCodeFor(booking.id) },
+    timelines: { ...state.timelines, [booking.id]: { [BookingStatus.ACCEPTED]: booking.updatedAt } },
+  }));
+  return { ok: true, bookingId: booking.id };
+}
+
 export type DeclineResult = { ok: true } | { ok: false; reason: 'gone' };
 
 /**
@@ -89,6 +141,11 @@ export type DeclineResult = { ok: true } | { ok: false; reason: 'gone' };
 export async function declineJob(requestId: Id, reason: DeclineReason): Promise<DeclineResult> {
   const request = getJobRequest(requestId);
   if (!request) return { ok: false, reason: 'gone' };
+
+  const workerId = liveWorkerId();
+  if (request.source === 'live' && workerId) {
+    sendDecline({ workerId, bookingId: request.booking.id, offerId: request.id, reason });
+  }
 
   const record: DeclineRecord = {
     requestId,
@@ -125,13 +182,13 @@ export function getOfferDeadline(requestId: Id): number {
  * It gets its own id, arrives now, and expires in exactly OFFER_WINDOW_MS. A
  * template outside this partner's services is dealt as one of theirs, without
  * notes written about a different kind of job — so a partner who registered
- * as a plumber is offered plumbing work. A booked-ahead time that would be
- * less than half an hour away is dropped rather than shown as nearly due.
+ * as a plumber is offered plumbing work. Any booked-ahead time on a template is
+ * dropped: work for later is not dealt here at all, it waits in the Scheduled
+ * requests list (services/scheduled.ts).
  */
 function dealOffer(seq: number, now: number, subCategories: Id[]): JobRequest {
   const template = mockJobRequests[seq % mockJobRequests.length];
   const fits = subCategories.length === 0 || subCategories.includes(template.booking.serviceCategoryId);
-  const scheduledFor = template.booking.scheduledFor;
   const arrivedAt = new Date(now).toISOString();
   return {
     ...template,
@@ -141,7 +198,7 @@ function dealOffer(seq: number, now: number, subCategories: Id[]): JobRequest {
       id: `wjob_${seq + 1}`,
       serviceCategoryId: fits ? template.booking.serviceCategoryId : subCategories[seq % subCategories.length],
       notes: fits ? template.booking.notes : undefined,
-      scheduledFor: scheduledFor && time(scheduledFor) > now + 30 * 60_000 ? scheduledFor : undefined,
+      scheduledFor: undefined,
       createdAt: arrivedAt,
       updatedAt: arrivedAt,
     },
@@ -167,6 +224,8 @@ export function tickOffers(now: number = Date.now()): void {
 
   const live = jobRequests.filter((request) => time(request.expiresAt) > now);
   const canDeliver =
+    // Connected to the server, its dispatcher deals the offers; this one only tidies expired ones away.
+    !isServerBacked() &&
     isApproved &&
     isAvailable &&
     live.length < MAX_LIVE_OFFERS &&

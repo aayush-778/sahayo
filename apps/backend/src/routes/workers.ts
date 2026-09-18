@@ -1,7 +1,19 @@
 import { Router } from 'express';
-import { notImplemented } from './not-implemented';
+import { notFound, route } from '../lib/http';
+import * as workers from '../repositories/workers';
 
-export const workersRouter: Router = Router();
+/** GET /workers/:id — one member, as the admin portal's directory shows them. */
+export function workersRouter(): Router {
+  const router = Router();
 
-// Pathless: matches every method and path under the mount point.
-workersRouter.use(notImplemented('workers'));
+  router.get(
+    '/:id',
+    route((req, res) => {
+      const worker = workers.findById(req.params.id!);
+      if (!worker) throw notFound('worker', req.params.id!);
+      res.json(worker);
+    }),
+  );
+
+  return router;
+}

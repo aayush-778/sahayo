@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Image, Pressable, ScrollView, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,6 +10,7 @@ import {
   DEFAULT_RADIUS_M,
   GST_RATE,
   PLATFORM_SHARE,
+  startCodeFor,
 } from '@sahayo/shared';
 import {
   Avatar,
@@ -33,6 +34,7 @@ import {
 } from '../../src/lib/bookingStatus';
 import { fareFromItemTotal } from '../../src/lib/fare';
 import { useResourceLoading } from '../../src/lib/loading';
+import { useSmoothPoint } from '../../src/lib/useSmoothPoint';
 import { findServiceItem, findServiceSkuById, mockServiceLocation } from '../../src/mocks';
 import { bookableBasePaise } from '../../src/lib/fare';
 import { acceptBooking, advanceBooking, useBookingView } from '../../src/store/bookings';
@@ -40,6 +42,13 @@ import { useAuthStore } from '../../src/store/auth';
 
 /** How long the mock dispatcher takes to find someone. */
 const AUTO_ACCEPT_MS = 7000;
+
+/** Statuses where the customer needs the start code in hand: a worker is coming, and work has not started. */
+const START_CODE_STATUSES = new Set<BookingStatus>([
+  BookingStatus.ACCEPTED,
+  BookingStatus.EN_ROUTE,
+  BookingStatus.ARRIVED,
+]);
 
 /** Statuses where the worker is still travelling, so a map means something. */
 const MAP_STATUSES = new Set<BookingStatus>([
@@ -71,6 +80,11 @@ function percent(share: number): string {
  * The fare shown is the one the booking carries, not a fresh quote. A job
  * priced under yesterday's surge must not silently reprice itself while the
  * worker is on the way.
+ *
+ * A LIVE BOOKING MOVES BY ITSELF. For a booking the server holds, both of the above
+ * are switched off: the status is whatever booking:updated last said, the worker is
+ * whoever actually accepted, and the pin glides between the worker app's five-second
+ * position reports. The start code appears the moment a worker accepts.
  */
 export default function TrackScreen() {
   const { t } = useTranslation();
@@ -84,12 +98,15 @@ export default function TrackScreen() {
 
   const status = view?.status;
   const isPending = status === BookingStatus.REQUESTED || status === BookingStatus.BROADCAST;
+  const isLive = view?.live === true;
+  const smoothLocation = useSmoothPoint(view?.worker?.profile.lastLocation);
 
   useEffect(() => {
-    if (!bookingId || !isPending) return;
+    // The demo dispatcher, for bookings the server does not hold. A live booking waits for a real accept.
+    if (!bookingId || !isPending || isLive) return;
     const timer = setTimeout(() => acceptBooking(bookingId), AUTO_ACCEPT_MS);
     return () => clearTimeout(timer);
-  }, [bookingId, isPending]);
+  }, [bookingId, isPending, isLive]);
 
   if (loading) {
     return (
@@ -185,6 +202,9 @@ export default function TrackScreen() {
     : [];
 
   const showMap = worker !== undefined && MAP_STATUSES.has(current);
+  const mapWorker =
+    worker && smoothLocation ? { ...worker, profile: { ...worker.profile, lastLocation: smoothLocation } } : worker;
+  const showStartCode = worker !== undefined && START_CODE_STATUSES.has(current);
 
   return (
     <ScrollView
@@ -227,8 +247,8 @@ export default function TrackScreen() {
               ? 'border-brand-danger bg-brand-danger-soft'
               : 'border-brand-primary-soft bg-brand-primary-tint'
           }`}
-          onPress={() => bookingId && advanceBooking(bookingId, current)}
-          disabled={cancelled || nextStatus(current) === undefined}
+          onPress={() => bookingId && !isLive && advanceBooking(bookingId, current)}
+          disabled={isLive || cancelled || nextStatus(current) === undefined}
           accessibilityRole="text"
           accessibilityLabel={t(`booking.status.${current}`)}
         >
@@ -247,7 +267,12 @@ export default function TrackScreen() {
               {cancelled
                 ? t('track.cancelledNote')
                 : isPending
-                  ? t('track.finding')
+                  ? isLive && current === BookingStatus.BROADCAST
+                    ? /* Booked ahead: it waits with every matching worker until the slot, so nobody is on their way yet. */
+                      booking.scheduledFor
+                      ? t('track.notifyingScheduled')
+                      : t('track.notifying')
+                    : t('track.finding')
                   : t(`track.hint.${current}`)}
             </Text>
           </View>
@@ -264,12 +289,32 @@ export default function TrackScreen() {
         {showMap ? (
           <View className="mt-4">
             <WorkerMap
-              workers={worker ? [worker] : []}
+              workers={mapWorker ? [mapWorker] : []}
               centre={mockServiceLocation.point}
               radiusM={DEFAULT_RADIUS_M}
               etaMinutes={etaMinutes}
               showRadius={false}
             />
+          </View>
+        ) : null}
+
+        {showStartCode && worker && bookingId ? (
+          <View className="mt-4 flex-row items-center rounded-2xl border border-brand-primary bg-brand-surface px-4 py-4">
+            <View className="flex-1 pr-3">
+              <Text weight="semibold" className="text-base text-brand-navy">
+                {t('track.startCode.title')}
+              </Text>
+              <Text className="mt-0.5 text-sm text-brand-muted">
+                {t('track.startCode.body', { name: worker.user.name.split(' ')[0] })}
+              </Text>
+            </View>
+            <Text
+              weight="bold"
+              className="text-3xl tracking-[6px] text-brand-primary"
+              accessibilityLabel={startCodeFor(bookingId).split('').join(' ')}
+            >
+              {startCodeFor(bookingId)}
+            </Text>
           </View>
         ) : null}
 
@@ -320,7 +365,15 @@ export default function TrackScreen() {
 
         {worker ? (
           <View className="mt-4 flex-row items-center rounded-2xl border border-brand-border bg-brand-surface p-4">
-            <Avatar name={worker.user.name} size="lg" />
+            {worker.user.avatarUrl ? (
+              <Image
+                source={{ uri: worker.user.avatarUrl }}
+                className="h-14 w-14 rounded-full bg-brand-primary-soft"
+                accessibilityLabel={worker.user.name}
+              />
+            ) : (
+              <Avatar name={worker.user.name} size="lg" />
+            )}
             <View className="ml-3 flex-1">
               <Text weight="semibold" className="text-base text-brand-navy" numberOfLines={1}>
                 {worker.user.name}
@@ -391,7 +444,7 @@ export default function TrackScreen() {
           <View className="mt-4 flex-row items-center rounded-xl bg-brand-warning-soft px-4 py-3">
             <Ionicons name="cash-outline" size={16} color={brandColors.warning} />
             <Text className="ml-2 flex-1 text-sm text-brand-warning">
-              {t('track.payAfterCompletion')}
+              {isLive ? t('track.payAfterJob') : t('track.payAfterCompletion')}
             </Text>
           </View>
         ) : null}

@@ -1,17 +1,33 @@
 import { Router } from 'express';
+import type { Dispatcher } from '../dispatch/dispatcher';
+import { adminRouter } from './admin';
 import { authRouter } from './auth';
 import { bookingsRouter } from './bookings';
+import { coopRouter } from './coop';
+import { earningsRouter } from './earnings';
+import { pricingRouter } from './pricing';
+import { servicesRouter } from './services';
 import { workersRouter } from './workers';
-import { ledgerRouter } from './ledger';
 
-export const apiRouter: Router = Router();
+export interface RouteContext {
+  dispatcher: Dispatcher;
+}
 
-/** The only route that actually does anything in Phase 1. */
-apiRouter.get('/health', (_req, res) => {
-  res.json({ ok: true });
-});
+export function createApiRouter(context: RouteContext): Router {
+  const api = Router();
 
-apiRouter.use('/auth', authRouter);
-apiRouter.use('/bookings', bookingsRouter);
-apiRouter.use('/workers', workersRouter);
-apiRouter.use('/ledger', ledgerRouter);
+  api.get('/health', (_req, res) => {
+    res.json({ ok: true });
+  });
+
+  api.use('/auth', authRouter());
+  api.use('/services', servicesRouter());
+  api.use('/bookings', bookingsRouter(context));
+  api.use('/pricing', pricingRouter());
+  api.use('/workers', workersRouter());
+  api.use('/earnings', earningsRouter());
+  api.use('/coop', coopRouter());
+  api.use('/admin', adminRouter(context));
+
+  return api;
+}

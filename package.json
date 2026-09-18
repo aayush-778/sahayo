@@ -9,6 +9,10 @@
     "dev:admin": "pnpm --filter @sahayo/admin-web dev",
     "dev:customer": "pnpm --filter @sahayo/customer dev",
     "dev:worker": "pnpm --filter @sahayo/worker dev",
+    "demo:reset": "pnpm --filter @sahayo/backend demo:reset",
+    "demo:tunnel": "pnpm --filter @sahayo/backend demo:tunnel",
+    "demo:walk": "pnpm --filter @sahayo/backend demo:walk",
+    "demo:request": "pnpm --filter @sahayo/backend demo:request",
     "typecheck": "turbo run typecheck",
     "lint": "turbo run lint",
     "format": "prettier --write ."

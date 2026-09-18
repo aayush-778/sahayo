@@ -1,7 +1,7 @@
 'use client';
 
 import type { RowSelectionState } from '@tanstack/react-table';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { LedgerAccount, LedgerEntryType, SplitSummary } from '@sahayo/shared';
 import { Tabs } from '@/components/ui-kit/Tabs';
 import { LedgerTable, shortId, type LedgerFilters } from '@/components/finance/LedgerTable';
@@ -14,6 +14,8 @@ import {
   issueReversal,
   listLedgerRows,
   listPayouts,
+  useFreshLedgerIds,
+  useLiveVersion,
   releasePayouts,
   type LedgerRow,
   type PayoutRow,
@@ -48,6 +50,9 @@ export default function FinancePage() {
   const [busy, setBusy] = useState(false);
 
   const [notice, setNotice] = useState<string>();
+  const ledgerVersion = useLiveVersion('ledger');
+  const freshLedgerIds = useFreshLedgerIds();
+  const freshSet = useMemo(() => new Set(freshLedgerIds), [freshLedgerIds]);
 
   /*
    * A dispute's resolution card links here with ?entry=<id>, which opens the ledger
@@ -71,6 +76,15 @@ export default function FinancePage() {
     };
   }, [period]);
 
+  /* A completed job posted its split live: re-read the ledger and the totals in place, without a skeleton. */
+  useEffect(() => {
+    if (ledgerVersion === 0) return;
+    void loadLedgerRef.current();
+    void getSplitSummary(period).then(setSummary);
+    if (tab === 'payouts') void loadPayoutsRef.current();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs only when live rows arrive
+  }, [ledgerVersion]);
+
   const loadLedger = useCallback(async () => {
     const next = await listLedgerRows({
       ...(filters.search ? { search: filters.search } : {}),
@@ -85,10 +99,14 @@ export default function FinancePage() {
     setRows(undefined);
     void loadLedger();
   }, [loadLedger]);
+  const loadLedgerRef = useRef(loadLedger);
+  loadLedgerRef.current = loadLedger;
 
   const loadPayouts = useCallback(async () => {
     setPayouts(await listPayouts(payoutView));
   }, [payoutView]);
+  const loadPayoutsRef = useRef(loadPayouts);
+  loadPayoutsRef.current = loadPayouts;
 
   useEffect(() => {
     if (tab !== 'payouts') return;
@@ -165,6 +183,7 @@ export default function FinancePage() {
         {tab === 'ledger' ? (
           <LedgerTable
             rows={rows}
+            freshIds={freshSet}
             filters={filters}
             onFiltersChange={setFilters}
             onReverse={setReversing}

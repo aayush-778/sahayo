@@ -71,6 +71,8 @@ export interface LedgerTableProps {
   onFiltersChange: (next: LedgerFilters) => void;
   onReverse: (row: LedgerRow) => void;
   onCopyTrace: (traceId: string) => void;
+  /** Rows that arrived live from the platform in this session, marked so the finale can point at them. */
+  freshIds?: ReadonlySet<string>;
 }
 
 /**
@@ -83,6 +85,7 @@ export interface LedgerTableProps {
  */
 export function LedgerTable({
   rows,
+  freshIds,
   filters,
   onFiltersChange,
   onReverse,
@@ -350,7 +353,10 @@ export function LedgerTable({
         rowClassName={(row) =>
           row.status === 'REVERSAL'
             ? '[&>td:first-child]:shadow-[inset_2px_0_0_0_hsl(var(--coral))]'
-            : undefined
+            : /* Just posted by a completed job: a fund-green edge and wash, so the split is easy to find. */
+              freshIds?.has(row.entry.id)
+              ? 'bg-fund-green/10 [&>td:first-child]:shadow-[inset_2px_0_0_0_hsl(var(--fund-green))]'
+              : undefined
         }
         note={
           <>

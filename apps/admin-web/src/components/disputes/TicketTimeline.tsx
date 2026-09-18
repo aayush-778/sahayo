@@ -4,11 +4,13 @@ import {
   CheckCheck,
   Hammer,
   Handshake,
+  MapPin,
   MessageSquare,
   Navigation,
   PhoneCall,
   Radio,
   StickyNote,
+  TimerOff,
   Users,
   type LucideIcon,
 } from 'lucide-react';
@@ -24,10 +26,13 @@ const EVENT: Record<string, { icon: LucideIcon; tint: Tint; title: string }> = {
   [BookingEventKind.BROADCAST]: { icon: Radio, tint: 'marigold', title: 'Offered out' },
   [BookingEventKind.PINGED]: { icon: Users, tint: 'marigold', title: 'Workers offered the job' },
   [BookingEventKind.ACCEPTED]: { icon: Handshake, tint: 'lavender', title: 'Accepted' },
+  [BookingEventKind.EN_ROUTE]: { icon: Navigation, tint: 'lavender', title: 'On the way' },
+  [BookingEventKind.ARRIVED]: { icon: MapPin, tint: 'lavender', title: 'Arrived' },
   [BookingEventKind.STARTED]: { icon: Hammer, tint: 'lavender', title: 'Work started' },
   [BookingEventKind.COMPLETED]: { icon: CheckCheck, tint: 'fund-green', title: 'Finished' },
   [BookingEventKind.PAID]: { icon: BadgeIndianRupee, tint: 'fund-green', title: 'Paid' },
   [BookingEventKind.CANCELLED]: { icon: Ban, tint: 'coral', title: 'Cancelled' },
+  [BookingEventKind.EXPIRED]: { icon: TimerOff, tint: 'coral', title: 'No worker accepted' },
   [BookingEventKind.DISPUTED]: { icon: Ban, tint: 'coral', title: 'Disputed' },
 };
 

@@ -380,8 +380,10 @@ export const bookingCounts = {
   // list: `serviceItems.ts` covers all 49 sub-categories and throws rather
   // than warns if one is ever empty. Warn so the gap stays visible, but do
   // not refuse to boot — nothing on screen depends on these.
+  // Only in development: a release build — and the demo given from one — should start
+  // silently, and this is a note to whoever is working on the catalogue, not to a user.
   const unpriced = [...subCategoryIds].filter((id) => servicesFor(id).length === 0);
-  if (unpriced.length > 0) {
+  if (__DEV__ && unpriced.length > 0) {
     console.warn(
       `[mocks] ${unpriced.length} sub-categories have no legacy SKU (item list is unaffected): ${unpriced.join(', ')}`,
     );

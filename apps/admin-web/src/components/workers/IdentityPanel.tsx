@@ -6,6 +6,7 @@ import { Button } from '@/components/ui-kit/Button';
 import { Card } from '@/components/ui-kit/Card';
 import { Avatar } from '@/components/ui-kit/Avatar';
 import { count, rupees } from '@/lib/format';
+import { categoryLabel } from '@/lib/services';
 import { cn } from '@/lib/utils';
 
 export interface IdentityPanelProps {
@@ -71,7 +72,7 @@ export function IdentityPanel({
         <div className="min-w-0 pt-1">
           <h2 className="font-display text-card-title font-medium text-ink">{worker.name}</h2>
           <p className="mt-0.5 text-table text-muted">
-            {worker.category.charAt(0) + worker.category.slice(1).toLowerCase()} in {zoneName}
+            {categoryLabel(worker.category)} in {zoneName}
           </p>
           <p className="mt-2 flex items-center gap-2">
             <StarRow rating={worker.rating} />

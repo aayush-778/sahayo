@@ -1,5 +1,6 @@
 import { PiggyBank } from 'lucide-react';
 import { Card } from '@/components/ui-kit/Card';
+import { CountUp } from '@/components/ui-kit/CountUp';
 import { DeltaPill } from '@/components/ui-kit/DeltaPill';
 import { IconTile } from '@/components/ui-kit/IconTile';
 import { Skeleton } from '@/components/ui-kit/Skeleton';
@@ -32,9 +33,8 @@ export function FundHero({ summary }: { summary?: DashboardSummary }) {
       <div>
         <p className="text-table text-muted">Cooperative Fund</p>
         <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-2">
-          <span className="tabular font-display text-hero font-medium text-ink">
-            {rupees(summary.fundBalance)}
-          </span>
+          {/* Climbs when a finished job's share arrives live. */}
+          <CountUp value={summary.fundBalance} format={rupees} className="tabular font-display text-hero font-medium text-ink" />
           <DeltaPill value={summary.fundDeltaPercent} period="this month" />
         </div>
         <p className="mt-2 text-table text-muted">

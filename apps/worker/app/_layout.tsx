@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
-import { View } from 'react-native';
-import { Stack, useRouter, useSegments } from 'expo-router';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Pressable, View } from 'react-native';
+import { Stack, useRouter, useSegments, type ErrorBoundaryProps } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaInsetsContext, SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
 
@@ -19,12 +19,15 @@ import {
   FontScriptProvider,
   initI18n,
   SCRIPT_FOR_LOCALE,
+  Text,
   THEME_COLORS,
   ThemeProvider,
 } from '@sahayo/ui-native';
 
 import '../global.css';
+import { ConnectionBanner, useConnectionNotice } from '../src/components/ConnectionBanner';
 import { resolveGate } from '../src/navigation/gate';
+import { useRealtimeSession } from '../src/services';
 import { useWorkerStore } from '../src/store/worker';
 
 /**
@@ -79,6 +82,9 @@ export default function RootLayout() {
   const router = useRouter();
   const segments = useSegments();
 
+  // The live connection opens while an approved partner is signed in, and closes otherwise.
+  useRealtimeSession();
+
   useEffect(() => {
     let cancelled = false;
     initI18n()
@@ -116,18 +122,69 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <ThemeProvider theme="worker">
         <FontScriptProvider script={SCRIPT_FOR_LOCALE[language]}>
-          <View className="flex-1" onLayout={onLayoutRootView}>
-            <StatusBar style="dark" />
-            <Stack
-              screenOptions={{
-                headerShown: false,
-                // A navigator's container has no className. The value is a token.
-                contentStyle: { backgroundColor: THEME_COLORS.worker.ground },
-              }}
-            />
-          </View>
+          <AppShell onLayout={onLayoutRootView} />
         </FontScriptProvider>
       </ThemeProvider>
     </SafeAreaProvider>
+  );
+}
+
+/**
+ * Everything under the safe-area provider: the connection strip, and the navigator below it.
+ *
+ * Its own component because the insets can only be read inside the provider, and because
+ * the strip changes what the screens under it should use: while it is up it has already
+ * covered the status bar, so the screens must not add that inset a second time — they
+ * would sit a status bar's height too low. Zeroing the top inset here is what keeps every
+ * screen in the same place whether the strip is showing or not.
+ */
+function AppShell({ onLayout }: { onLayout: () => void }) {
+  const notice = useConnectionNotice();
+  const insets = useSafeAreaInsets();
+  const belowBanner = useMemo(() => (notice ? { ...insets, top: 0 } : insets), [notice, insets]);
+
+  return (
+    <View className="flex-1" onLayout={onLayout}>
+      <StatusBar style="dark" />
+      <ConnectionBanner notice={notice} />
+      <SafeAreaInsetsContext.Provider value={belowBanner}>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            // A navigator's container has no className. The value is a token.
+            contentStyle: { backgroundColor: THEME_COLORS.worker.ground },
+          }}
+        />
+      </SafeAreaInsetsContext.Provider>
+    </View>
+  );
+}
+
+/**
+ * The last line of defence: a screen that throws shows this card instead of a red box of
+ * stack trace. Retry remounts the route, which is enough for anything transient — and on
+ * stage it is a card a judge can look at rather than a wall of file paths.
+ */
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  return (
+    <View className="flex-1 items-center justify-center bg-worker-ground px-8">
+      <Text weight="bold" className="text-center text-lg text-worker-ink">
+        Something went wrong
+      </Text>
+      <Text className="mt-2 text-center text-sm text-worker-muted">
+        This screen could not be shown. Your work is safe on the cooperative's server.
+      </Text>
+      <Text className="mt-3 text-center text-xs text-worker-muted">{error.message}</Text>
+      <Pressable
+        className="mt-6 h-12 items-center justify-center rounded-xl bg-worker-primary px-6"
+        onPress={() => void retry()}
+        accessibilityRole="button"
+        accessibilityLabel="Try again"
+      >
+        <Text weight="semibold" className="text-base text-white">
+          Try again
+        </Text>
+      </Pressable>
+    </View>
   );
 }

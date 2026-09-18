@@ -28,6 +28,7 @@ import {
   disburseLoan,
   getFundGrowth,
   getFundTotals,
+  useLiveVersion,
   getSettings,
   listLoanRequests,
   listPastDecisions,
@@ -62,6 +63,8 @@ export default function FundPage() {
   const [proposing, setProposing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string>();
+  /* A finished job's fund share arriving live moves the balance and the chart. */
+  const ledgerVersion = useLiveVersion('ledger');
 
   const load = useCallback(async () => {
     const [nextTotals, nextGrowth, nextOpen, nextPast, nextLoans] = await Promise.all([
@@ -77,6 +80,10 @@ export default function FundPage() {
     setPast(nextPast);
     setLoans(nextLoans);
   }, []);
+
+  useEffect(() => {
+    if (ledgerVersion > 0) void load();
+  }, [ledgerVersion, load]);
 
   useEffect(() => {
     void load();

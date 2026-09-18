@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { fontFamilies, useFontScript, useThemeColors } from '@sahayo/ui-native';
 
+import { OfferModal } from '../../src/components/OfferModal';
 import { useOfferDispatch, useUnreadTotal } from '../../src/services';
 
 /**
@@ -44,6 +45,7 @@ export default function TabsLayout() {
   useOfferDispatch();
 
   return (
+    <>
     <Tabs
       screenOptions={{
         headerShown: false,
@@ -83,5 +85,8 @@ export default function TabsLayout() {
         />
       ))}
     </Tabs>
+    {/* A live job offer, full screen, over whichever tab is open. */}
+    <OfferModal />
+    </>
   );
 }

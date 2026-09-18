@@ -1,7 +1,10 @@
 import { useMemo } from 'react';
-import { BookingStatus, type Booking, type Id, type LedgerEntry, type User } from '@sahayo/shared';
+import { BookingStatus, type Booking, type BookingRecord, type Id, type LedgerEntry, type User } from '@sahayo/shared';
 
-import { DEMO_COOPERATIVE_ID, DEMO_WORKER_ID, findCustomer } from '../mocks';
+import { DEMO_COOPERATIVE_ID, DEMO_WORKER_ID } from '../mocks';
+import { ApiRequestError, api, isServerBacked, liveWorkerId, refreshEarningsAndFund } from '../realtime';
+import { timelineFromEvents } from '../realtime/mappers';
+import { findCustomer } from './people';
 import { useSessionStore } from '../store/session';
 import type { BookingTab, DeclineRecord, JobRequest, JobTimeline } from '../types';
 
@@ -196,11 +199,45 @@ function transition(bookingId: Id, from: Booking['status']): TransitionResult {
   return { ok: true };
 }
 
+/**
+ * One step, asked of the server: it checks the move against its state machine, checks
+ * the start code, posts the ledger split on completion, and tells the booking's room.
+ * The session takes the booking the server returns, not a locally guessed one.
+ */
+async function remoteTransition(
+  bookingId: Id,
+  to: Booking['status'],
+  startCode?: string,
+): Promise<TransitionResult | { ok: false; reason: 'wrong_code' | 'incomplete' }> {
+  const workerId = liveWorkerId();
+  if (!workerId) return { ok: false, reason: 'not_found' };
+  try {
+    const record = await api<BookingRecord>('POST', `/bookings/${encodeURIComponent(bookingId)}/transitions`, {
+      to,
+      actor: { role: 'WORKER', id: workerId },
+      ...(startCode ? { startCode } : {}),
+    });
+    useSessionStore.setState((state) => ({
+      bookings: state.bookings.map((entry) => (entry.id === bookingId ? record.booking : entry)),
+      timelines: { ...state.timelines, [bookingId]: { ...state.timelines[bookingId], ...timelineFromEvents(record.timeline) } },
+    }));
+    return { ok: true };
+  } catch (error) {
+    const code = error instanceof ApiRequestError ? error.code : '';
+    if (code === 'WRONG_START_CODE') return { ok: false, reason: 'wrong_code' };
+    if (code === 'START_CODE_REQUIRED') return { ok: false, reason: 'incomplete' };
+    if (error instanceof ApiRequestError && error.status === 404) return { ok: false, reason: 'not_found' };
+    return { ok: false, reason: 'wrong_status' };
+  }
+}
+
 export async function startTrip(bookingId: Id): Promise<TransitionResult> {
+  if (isServerBacked()) return (await remoteTransition(bookingId, BookingStatus.EN_ROUTE)) as TransitionResult;
   return transition(bookingId, BookingStatus.ACCEPTED);
 }
 
 export async function markArrived(bookingId: Id): Promise<TransitionResult> {
+  if (isServerBacked()) return (await remoteTransition(bookingId, BookingStatus.ARRIVED)) as TransitionResult;
   return transition(bookingId, BookingStatus.EN_ROUTE);
 }
 
@@ -220,6 +257,8 @@ export async function startWork(bookingId: Id, code: string): Promise<StartWorkR
 
   const digits = code.replace(/\D/g, '');
   if (digits.length !== START_CODE_LENGTH) return { ok: false, reason: 'incomplete' };
+  // Connected, the server holds the code and is the one that checks it.
+  if (isServerBacked()) return remoteTransition(bookingId, BookingStatus.IN_PROGRESS, digits);
   if (digits !== startCodes[bookingId]) return { ok: false, reason: 'wrong_code' };
   return transition(bookingId, BookingStatus.ARRIVED);
 }
@@ -233,6 +272,14 @@ export async function startWork(bookingId: Id, code: string): Promise<StartWorkR
  * The cooperative model, working in one tap.
  */
 export async function completeJob(bookingId: Id): Promise<TransitionResult> {
+  if (isServerBacked()) {
+    const remote = (await remoteTransition(bookingId, BookingStatus.COMPLETED)) as TransitionResult;
+    // The payout and the fund's share are the server's ledger rows, read back rather than written here.
+    const workerId = liveWorkerId();
+    if (remote.ok && workerId) await refreshEarningsAndFund(workerId).catch(() => undefined);
+    return remote;
+  }
+
   const result = transition(bookingId, BookingStatus.IN_PROGRESS);
   if (!result.ok) return result;
 

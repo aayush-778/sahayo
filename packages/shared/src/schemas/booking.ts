@@ -4,6 +4,7 @@ import {
   BookingStatus,
   type AdminBooking,
   type Booking,
+  type BookingActor,
   type BookingAddress,
   type BookingEvent,
   type BookingFare,
@@ -45,10 +46,17 @@ export const bookingSchema = z.object({
 
 export const bookingEventKindSchema = z.nativeEnum(BookingEventKind);
 
+export const bookingActorSchema = z.object({
+  role: z.enum(['CUSTOMER', 'WORKER', 'ADMIN', 'SYSTEM']),
+  id: idSchema.optional(),
+}) satisfies z.ZodType<BookingActor>;
+
 export const bookingEventSchema = z.object({
   id: idSchema,
   kind: bookingEventKindSchema,
   at: isoDateTimeSchema,
+  actor: bookingActorSchema.optional(),
+  status: bookingStatusSchema.optional(),
   detail: z.string().min(1).max(300),
   workersPinged: z.number().int().nonnegative().optional(),
   equityRank: z.number().int().positive().optional(),

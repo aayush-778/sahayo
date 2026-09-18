@@ -1,14 +1,16 @@
 import { create } from 'zustand';
-import { BookingStatus, type Booking, type Id, type LedgerEntry } from '@sahayo/shared';
+import { BookingStatus, startCodeFor, type Booking, type Id, type LedgerEntry, type User } from '@sahayo/shared';
 
 import {
   customerByEntryId,
   mockBookings,
+  mockCustomers,
   mockEarnings,
   mockFundLedger,
   mockMyVotes,
   mockProposals,
   mockRatings,
+  mockScheduledRequests,
   mockSettlements,
   mockSupportRequests,
   mockThreads,
@@ -41,8 +43,21 @@ import type {
  * the seed with the server's copy.
  */
 export interface SessionState {
-  /** Offers open right now. Dealt live by the dispatcher in services/jobs.ts, never seeded. */
+  /** Offers open right now: from the server's dispatcher, or offline from services/jobs.ts. Never seeded. */
   jobRequests: JobRequest[];
+  /**
+   * Booked-ahead requests waiting for an answer. Unlike instant offers these are seeded,
+   * because with no backend the demo still has to show work booked for the days ahead.
+   */
+  scheduledRequests: JobRequest[];
+  /** How long each job takes, from the offer that was accepted — what overlap checks measure. */
+  jobMinutes: Record<Id, number>;
+  /** Live offers another worker accepted first, shown as taken for a moment before they leave. */
+  takenOfferIds: Record<Id, true>;
+  /** Everyone this worker's bookings and payouts mention, by id. */
+  customers: Record<Id, User>;
+  /** The cooperative's member count, from the server; null while showing the demo data. */
+  fundMemberCount: number | null;
   /** How many offers have been dealt this session — gives each a unique id. */
   offerSeq: number;
   /** When the last offer arrived, in epoch milliseconds; null before the first. */
@@ -91,14 +106,10 @@ function hashOf(text: string): number {
 }
 
 /**
- * A booking's 4-digit start code, derived from its id.
- *
- * Derived rather than random so it is the same on every run of the demo — a
- * presenter can learn the code for the job they always show.
+ * A booking's 4-digit start code, derived from its id — defined in @sahayo/shared,
+ * because the server is the one that checks it.
  */
-export function startCodeFor(bookingId: Id): string {
-  return String(1000 + (hashOf(bookingId) % 9000));
-}
+export { startCodeFor };
 
 const MINUTE = 60_000;
 
@@ -122,6 +133,11 @@ function seedTimeline(booking: Booking): JobTimeline {
 function seed(): SessionState {
   return {
     jobRequests: [],
+    scheduledRequests: clone(mockScheduledRequests),
+    jobMinutes: {},
+    takenOfferIds: {},
+    customers: Object.fromEntries(mockCustomers.map((customer) => [customer.id, customer])),
+    fundMemberCount: null,
     offerSeq: 0,
     lastOfferAt: null,
     bookings: clone(mockBookings),

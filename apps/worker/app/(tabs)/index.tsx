@@ -11,6 +11,8 @@ import { AvailabilityCard } from '../../src/components/AvailabilityCard';
 import { DeclineSheet } from '../../src/components/DeclineSheet';
 import { JobRequestCard } from '../../src/components/JobRequestCard';
 import { LanguageToggle } from '../../src/components/LanguageToggle';
+import { ScheduleReminder } from '../../src/components/ScheduleReminder';
+import { ScheduledEntry } from '../../src/components/ScheduledEntry';
 import {
   acceptJob,
   declineJob,
@@ -22,6 +24,7 @@ import {
   useJobFeed,
   useLanguage,
   useRatingSummary,
+  useScheduledSummary,
   useTodayOverview,
   useWorkerProfile,
 } from '../../src/services';
@@ -57,6 +60,7 @@ export default function DashboardScreen() {
   const active = useActiveJob();
   const overview = useTodayOverview();
   const rating = useRatingSummary();
+  const scheduled = useScheduledSummary();
 
   const [toggling, setToggling] = useState(false);
   const [showAll, setShowAll] = useState(false);
@@ -116,6 +120,9 @@ export default function DashboardScreen() {
             </Pressable>
           </View>
 
+          {/* The slot coming up, an hour before it */}
+          <ScheduleReminder />
+
           {/* Availability, or why there is none yet */}
           <View className="mt-5">
             {profile.isApproved ? (
@@ -140,6 +147,15 @@ export default function DashboardScreen() {
               </View>
             )}
           </View>
+
+          {/* Work booked for later, which never interrupts and waits in its own list */}
+          {profile.isApproved ? (
+            <ScheduledEntry
+              count={scheduled.count}
+              nextSlot={scheduled.nextSlot}
+              onPress={() => router.push('/scheduled')}
+            />
+          ) : null}
 
           {notice ? (
             <View

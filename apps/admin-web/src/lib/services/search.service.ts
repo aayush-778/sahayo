@@ -1,3 +1,4 @@
+import { workerCategoryLabel } from '@sahayo/shared';
 import { NAV_ITEMS } from '@/lib/nav/routes';
 import { adminState } from '@/lib/store';
 import { respond } from './latency';
@@ -84,7 +85,7 @@ export async function searchPortal(query: string): Promise<SearchGroup[]> {
       .map((worker) => ({
         id: worker.id,
         title: worker.name,
-        detail: `${worker.category.charAt(0)}${worker.category.slice(1).toLowerCase()} in ${zoneName.get(worker.zoneId) ?? 'an unknown zone'} · ${worker.phone}`,
+        detail: `${workerCategoryLabel(worker.category)} in ${zoneName.get(worker.zoneId) ?? 'an unknown zone'} · ${worker.phone}`,
         href: `/workers/${worker.id}`,
       })),
   );

@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { count, rupees } from '@/lib/format';
-import { UNDER_ALLOCATED_THRESHOLD, isUnderAllocated } from '@/lib/services';
+import { UNDER_ALLOCATED_THRESHOLD, categoryLabel, isUnderAllocated } from '@/lib/services';
 import { cn } from '@/lib/utils';
 
 /** Maps a verification state to the pill that shows it. */
@@ -131,7 +131,7 @@ export function buildWorkerColumns({
       header: 'Category',
       cell: ({ row }) => (
         <span className="text-muted">
-          {row.original.category.charAt(0) + row.original.category.slice(1).toLowerCase()}
+          {categoryLabel(row.original.category)}
         </span>
       ),
     },

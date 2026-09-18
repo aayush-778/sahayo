@@ -16,6 +16,7 @@ import {
   getRevenueSeries,
   getZoneDemand,
   listRecentActivity,
+  useLiveVersion,
   type ActivityItem,
   type CategoryJobCount,
   type CategorySlice,
@@ -45,6 +46,8 @@ export default function DashboardPage() {
   const [activity, setActivity] = useState<ActivityItem[]>();
   const [jobs, setJobs] = useState<CategoryJobCount[]>();
   const [failed, setFailed] = useState(false);
+  /* Every live booking, worker move, ledger row and verification re-reads the page's figures. */
+  const liveVersion = useLiveVersion('bookings', 'ledger', 'workers', 'kyc');
 
   useEffect(() => {
     let cancelled = false;
@@ -77,7 +80,7 @@ export default function DashboardPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [liveVersion]);
 
   if (failed) {
     return (

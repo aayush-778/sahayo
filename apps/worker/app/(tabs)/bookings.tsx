@@ -9,6 +9,7 @@ import { PrimaryButton, Text, useThemeColors } from '@sahayo/ui-native';
 
 import { BookingListCard } from '../../src/components/BookingListCard';
 import { DeclineSheet } from '../../src/components/DeclineSheet';
+import { ScheduleReminder } from '../../src/components/ScheduleReminder';
 import { LanguageToggle } from '../../src/components/LanguageToggle';
 import { SegmentedTabs } from '../../src/components/SegmentedTabs';
 import {
@@ -16,8 +17,10 @@ import {
   BOOKING_TABS,
   declineJob,
   setAvailability,
+  useAcceptedSchedule,
   useBookingBoard,
   useWorkerProfile,
+  type BoardItem,
 } from '../../src/services';
 import type { BookingTab, DeclineReason, JobRequest } from '../../src/types';
 
@@ -53,6 +56,9 @@ export default function BookingsScreen() {
   const colors = useThemeColors();
   const profile = useWorkerProfile();
   const board = useBookingBoard(profile.isApproved);
+  /* Accepted work split by day: today's jobs, and the ones booked for another day. */
+  const schedule = useAcceptedSchedule();
+  const upcomingIds = new Set(schedule.upcoming.map((job) => job.booking.id));
 
   const [tab, setTab] = useState<BookingTab>('all');
   const [acceptingId, setAcceptingId] = useState<Id | null>(null);
@@ -98,6 +104,8 @@ export default function BookingsScreen() {
             </Text>
             <LanguageToggle />
           </View>
+
+          <ScheduleReminder />
 
           <View className="mt-3">
             <SegmentedTabs
@@ -149,15 +157,29 @@ export default function BookingsScreen() {
 
           {items.length > 0 ? (
             <View className="mt-3 gap-3">
-              {items.map((item) => (
-                <BookingListCard
-                  key={item.key}
-                  item={item}
-                  canAccept={profile.isAvailable}
-                  accepting={item.kind === 'request' && acceptingId === item.request.id}
-                  onAccept={(request) => void accept(request)}
-                  onReject={setDeclining}
-                />
+              {sections(items, upcomingIds).map((section) => (
+                <View key={section.key} className="gap-3">
+                  {section.heading ? (
+                    <View className="mt-1 flex-row items-baseline justify-between">
+                      <Text weight="bold" className="text-[13px] text-worker-ink" accessibilityRole="header">
+                        {t(`worker.bookings.sections.${section.key}`)}
+                      </Text>
+                      <Text className="text-[10.5px] text-worker-muted">
+                        {t('worker.bookings.sections.count', { count: section.items.length })}
+                      </Text>
+                    </View>
+                  ) : null}
+                  {section.items.map((item) => (
+                    <BookingListCard
+                      key={item.key}
+                      item={item}
+                      canAccept={profile.isAvailable}
+                      accepting={item.kind === 'request' && acceptingId === item.request.id}
+                      onAccept={(request) => void accept(request)}
+                      onReject={setDeclining}
+                    />
+                  ))}
+                </View>
               ))}
             </View>
           ) : (
@@ -183,6 +205,21 @@ export default function BookingsScreen() {
       />
     </View>
   );
+}
+
+/**
+ * Work booked for another day is listed apart from today's, under its own heading — a
+ * job on Saturday is not something to act on now. Anything else (offers, history) stays
+ * in one unheaded run, so tabs that never mix the two look exactly as they did.
+ */
+function sections(items: BoardItem[], upcomingIds: ReadonlySet<Id>): Array<{ key: 'today' | 'upcoming' | 'rest'; heading: boolean; items: BoardItem[] }> {
+  const upcoming = items.filter((item) => item.kind === 'booking' && upcomingIds.has(item.booking.id));
+  if (upcoming.length === 0) return [{ key: 'rest', heading: false, items }];
+  const rest = items.filter((item) => !(item.kind === 'booking' && upcomingIds.has(item.booking.id)));
+  return [
+    ...(rest.length > 0 ? [{ key: 'today' as const, heading: true, items: rest }] : []),
+    { key: 'upcoming' as const, heading: true, items: upcoming },
+  ];
 }
 
 function EmptyTab({

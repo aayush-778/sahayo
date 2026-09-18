@@ -31,3 +31,5 @@ allowBuilds:
 overrides:
   react: 19.2.3
   react-dom: 19.2.3
+minimumReleaseAgeExclude:
+  - expo-location@57.0.18

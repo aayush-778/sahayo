@@ -8,11 +8,13 @@ import {
   PROPOSAL_QUORUM_SHARE,
   ProposalStatus,
   VoteDirection,
+  workerCategoryLabel,
   type FundTotals,
   type LedgerEntry,
   type LoanRequest,
   type Paise,
   type Proposal,
+  type WorkerCategory,
 } from '@sahayo/shared';
 import { CURRENT_ADMIN } from '@/lib/nav/session';
 import { DAY_MS, SEED_NOW } from '@/lib/seed';
@@ -230,7 +232,7 @@ export async function getProposalBreakdown(proposalId: string): Promise<Proposal
   return respond({
     byCategory: group(
       (worker) => worker.category,
-      (key) => key.charAt(0) + key.slice(1).toLowerCase(),
+      (key) => workerCategoryLabel(key as WorkerCategory),
     ),
     byZone: group(
       (worker) => worker.zoneId,

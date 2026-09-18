@@ -31,6 +31,7 @@ import {
   walletBalancePaise,
 } from '../../src/mocks/paymentMethods';
 import { periodOf, twelveHour } from '../../src/lib/schedule';
+import { payLiveBooking } from '../../src/services/live';
 import { createBooking, settleBooking, useBookingView } from '../../src/store/bookings';
 import { useAuthStore } from '../../src/store/auth';
 import { useBookingDraftStore, useDraftedServiceItem } from '../../src/store/bookingDraft';
@@ -182,6 +183,19 @@ export default function PaymentScreen() {
 
       if (settled.status === 'FAILED') {
         setFailure(settled.reason);
+        return;
+      }
+
+      // A server booking is paid through the server, which records it against the job.
+      if (settling.live) {
+        setBusy(true);
+        const recorded = await payLiveBooking(settling.booking.id, method, settled.transactionId);
+        setBusy(false);
+        if (!recorded.ok) {
+          setFailure(recorded.message);
+          return;
+        }
+        router.replace(`/booking/success?bookingId=${settling.booking.id}`);
         return;
       }
 
@@ -544,9 +558,12 @@ export default function PaymentScreen() {
           <View className="mt-4 flex-row items-center rounded-xl border border-brand-danger bg-brand-danger-soft px-4 py-3">
             <Ionicons name="alert-circle-outline" size={18} color={brandColors.danger} />
             <Text className="ml-2 flex-1 text-sm text-brand-danger">
-              {t(`booking.payment.failure.${failure}`, {
-                defaultValue: t('booking.payment.failure.declined'),
-              })}
+              {/* A reason code from the payment provider, or the server's own sentence. */}
+              {/\s/.test(failure)
+                ? failure
+                : t(`booking.payment.failure.${failure}`, {
+                    defaultValue: t('booking.payment.failure.declined'),
+                  })}
             </Text>
           </View>
         ) : null}

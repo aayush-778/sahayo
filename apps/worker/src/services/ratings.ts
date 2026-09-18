@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { BookingStatus, type Id, type User } from '@sahayo/shared';
 
-import { findCustomer } from '../mocks';
+import { findCustomer } from './people';
 import { useSessionStore } from '../store/session';
 import { CUSTOMER_FLAGS, type CustomerFlag, type CustomerRating, type Rating } from '../types';
 

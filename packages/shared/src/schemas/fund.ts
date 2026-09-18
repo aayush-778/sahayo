@@ -34,6 +34,8 @@ export const proposalSchema = z.object({
   id: idSchema,
   title: z.string().min(1).max(200),
   description: z.string().min(1).max(2000),
+  titleLocalized: z.record(z.string().min(1).max(200)).optional(),
+  descriptionLocalized: z.record(z.string().min(1).max(2000)).optional(),
   amountRequested: paiseSchema,
   proposerId: idSchema,
   proposerName: z.string().min(1),

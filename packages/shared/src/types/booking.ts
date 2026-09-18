@@ -74,18 +74,36 @@ export const BookingEventKind = {
   BROADCAST: 'BROADCAST',
   PINGED: 'PINGED',
   ACCEPTED: 'ACCEPTED',
+  EN_ROUTE: 'EN_ROUTE',
+  ARRIVED: 'ARRIVED',
   STARTED: 'STARTED',
   COMPLETED: 'COMPLETED',
   PAID: 'PAID',
   CANCELLED: 'CANCELLED',
+  /** No worker accepted in time, even after the radius was widened. */
+  EXPIRED: 'EXPIRED',
   DISPUTED: 'DISPUTED',
 } as const;
 export type BookingEventKind = (typeof BookingEventKind)[keyof typeof BookingEventKind];
+
+/** Who moved a booking: a person in one of the three apps, or the dispatcher itself. */
+export interface BookingActor {
+  role: 'CUSTOMER' | 'WORKER' | 'ADMIN' | 'SYSTEM';
+  /** Absent for SYSTEM. */
+  id?: Id;
+}
 
 export interface BookingEvent {
   id: Id;
   kind: BookingEventKind;
   at: IsoDateTime;
+  /**
+   * Who caused it. Every transition the server applies records one; events in the
+   * generated history predate the server and carry none.
+   */
+  actor?: BookingActor;
+  /** The status the booking reached with this event, when it changed status. */
+  status?: BookingStatus;
   /** One plain-language line describing what happened. */
   detail: string;
   /** Set on PINGED: how many workers the request reached. */

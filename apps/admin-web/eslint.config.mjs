@@ -18,6 +18,8 @@ const eslintConfig = [
       "out/**",
       "build/**",
       "next-env.d.ts",
+      /* MapLibre's worker, copied in from node_modules by scripts/copy-maplibre-worker.mjs. Not our code. */
+      "public/maplibre/**",
     ],
   },
 
@@ -49,6 +51,12 @@ const eslintConfig = [
               group: ["@/lib/seed", "@/lib/seed/*", "**/lib/seed", "**/lib/seed/*"],
               message:
                 "The seed is the store's source, not the UI's. Read data through @/lib/services.",
+            },
+            {
+              /* The seed itself lives in @sahayo/shared. Only its time anchor, which carries no data, is open. */
+              regex: "^@sahayo/shared/seed(?!/clock$)",
+              message:
+                "The seed is the store's source, not the UI's. Read data through @/lib/services; for SEED_NOW use @/lib/dates.",
             },
             {
               group: ["zustand", "zustand/*"],

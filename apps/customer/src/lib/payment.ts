@@ -46,13 +46,15 @@ export const FAIL_NEXT_PAYMENT = false;
 /** How long the mock pretends to be talking to a bank. */
 const MOCK_LATENCY_MS = 1500;
 
-function mockTransactionId(): string {
-  const stamp = Date.now().toString(36).toUpperCase();
-  const noise = Math.floor(Math.random() * 46_656)
-    .toString(36)
-    .toUpperCase()
-    .padStart(3, '0');
-  return `SHY${stamp}${noise}`;
+/**
+ * The receipt's transaction id, derived from the booking's own reference rather than the
+ * clock and a random suffix: the same booking shows the same number in rehearsal and on
+ * stage, and two bookings never collide because their references do not.
+ */
+function mockTransactionId(reference: string): string {
+  let hash = 0;
+  for (let i = 0; i < reference.length; i += 1) hash = (hash * 31 + reference.charCodeAt(i)) >>> 0;
+  return `SHY${hash.toString(36).toUpperCase().padStart(7, '0')}`;
 }
 
 export function createMockPaymentProvider(): PaymentProvider {
@@ -71,7 +73,7 @@ export function createMockPaymentProvider(): PaymentProvider {
         return { status: 'FAILED', reason: 'invalid_amount' };
       }
 
-      return { status: 'SUCCEEDED', transactionId: mockTransactionId() };
+      return { status: 'SUCCEEDED', transactionId: mockTransactionId(request.reference) };
     },
   };
 }

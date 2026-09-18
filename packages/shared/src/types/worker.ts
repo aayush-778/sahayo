@@ -36,25 +36,74 @@ export interface WorkerProfile {
 }
 
 /**
- * The trade a worker is engaged for.
+ * The trade a worker is engaged for: one per worker type in the service catalogue.
  *
- * Deliberately a small closed set rather than a free-text field: the dispatcher
- * matches on it, the analytics group by it, and eight categories is already past
- * the point where a pie chart stops being readable.
+ * A small closed set rather than a free-text field, because the dispatcher matches on
+ * it and the analytics group by it. It mirrors the catalogue's ten worker types one to
+ * one — see `CATEGORY_ID_BY_WORKER_CATEGORY` — so the trade a customer books and the
+ * trade the portal reports are the same thing. It used to be a separate list of eight,
+ * with cooks the catalogue does not sell and no technicians, domestic helpers or
+ * gardeners, which made a gardener booked in the customer app unreportable here.
+ *
+ * Declared in the catalogue's display order.
  */
 export const WorkerCategory = {
-  PLUMBER: 'PLUMBER',
   ELECTRICIAN: 'ELECTRICIAN',
-  CAREGIVER: 'CAREGIVER',
-  DRIVER: 'DRIVER',
-  CLEANER: 'CLEANER',
+  PLUMBER: 'PLUMBER',
   CARPENTER: 'CARPENTER',
   PAINTER: 'PAINTER',
-  COOK: 'COOK',
+  DOMESTIC_HELPER: 'DOMESTIC_HELPER',
+  CAREGIVER: 'CAREGIVER',
+  DRIVER: 'DRIVER',
+  GARDENER: 'GARDENER',
+  CLEANER: 'CLEANER',
+  TECHNICIAN: 'TECHNICIAN',
 } as const;
 export type WorkerCategory = (typeof WorkerCategory)[keyof typeof WorkerCategory];
 
 export const WORKER_CATEGORIES = Object.values(WorkerCategory);
+
+/** Each trade's worker type in the catalogue (`serviceCategories` in catalogue.ts). */
+export const CATEGORY_ID_BY_WORKER_CATEGORY: Record<WorkerCategory, Id> = {
+  ELECTRICIAN: 'cat_electricians',
+  PLUMBER: 'cat_plumbers',
+  CARPENTER: 'cat_carpenters',
+  PAINTER: 'cat_painters',
+  DOMESTIC_HELPER: 'cat_domestic_helpers',
+  CAREGIVER: 'cat_caregivers',
+  DRIVER: 'cat_drivers',
+  GARDENER: 'cat_gardeners',
+  CLEANER: 'cat_cleaners',
+  TECHNICIAN: 'cat_technicians',
+};
+
+/** The reverse of `CATEGORY_ID_BY_WORKER_CATEGORY`. */
+export const WORKER_CATEGORY_BY_CATEGORY_ID: Readonly<Record<Id, WorkerCategory>> = Object.fromEntries(
+  WORKER_CATEGORIES.map((category) => [CATEGORY_ID_BY_WORKER_CATEGORY[category], category]),
+);
+
+/** How a trade reads in a sentence or a table cell: "Domestic helper", not "DOMESTIC_HELPER". */
+export const WORKER_CATEGORY_LABEL: Record<WorkerCategory, string> = {
+  ELECTRICIAN: 'Electrician',
+  PLUMBER: 'Plumber',
+  CARPENTER: 'Carpenter',
+  PAINTER: 'Painter',
+  DOMESTIC_HELPER: 'Domestic helper',
+  CAREGIVER: 'Caregiver',
+  DRIVER: 'Driver',
+  GARDENER: 'Gardener',
+  CLEANER: 'Cleaner',
+  TECHNICIAN: 'Technician',
+};
+
+export function workerCategoryLabel(category: WorkerCategory): string {
+  return WORKER_CATEGORY_LABEL[category];
+}
+
+/** The trade a label names, for records that store the label (a booking's `category`). */
+export function workerCategoryFromLabel(label: string): WorkerCategory | undefined {
+  return WORKER_CATEGORIES.find((category) => WORKER_CATEGORY_LABEL[category] === label);
+}
 
 /**
  * The inputs to a worker's equity score, kept separate from the score so the
@@ -84,8 +133,19 @@ export interface AdminWorker {
   id: Id;
   name: string;
   avatarUrl: string;
+  /** The worker's primary trade: the first of `serviceCategoryIds`. */
   category: WorkerCategory;
+  /**
+   * Every catalogue worker type this worker takes, primary first. What the dispatcher
+   * matches a request against; most workers have one, some have two.
+   */
+  serviceCategoryIds: Id[];
   zoneId: Id;
+  /**
+   * Where the worker is, or was last seen. A fixed point in the seed; in production it
+   * follows the worker app's location updates.
+   */
+  location: GeoPoint;
   phone: string;
   /** 3.6 to 5.0. Below 3.6 a worker would not still be on the platform. */
   rating: number;

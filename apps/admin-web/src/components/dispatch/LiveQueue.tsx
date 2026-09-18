@@ -2,12 +2,14 @@
 
 import {
   Car,
-  ChefHat,
+  Cpu,
   Hammer,
   HeartHandshake,
+  House,
   PaintRoller,
   Plug,
   Sparkles,
+  Sprout,
   Wrench,
   type LucideIcon,
 } from 'lucide-react';
@@ -23,7 +25,7 @@ import { secondsSinceRequest } from '@/lib/services';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui-kit/Button';
 
-/** An icon and tint per trade, so a queue row is identifiable at a glance. */
+/** An icon and tint per trade, keyed by the booking's trade label, so a queue row is identifiable at a glance. */
 const TRADE: Record<string, { icon: LucideIcon; tint: Tint }> = {
   plumber: { icon: Wrench, tint: 'lavender' },
   electrician: { icon: Plug, tint: 'marigold' },
@@ -32,7 +34,9 @@ const TRADE: Record<string, { icon: LucideIcon; tint: Tint }> = {
   cleaner: { icon: Sparkles, tint: 'fund-green' },
   carpenter: { icon: Hammer, tint: 'marigold' },
   painter: { icon: PaintRoller, tint: 'coral' },
-  cook: { icon: ChefHat, tint: 'fund-green' },
+  'domestic helper': { icon: House, tint: 'fund-green' },
+  gardener: { icon: Sprout, tint: 'fund-green' },
+  technician: { icon: Cpu, tint: 'lavender' },
 };
 
 const STATUS: Record<string, { status: StatusVariant; label: string }> = {

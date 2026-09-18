@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import type { Booking, Id, LedgerEntry, Paise } from '@sahayo/shared';
 
 import { COOP_MEMBER_COUNT, COOPERATIVE_NAME } from '../mocks';
+import { ApiRequestError, api, isServerBacked, liveWorkerId } from '../realtime';
 import { useSessionStore } from '../store/session';
 import type { Localized, Proposal, VoteChoice, VoteTally } from '../types';
 import { contributionFor } from './earnings';
@@ -40,7 +41,7 @@ export interface FundOverview {
   spentOnMembers: Paise;
 }
 
-function overviewOf(ledger: LedgerEntry[], now: Date): FundOverview {
+function overviewOf(ledger: LedgerEntry[], now: Date, memberCount: number | null = null): FundOverview {
   const monthly = [3, 2, 1, 0].map((monthsAgo) => {
     const start = new Date(now.getFullYear(), now.getMonth() - monthsAgo, 1);
     const end = monthsAgo === 0 ? Number.POSITIVE_INFINITY : new Date(start.getFullYear(), start.getMonth() + 1, 1).getTime();
@@ -56,7 +57,7 @@ function overviewOf(ledger: LedgerEntry[], now: Date): FundOverview {
   return {
     name: COOPERATIVE_NAME,
     balance: ledger.reduce((sum, row) => sum + signed(row), 0),
-    memberCount: COOP_MEMBER_COUNT,
+    memberCount: memberCount ?? COOP_MEMBER_COUNT,
     changeThisMonth: ledger.filter((row) => time(row.createdAt) >= thisMonthStart).reduce((sum, row) => sum + signed(row), 0),
     monthly,
     totalContributions: ledger
@@ -70,11 +71,13 @@ function overviewOf(ledger: LedgerEntry[], now: Date): FundOverview {
 
 export function useFundOverview(): FundOverview {
   const ledger = useSessionStore((state) => state.fundLedger);
-  return useMemo(() => overviewOf(ledger, new Date()), [ledger]);
+  const memberCount = useSessionStore((state) => state.fundMemberCount);
+  return useMemo(() => overviewOf(ledger, new Date(), memberCount), [ledger, memberCount]);
 }
 
 export function getFundOverview(): FundOverview {
-  return overviewOf(useSessionStore.getState().fundLedger, new Date());
+  const { fundLedger, fundMemberCount } = useSessionStore.getState();
+  return overviewOf(fundLedger, new Date(), fundMemberCount);
 }
 
 export interface MyContribution {
@@ -193,6 +196,18 @@ export async function castVote(proposalId: Id, choice: 'yes' | 'no'): Promise<Vo
   if (!proposal) return { ok: false, reason: 'not_found' };
   if (!isVotingOpen(proposal)) return { ok: false, reason: 'closed' };
   if (votes[proposalId]) return { ok: false, reason: 'already_voted' };
+
+  const workerId = liveWorkerId();
+  if (isServerBacked() && workerId) {
+    try {
+      await api('POST', `/coop/proposals/${encodeURIComponent(proposalId)}/vote`, { workerId, direction: choice === 'yes' ? 'FOR' : 'AGAINST' });
+    } catch (error) {
+      const code = error instanceof ApiRequestError ? error.code : '';
+      if (code === 'ALREADY_VOTED') return { ok: false, reason: 'already_voted' };
+      if (code === 'VOTING_CLOSED') return { ok: false, reason: 'closed' };
+      return { ok: false, reason: 'not_found' };
+    }
+  }
   useSessionStore.setState((state) => ({ votes: { ...state.votes, [proposalId]: choice } }));
   return { ok: true };
 }
