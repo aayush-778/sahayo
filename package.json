@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "packageManager": "pnpm@12.3.4",
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=10"
+  },
   "scripts": {
     "dev": "turbo run dev --filter=@sahayo/backend --filter=@sahayo/admin-web --filter=@sahayo/customer --filter=@sahayo/worker",
     "dev:backend": "pnpm --filter @sahayo/backend dev",
@@ -13,6 +17,8 @@
     "demo:tunnel": "pnpm --filter @sahayo/backend demo:tunnel",
     "demo:walk": "pnpm --filter @sahayo/backend demo:walk",
     "demo:request": "pnpm --filter @sahayo/backend demo:request",
+    "build": "turbo run build",
+    "test": "turbo run test",
     "typecheck": "turbo run typecheck",
     "lint": "turbo run lint",
     "format": "prettier --write ."

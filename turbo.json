@@ -16,6 +16,12 @@
     "lint": {
       "cache": false
     },
+    // Only @sahayo/backend defines `test` today (node:test over test/*.test.ts).
+    // Declared here so `pnpm test` resolves; turbo skips packages without it.
+    "test": {
+      "dependsOn": ["^build"],
+      "cache": false
+    },
     "build": {
       "dependsOn": ["^build"],
       "outputs": [".next/**", "!.next/cache/**", "dist/**"]
