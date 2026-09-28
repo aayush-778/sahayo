@@ -4,608 +4,568 @@
 
 # Sahayo
 
-### Cooperative Gig Services Platform for Household & Community Services 
-**Turning on-demand gig work into worker-owned enterprise.** Sahayo matches the on-demand speed and convenience of commercial aggregators while fundamentally restructuring ownership: workers retain 90% of job earnings, algorithmic dispatch actively prevents income concentration, and an append-only, member-governed cooperative fund provides structural social security at zero additional cost to the customer.
+### Cooperative gig services platform for household and community services
+
+**Turning on-demand gig work into worker-owned enterprise.**
 
 [![Smart India Hackathon 2026](https://img.shields.io/badge/Smart_India_Hackathon-2026-F5B814?style=flat-square)](https://www.sih.gov.in/)
 [![Problem Statement SIH26089](https://img.shields.io/badge/Problem_Statement-SIH26089-113B5E?style=flat-square)](https://www.sih.gov.in/)
 [![Ministry of Cooperation](https://img.shields.io/badge/Ministry_of-Cooperation-4F8233?style=flat-square)](https://cooperation.gov.in/)
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9.3-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Next.js](https://img.shields.io/badge/Next.js-15.5.4-000000?style=flat-square&logo=nextdotjs)](https://nextjs.org/)
 [![Expo SDK](https://img.shields.io/badge/Expo_SDK-57-000020?style=flat-square&logo=expo)](https://expo.dev/)
 [![React Native](https://img.shields.io/badge/React_Native-0.86.3-61DAFB?style=flat-square&logo=react&logoColor=black)](https://reactnative.dev/)
-[![Socket.io](https://img.shields.io/badge/Socket.io-4.8-010101?style=flat-square&logo=socketdotio)](https://socket.io/)
-[![pnpm workspaces](https://img.shields.io/badge/pnpm-workspaces-F69220?style=flat-square&logo=pnpm&logoColor=white)](https://pnpm.io/workspaces)
+[![pnpm](https://img.shields.io/badge/pnpm-12.3.4-F69220?style=flat-square&logo=pnpm&logoColor=white)](https://pnpm.io/workspaces)
 [![Turborepo](https://img.shields.io/badge/Turborepo-2.x-EF4444?style=flat-square&logo=turborepo)](https://turborepo.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-A78BFA?style=flat-square)](LICENSE)
 
 </div>
 
 ---
 
-## Executive summary
+## Submission details
 
-India's gig economy runs on proximity-and-rating dispatch. That single design
-choice is what concentrates income: the worker who happens to be closest to
-affluent demand, with the earliest good reviews, gets offered more work, earns
-more, stays online more, and pulls further ahead. Everyone else subsidises the
-platform's convenience with idle hours. The worker has no equity, no safety net,
-and no say in the rules they work under.
-
-**Sahayo is the same product built on a cooperative premise.** The workers are
-members. The dispatcher deliberately ranks a quiet worker up. A fixed slice of
-every settled booking goes into a fund the members own and vote on — and it
-costs the customer nothing extra, because it comes out of the platform's own
-share.
-
-### The problem, stated plainly
-
-| | Conventional aggregator | Sahayo |
-| --- | --- | --- |
-| Who gets the job | nearest + highest rated | weighted so the least-worked member ranks up |
-| Platform take | 20–30% commission | **5%** |
-| Worker take | 70–80% | **90%** |
-| Collective safety net | none | **5%** into a member-owned fund |
-| Who sets the rules | the platform | members, by recorded vote |
-| Customer price | — | **unchanged** — the fund comes out of the platform's cut |
-
-### Beneficiaries and measurable impact
-
-- **Members (workers).** 90% of the item price instead of the industry's 70–80%.
-  At the seeded cooperative's scale — `WORKER_COUNT = 140`,
-  `BOOKING_COUNT = 12000` over `BOOKING_WINDOW_DAYS = 90`, averaging ~₹1,725 a
-  job — each member bills roughly ₹11,500 a week, so the extra 10–20 points is
-  **₹1,150 to ₹2,300 more per member per week** at the same volume. No change to
-  what the customer pays.
-- **Idle members specifically.** `INVERSE_ALLOCATION` carries the heaviest
-  dispatch weight (0.45, against 0.30 proximity and 0.25 rating), so a member
-  with few jobs this week is ranked *up*. The backend test suite asserts the
-  claim directly: *"a lower-rated worker with fewer jobs this week outranks a
-  saturated top-rated worker."*
-- **The collective.** The seeded fund holds **₹32,59,180** against a stated
-  ₹50,00,000 goal, funding accident cover, health premiums, tool loans and
-  children's education — each one traceable to the vote that approved it.
-- **Customers.** Identical booking flow, transparent fare breakdown, live
-  tracking. The cooperative model is invisible at the point of sale, which is
-  the point.
-- **The registrar (CRCS).** Compliance datasets export straight from the same
-  collections the portal reads, so the cooperative's statutory reporting is a
-  download rather than a reconciliation exercise.
+| | |
+| --- | --- |
+| **Problem Statement ID** | SIH26089 |
+| **Problem Statement Title** | Cooperative Gig Services Platform for Household & Community Services |
+| **Organisation / Ministry** | Ministry of Cooperation |
+| **Theme** | Agriculture, FoodTech & Rural Development |
+| **Category** | Software |
+| **Team name** | Innovex |
 
 ---
 
-## Key features and innovation
+## The pitch
 
-### 1. The equity dispatcher — the technical differentiator
+Household services in India are brokered by aggregators that take 20–30% of every
+job and decide who gets offered work. Dispatch runs on proximity and rating, so
+income concentrates: the worker nearest affluent demand with the earliest good
+reviews is offered more, earns more, stays online more, and pulls further ahead.
+Everyone else absorbs the idle hours. Workers hold no equity, no safety net, and
+no vote on the rules they work under. Customers, meanwhile, struggle to find help
+that is verified and transparently priced.
 
-One scoring function, `computeEquityScore`, in
-[packages/shared/src/equity.ts](packages/shared/src/equity.ts). The backend
-dispatcher, the admin portal's Broadcast Inspector and the seed all call it, so
-the inspector's on-screen claim *"ranked first for taking fewer jobs"* is true
-by construction rather than by narration.
-
-```
-score = 0.30 · proximity          (1 at the door, 0 at the radius edge)
-      + 0.25 · rating             (0 at the 3.6 floor, 1 at a perfect 5)
-      + 0.45 · inverseAllocation  (1 with no jobs this week, 0 for the busiest)
-```
-
-The weights are administrator-adjustable from Settings, and changing them
-recomputes every member's stored score in the same write — with an audit row.
-
-### 2. A real-time offer race, arbitrated server-side
-
-A request broadcasts to ranked candidates over Socket.io with a 30-second
-countdown. Five simultaneous accepts on one booking yield exactly one winner;
-the other four are told `TAKEN`. If nobody accepts, the radius widens from 5 km
-to 8 km, the job is offered once more, then expires. Decliners are not
-re-offered the same job. All four behaviours are covered by tests.
-
-### 3. Scheduled bookings with conflict detection
-
-A job booked for later goes to every verified member nearby — online or not —
-and stays claimable past the instant window. Accepting one that overlaps work
-already taken is refused with `CONFLICT` plus the overlapping jobs, until the
-worker explicitly confirms.
-
-### 4. Transparent fare engine
-
-```
-multiplier = 1 + urgency(0.15) + weather(0–0.25) + demand(0–0.25),  capped at 1.5×
-item total = base × multiplier      <- the 90/5/5 split comes out of this
-total      = item total + 18% GST   <- added on top, never split
-```
-
-A booking made ahead of time carries none of the three surcharges: each is a
-statement about *right now*. GST is collected and remitted, so it is never
-treated as revenue to divide.
-
-### 5. An append-only ledger
-
-There is no function anywhere that edits or deletes a ledger entry, and there
-must never be one. A correction is a **new** compensating row carrying
-`reversalOf`; the original stays byte-identical forever. Status is *derived*, not
-stored — "released" means a `PAYOUT_RELEASE` row exists pointing back. A refund
-is four rows that net to zero: the customer is credited R, and R is recovered
-from worker, platform and fund by the same `splitAmount` the booking was paid
-with, so a refunded period still sums to the paisa.
-
-In the UI this is visible rather than claimed: the row menu offers View booking,
-Copy trace ID and Issue reversal — and nothing else. Not disabled. Absent.
-
-### 6. Cooperative governance, on the members' phones
-
-Members read proposals, cast one recorded vote each, and request micro-loans
-from within the worker app. Every rupee the fund has spent traces back to the
-proposal that authorised it, for exactly the amount approved, dated just after
-the vote closed. Quorum is 60% of eligible members and is reported as
-participation — a proposal can fail quorum with every vote in favour, and the UI
-says so rather than calling it a rejection.
-
-### 7. UIDAI Circular 14 of 2025 compliance — Aadhaar handled correctly
-
-This has legal force and the code is built around it:
-
-- **No Aadhaar number is ever persisted.** Not in `localStorage`, Zustand, React
-  state, a URL, or a log. The store holds an opaque `aref_…` reference and
-  `aadhaarLast4`, nothing more.
-- **Masked by default** — `XXXX-XXXX-4567` is the only persistent form.
-- **Reveal is purpose-bound and audited.** Select a purpose, then the audit row
-  is written *synchronously, before the value exists* — then the full number is
-  written straight into a text node through a ref, shown for 30 seconds with a
-  visible countdown, and wiped. React state holds only the countdown.
-- **Hashing Aadhaar is banned.** Routes are UUIDs, never anything
-  Aadhaar-derived.
-- **An Access log tab** lists every reveal with admin, timestamp, worker and
-  stated purpose.
-- **Compliance exports carry no Aadhaar data at all** — not the number, not a
-  masked form, not the last four.
-
-Verify: `grep -rnE "[0-9]{12}" apps/admin-web/src` prints nothing.
-
-### 8. Offline-first, because venue wifi fails
-
-- The admin portal precaches every route plus the scripts, styles and fonts
-  their HTML references, so an airplane-mode reload still renders every page.
-- Street maps measure health on the **first basemap tile**, not the map's `load`
-  event; if no tile arrives in time an SVG zone map covers the street map — and
-  lifts by itself if tiles arrive late.
-- Both mobile apps fall back to bundled demo data behind a visible offline strip.
-- Maps use OpenStreetMap raster tiles and need **no API key**.
-
-### 9. Bilingual from the first screen
-
-English and Hindi, around 1,080 strings each, every user-facing string in both
-mobile apps routed through i18next from day one. Money is integer **paise** end
-to end and formatted only at the render edge, through one shared formatter.
+Sahayo keeps the on-demand experience and changes who owns it. Workers are
+members of a cooperative and keep **90%** of the job price. Dispatch weights the
+least-worked member *up*, so work spreads instead of concentrating. **5%** of
+every settled job funds a member-governed welfare fund — paid out of the
+platform's share, so the customer's price is unchanged. The cooperative structure
+is in the arithmetic and the dispatch algorithm, not in the marketing copy.
 
 ---
 
-## Tech stack
+## What makes it cooperative
 
-| Layer | Technology | Why |
-| --- | --- | --- |
-| **Customer app** | Expo SDK 57, Expo Router, React Native 0.86.3, NativeWind 4 | File-based routing; Tailwind classes on native |
-| **Worker app** | same, plus `expo-location`, `expo-audio` | Background location and an audible offer ring |
-| **Admin portal** | Next.js 15.5.4 (App Router), React 19.2.3, Tailwind 3.4, shadcn/ui 2.10, Radix | Static generation for offline precaching |
-| **Data viz** | Recharts 3 | Revenue, fund growth, zone demand |
-| **Maps** | MapLibre GL 6 + react-map-gl, OpenStreetMap raster tiles | No API key, no watermark, no vendor account |
-| **Tables** | TanStack Table 8 | Headless, so the design system stays in charge |
-| **Backend** | Node.js, Express 4, TypeScript, `tsx` | No build step in the dev loop |
-| **Real time** | Socket.io 4.8, typed both ends from one contract | A renamed event is a compile error |
-| **Validation** | Zod 3, shared between client and server | One schema, one source of truth |
-| **State** | Zustand 5 | Admin portal store; mobile app stores |
-| **i18n** | i18next + react-i18next, `expo-localization` | English and Hindi |
-| **Persistence (provisioned)** | PostgreSQL 16 + PostGIS 3.4, Redis 7 via Docker Compose | Geospatial dispatch queries, offer locks |
-| **Monorepo** | pnpm 12 workspaces + Turborepo 2 | Four apps, two shared packages, one install |
-| **Quality** | `tsc --noEmit`, ESLint 9 (flat config), Prettier, `node:test` | 6/6 typecheck, 6/6 lint, 19 backend tests |
+### The fare split — 90 / 5 / 5
 
-> **Current data layer.** The backend runs on a deterministic in-memory store
-> seeded from `packages/shared/src/seed`, and the admin portal runs on a
-> deterministic dataset behind an async service layer. Both are deliberate: a
-> dataset that drifts with the wall clock is not demonstrable, and "12,000
-> bookings over 90 days" would silently re-bucket overnight and change the shape
-> of every chart between the rehearsal and the room. Postgres + PostGIS and Redis
-> are provisioned in `docker-compose.yml` and the service layer is the seam they
-> swap into — a service function's body changes from "filter this array" to
-> "fetch this endpoint" and every page keeps working.
+Defined once in [`packages/shared/src/constants.ts`](packages/shared/src/constants.ts)
+as `WORKER_SHARE`, `PLATFORM_SHARE` and `COOP_FUND_SHARE`, asserted to sum to 1 at
+module load, and imported by the backend, the admin portal and both mobile apps.
+No app writes the numbers as literals, so the portal cannot show a worker a
+different figure than their phone does.
+
+Money is integer **paise** everywhere and formatted only at the render edge.
+[`splitAmount()`](packages/shared/src/seed/ledger.ts) computes the worker and
+platform shares and assigns the **rounding remainder to the cooperative fund**
+(`coopFund = gross - worker - platform`), rather than rounding all three
+independently. That is what makes every period's three figures sum exactly to
+the gross, to the paisa.
+
+GST at 18% is added on top of the item price and is never split — it is collected
+and remitted, not revenue to divide.
+
+### Equity-ranked dispatch
+
+One scoring function, `computeEquityScore` in
+[`packages/shared/src/equity.ts`](packages/shared/src/equity.ts), shared by the
+backend dispatcher, the admin portal's Broadcast Inspector and the seed:
+
+```
+score = 0.30 x proximity          (1 at the customer's door, 0 at the radius edge)
+      + 0.25 x rating             (0 at the 3.6 floor, 1 at a perfect 5)
+      + 0.45 x inverseAllocation  (1 with no jobs this week, 0 for the busiest member)
+```
+
+**The third term is the point.** It carries the heaviest weight, so a member who
+has taken few jobs this week is ranked up — which is how income is stopped from
+concentrating in the hands of whoever is closest or best-reviewed. The backend
+test suite asserts exactly this: *"a lower-rated worker with fewer jobs this week
+outranks a saturated top-rated worker."*
+
+A request is offered to the **top 5** candidates within **5 km**, simultaneously,
+with a **30-second** countdown. The first accept wins and the rest receive
+`TAKEN`; the server arbitrates, so five concurrent accepts still produce one
+winner. If nobody accepts, the radius widens to **8 km** for one more round, then
+the booking expires. Weights are administrator-adjustable from Settings, and a
+change recomputes every member's stored score in the same write, with an audit row.
+
+### An append-only ledger
+
+No function in the codebase edits or deletes a ledger entry. A correction is a
+**new** compensating row carrying `reversalOf`; the original stays byte-identical
+forever. Status is *derived*, never stored — "released" means a `PAYOUT_RELEASE`
+row exists pointing back at the original. A refund is four rows that net to zero:
+the customer is credited R, and R is recovered from the worker, the platform and
+the fund using the same `splitAmount` the booking was paid with, so a refunded
+period still balances to the paisa. Balances are computed from the rows, never
+cached in a mutable field.
+
+### A member-governed welfare fund
+
+Implemented: members read proposals and cast one recorded ballot each from the
+worker app; `votesFor` / `votesAgainst` always equal the ballots counted by
+direction; a second vote from the same member is refused rather than replacing
+the first. Quorum is 60% of eligible members and is reported as *participation* —
+a proposal can fail quorum with every vote cast in favour, and the UI says so
+rather than reporting a rejection. Each passed programme produces a fund
+disbursement for exactly the amount approved, dated just after its vote closed,
+so every rupee spent traces to the decision that authorised it.
+
+Prototype status: voting, ballots, quorum and disbursement traceability run on
+seeded data. Micro-loan requests are captured in the worker app and appear in the
+admin portal; disbursement approval is a seeded flow, not a live credit decision.
 
 ---
 
 ## Architecture
 
-### Data flow, end to end
+### Components
 
-```
- CUSTOMER APP (Expo, :8081)                              WORKER APP (Expo, :8082)
- +--------------------------+                            +--------------------------+
- | browse 10 trades ->      |                            | go Online                |
- | 49 sub-categories ->     |                            | location every 5 s       |
- | 289 priced items         |                            | ring + 30 s countdown    |
- +-----------+--------------+                            +-----------+--------------+
-             | POST /bookings                       gig:accept (race)| worker:location
-             v                                                       v
- ===================================================================================
-   BACKEND -- Express + Socket.io  (:4000, /api/v1)
- -----------------------------------------------------------------------------------
-   pricing/fare.ts ----> base x (1 + urgency + weather + demand <= 1.5x) + 18% GST
-           |
-   dispatch/ranking.ts ----> computeEquityScore()  <-- shared with portal + seed
-           |                 0.30 proximity - 0.25 rating - 0.45 inverseAllocation
-           v
-   dispatch/dispatcher.ts - broadcast 5 km, 30 s - no accept -> widen 8 km -> expire
-           |                                       first accept wins, rest TAKEN
-           v
-   domain/booking-machine.ts   REQUESTED -> BROADCAST -> ACCEPTED -> EN_ROUTE ->
-           |                   ARRIVED -> IN_PROGRESS -> COMPLETED -> SETTLED
-           |                   (role-checked; illegal moves throw, naming both states)
-           v
-   repositories/ledger.ts ----> splitAmount() ----> 3 append-only rows, sum exact
-                                90% worker - 5% platform - 5% cooperative fund
- ===================================================================================
-        booking:updated | worker:moved | coop:fund_updated        | dispatch:round
-        gig:offer/taken | ledger:appended | worker:kyc_updated    | dispatch:resolved
-                     v                                            v
-            both mobile apps                       ADMIN PORTAL (Next.js, :3000)
-                                                   Live Dispatch - Broadcast Inspector
-                                                   Finance - Fund - KYC - Analytics
+```mermaid
+flowchart TB
+    subgraph clients["Clients"]
+        CUS["Customer app<br/>Expo Router, port 8081"]
+        WRK["Worker app<br/>Expo Router, port 8082"]
+        ADM["Admin portal<br/>Next.js 15, port 3000"]
+    end
 
- -- packages/shared ---------------------------------------------------------------
-    types + zod schemas (kept in lockstep by `satisfies z.ZodType<T>`)
-    socket event contract - equity maths - fare constants - deterministic seed
-    consumed as TypeScript SOURCE by all four apps -- no build step, no dist
-```
+    subgraph backend["apps/backend — port 4000, prefix /api/v1"]
+        REST["REST routes<br/>Express 4"]
+        WS["Realtime gateway<br/>Socket.io 4.8"]
+        FARE["Fare engine<br/>urgency, weather, demand, capped 1.5x"]
+        DISP["Equity dispatcher<br/>rank, broadcast, widen, expire"]
+        FSM["Booking state machine<br/>role-checked transitions"]
+        LEDGER["Append-only ledger<br/>splitAmount 90/5/5"]
+        REPO["Repository layer<br/>in-memory store"]
+    end
 
-### The three architectural rules that hold it together
+    SHARED["packages/shared<br/>TypeScript types, Zod schemas,<br/>socket contract, equity maths,<br/>fare constants, deterministic seed"]
+    UI["packages/ui-native<br/>shared RN primitives, i18n"]
 
-**1. One definition of the maths, imported everywhere.** `WORKER_SHARE`,
-`PLATFORM_SHARE`, `COOP_FUND_SHARE` (90/5/5, asserted to sum to 1 at module
-load) and `computeEquityScore` live in `packages/shared` and are **never written
-as literals** in an app. The portal cannot tell a worker a different number than
-the mobile app does.
+    CUS -->|REST| REST
+    WRK -->|REST| REST
+    ADM -->|REST| REST
+    CUS <-->|websocket| WS
+    WRK <-->|websocket| WS
+    ADM <-->|websocket| WS
 
-**2. Types and schemas cannot drift.** Every zod schema carries
-`satisfies z.ZodType<T>` against its TypeScript type. Drift is a compile error,
-not a runtime surprise.
+    REST --> FARE
+    REST --> FSM
+    WS --> DISP
+    DISP --> FSM
+    FSM --> LEDGER
+    FARE --> REPO
+    DISP --> REPO
+    FSM --> REPO
+    LEDGER --> REPO
 
-**3. Components call services. Nothing else.** In the admin portal:
-
-```
-src/lib/seed      deterministic dataset   <- only the store reads this
-src/lib/store     zustand, the database   <- only services read this
-src/lib/services  async functions         <- the UI reads ONLY this
+    SHARED -.->|types and contract| CUS
+    SHARED -.->|types and contract| WRK
+    SHARED -.->|types and contract| ADM
+    SHARED -.->|types and contract| backend
+    UI -.->|primitives| CUS
+    UI -.->|primitives| WRK
 ```
 
-Enforced by `no-restricted-imports` in `eslint.config.mjs`, so a component
-importing the store fails lint. The comment asks; the rule refuses. That is what
-makes the seam real: `approveKyc(id)` updates the Workers directory badge, the
-verification queue count and the dashboard stat in the same instant, because all
-three read derived state from one store.
+`packages/shared` is consumed as TypeScript **source** — no build step and no
+`dist`. Next.js compiles it through `transpilePackages`, Metro resolves it through
+the hoisted `node_modules`, and the backend runs it under `tsx`. Types and Zod
+schemas are held in lockstep by a `satisfies z.ZodType<T>` assertion on every
+schema, so drift is a compile error rather than a runtime surprise.
 
-### REST surface — `/api/v1`
+The repository layer is the single seam a real database swaps into. Every read and
+write already goes through it, so a function body changes from "filter this array"
+to "query this table" and nothing above it changes.
 
-| Method | Route | Purpose |
-| --- | --- | --- |
-| `GET` | `/health` | Liveness — `{"ok":true}` |
-| `POST` | `/auth/login` | Phone + OTP, returns the session |
-| `GET` | `/services` | The full catalogue tree |
-| `POST` | `/pricing/quote` | Fare with every surcharge itemised |
-| `POST` | `/bookings` | Create; enters dispatch |
-| `GET` | `/bookings` and `/bookings/:id` | List / read |
-| `POST` | `/bookings/:id/transitions` | Role-checked state move |
-| `POST` | `/bookings/:id/payment` | Settle; posts the split |
-| `GET` | `/workers/:id` | Public worker profile |
-| `GET` | `/earnings/:workerId` | Earnings and payouts |
-| `GET` | `/coop/fund` | Fund balance, programmes, proposals |
-| `POST` | `/coop/proposals/:id/vote` | One recorded ballot per member |
-| `GET` | `/admin/overview` and `/admin/live` | Dashboard, live dispatch feed |
-| `GET` | `/admin/broadcasts/:bookingId` | Broadcast Inspector — equity components |
-| `GET` | `/admin/kyc/queue` | Verification queue |
-| `POST` | `/admin/workers/:id/kyc` | Approve or reject KYC |
-| `POST` | `/admin/demo/reset` | Restore the seed, byte-identically |
+### Booking lifecycle
 
-### Socket.io contract
+Transitions below are exactly those in
+[`apps/backend/src/domain/booking-machine.ts`](apps/backend/src/domain/booking-machine.ts).
+Roles in brackets are the only actors permitted to make each move; anything absent
+from the table throws `IllegalTransitionError` naming both states.
 
-Typed from [packages/shared/src/events.ts](packages/shared/src/events.ts) on
-both ends. A connection without `userId` and `role` is refused at the handshake.
+```mermaid
+stateDiagram-v2
+    [*] --> REQUESTED
 
-| Direction | Events |
-| --- | --- |
-| **client to server** | `worker:online`, `worker:offline`, `worker:location`, `gig:accept`, `gig:decline` |
-| **server to client** | `gig:offer`, `gig:taken`, `gig:expired`, `booking:updated`, `worker:moved`, `coop:fund_updated`, `ledger:appended`, `worker:kyc_updated` |
-| **server to admin room** | `dispatch:round`, `dispatch:resolved` |
+    REQUESTED --> BROADCAST : system
+    REQUESTED --> EXPIRED_NO_ACCEPT : system, nobody in radius
+    REQUESTED --> CANCELLED_BY_CUSTOMER : customer, admin
 
----
+    BROADCAST --> ACCEPTED : worker, first accept wins
+    BROADCAST --> EXPIRED_NO_ACCEPT : system, 30s then widened round
+    BROADCAST --> CANCELLED_BY_CUSTOMER : customer, admin
 
-## Getting started
+    ACCEPTED --> EN_ROUTE : worker
+    ACCEPTED --> CANCELLED_BY_CUSTOMER : customer, admin
+    ACCEPTED --> CANCELLED_BY_WORKER : worker, admin
 
-### Prerequisites
+    EN_ROUTE --> ARRIVED : worker
+    EN_ROUTE --> CANCELLED_BY_CUSTOMER : customer, admin
+    EN_ROUTE --> CANCELLED_BY_WORKER : worker, admin
 
-| | Version | Notes |
-| --- | --- | --- |
-| **Node.js** | 20 or newer (developed on 24.16.0) | |
-| **pnpm** | **12.3.4** | `corepack enable && corepack prepare pnpm@12.3.4 --activate`. Do not use npm or yarn — see below. |
-| **Expo Go** | SDK 57 build | On each phone, from the Play Store / App Store |
-| **Android platform-tools** | any | Only for the USB demo route (`adb`) |
-| **Docker** | optional | `docker-compose.yml` provisions Postgres + Redis; nothing reads them yet |
+    ARRIVED --> IN_PROGRESS : worker
+    ARRIVED --> CANCELLED_BY_CUSTOMER : customer, admin
+    ARRIVED --> CANCELLED_BY_WORKER : worker, admin
 
-> **pnpm is not interchangeable here.** `nodeLinker: hoisted` in
-> `pnpm-workspace.yaml` is load-bearing: Metro cannot resolve modules through
-> pnpm's default symlinked layout. React is also pinned to a single instance
-> (19.2.3) workspace-wide via `overrides` — two React copies bound to different
-> `react-dom` instances broke the portal's prerender with *"Cannot read
-> properties of null (reading 'useRef')"*.
+    IN_PROGRESS --> COMPLETED : worker, admin
+    IN_PROGRESS --> DISPUTED : customer, worker, admin
 
-### 1. Clone and install
+    COMPLETED --> SETTLED : admin, system
+    COMPLETED --> DISPUTED : customer, worker, admin
 
-```bash
-git clone https://github.com/aayush-778/sahayo.git
-cd sahayo
-pnpm install
+    SETTLED --> DISPUTED : customer, worker, admin
+
+    CANCELLED_BY_CUSTOMER --> [*]
+    CANCELLED_BY_WORKER --> [*]
+    EXPIRED_NO_ACCEPT --> [*]
+    DISPUTED --> [*]
 ```
 
-Verify the linker took — this **must** print `hoisted`:
+Terminal states have no exit, and nothing moves backwards. `SETTLED` is reachable
+only from `COMPLETED`, and posting the split is what `SETTLED` means.
 
-```bash
-pnpm config get node-linker
-```
-
-### 2. Environment
-
-```bash
-cp .env.example .env                                       # backend
-cp apps/admin-web/.env.example apps/admin-web/.env.local   # admin portal
-cp apps/customer/.env.example  apps/customer/.env          # customer app
-cp apps/worker/.env.example    apps/worker/.env            # worker app
-```
-
-Defaults work as-is for local development. Two things are worth knowing:
-
-- **`EXPO_PUBLIC_API_URL` is an origin, not a base path.** `http://host:4000`,
-  **not** `http://host:4000/api/v1` — `src/realtime/config.ts` appends the
-  prefix itself, and the same origin is what Socket.io connects to.
-- **`EXPO_PUBLIC_*` is inlined at bundle time.** After editing a mobile `.env`,
-  Metro must be restarted with `-c` or the old value stays baked in.
-
-### 3. Database (optional — nothing reads it yet)
-
-```bash
-docker compose up -d      # postgres/postgis:16-3.4 + redis:7, both health-checked
-```
-
-There are no migrations to run. The backend seeds a deterministic in-memory
-store on boot; `POST /api/v1/admin/demo/reset` (or `pnpm demo:reset`) restores it
-byte-identically.
-
-### 4. Run it
-
-Everything at once:
-
-```bash
-pnpm dev                  # backend + admin portal + both mobile apps
-```
-
-Or, recommended — one terminal each, because Metro's interactive keystrokes
-(`a`, `i`, `r`) do not survive turbo's multiplexed output:
-
-```bash
-pnpm dev:backend          # Express + Socket.io   -> :4000/api/v1
-pnpm dev:admin            # Next.js admin portal  -> :3000
-pnpm dev:customer         # Expo / Metro          -> :8081
-pnpm dev:worker           # Expo / Metro          -> :8082
-```
-
-Sanity check: `curl http://localhost:4000/api/v1/health` returns `{"ok":true}`.
-
-### 5. Get the apps onto phones (Expo Go)
-
-Scan each Metro QR with Expo Go. Then point the apps at the backend — the
-default `localhost:4000` means the *phone*, not your laptop:
-
-**Over USB — what the demo uses.** Immune to the AP isolation most venue wifi
-has, because there is no network in between:
-
-```bash
-pnpm demo:tunnel          # adb reverse tcp:4000 tcp:4000, per attached phone
-```
-
-No `.env` needed. **It does not survive an unplug, a knocked cable or a phone
-reboot — re-run it after any of those.** A phone that lost its tunnel shows a
-grey offline strip, which is the tell.
-
-**Over wifi.** Put the LAN address the backend printed at startup into each
-mobile `.env`, then restart Metro with `-c`:
-
-```bash
-# apps/customer/.env and apps/worker/.env
-EXPO_PUBLIC_API_URL=http://192.168.1.20:4000
-```
-
-> **One Expo Go caveat.** Foreground location works. The worker app's
-> **background** location does not — Expo Go's native manifest is fixed and
-> cannot carry `app.json`'s permissions. Use `npx expo run:android` or an EAS dev
-> build if you need that specific piece. Everything else runs in Expo Go.
-
-### 6. Demo helpers
-
-```bash
-pnpm demo:reset           # restore the seed — prints the fund back at ₹32,59,180
-pnpm demo:tunnel          # adb reverse, both phones
-pnpm demo:request         # inject a customer booking request
-pnpm demo:walk            # simulate worker movement along a route
-```
-
-Full presenter walkthrough: [docs/demo-script.md](docs/demo-script.md).
-Five-minute pre-flight: [docs/demo-checklist.md](docs/demo-checklist.md).
-
-### 7. Quality gates
-
-```bash
-pnpm typecheck                          # tsc --noEmit across all 6 packages
-pnpm lint                               # eslint across all 6 packages
-pnpm --filter @sahayo/backend test      # 19 tests, node:test
-pnpm --filter @sahayo/admin-web build   # Next.js production build
-```
-
-> **Do not run `next build` while `pnpm dev:admin` is running** — both write
-> `apps/admin-web/.next` and the dev server's output is corrupted. To verify a
-> build alongside a running dev server:
->
-> ```bash
-> cd apps/admin-web && NEXT_DIST_DIR=.next-verify npx next build
-> rm -rf .next-verify && git checkout -- tsconfig.json
-> ```
-
----
-
-## Repository structure
+### Monorepo layout
 
 ```
 sahayo/
 ├── apps/
-│   ├── backend/                    Node.js - Express 4 - Socket.io - TypeScript via tsx
-│   │   ├── src/
-│   │   │   ├── dispatch/           the equity dispatcher: ranking, broadcast rounds,
-│   │   │   │                       radius widening, offer expiry, scheduled conflicts
-│   │   │   ├── domain/             booking state machine — role-checked, terminal states
-│   │   │   │                       have no exit, nothing moves backwards
-│   │   │   ├── pricing/            fare engine (urgency + weather + demand, capped 1.5x)
-│   │   │   ├── repositories/       bookings, workers, ledger, proposals, catalogue
-│   │   │   ├── routes/             8 route modules under /api/v1
-│   │   │   ├── sockets/            gateway (authenticated handshake) + realtime fan-out
-│   │   │   └── store/              in-memory store seeded from @sahayo/shared
-│   │   ├── scripts/                demo-reset, demo-tunnel, demo-request, demo-walk
-│   │   └── test/                   19 tests, incl. the 5-way accept race and the
-│   │                               cooperative claim itself
-│   │
-│   ├── admin-web/                  Next.js 15 App Router - cooperative administrator portal
-│   │   └── src/
-│   │       ├── app/(admin)/        dashboard, dispatch, bookings, workers, customers,
-│   │       │                       verification, finance, fund, disputes, analytics,
-│   │       │                       settings, account
-│   │       ├── components/         feature folders + ui-kit primitives
-│   │       │   ├── maps/           MapLibre demand map, CSS heat spots, SVG fallback
-│   │       │   ├── finance/        append-only ledger — no edit or delete path exists
-│   │       │   └── verification/   KYC queue, AadhaarReveal, access log
-│   │       ├── lib/
-│   │       │   ├── seed/           deterministic dataset — no Math.random, no Date.now
-│   │       │   ├── store/          zustand; the database
-│   │       │   └── services/       async seam the real backend swaps into
-│   │       └── styles/tokens.css   nine colour tokens. There is no tenth.
-│   │
-│   ├── customer/                   Expo app - port 8081 - in.sahayo.customer - "Sahayo"
-│   │   └── app/                    (auth); (tabs) home/categories/bookings/support/profile;
-│   │                               category -> subcategory -> booking now|schedule ->
-│   │                               payment -> success -> track/[bookingId]
-│   │
-│   └── worker/                     Expo app - port 8082 - in.sahayo.worker - "Sahayo Partner"
-│       └── app/                    (auth); (onboarding) service details -> documents ->
-│                                   availability -> review; (tabs) home/bookings/earnings/
-│                                   chat/profile; job/[id] -> active -> rate;
-│                                   coop/ proposals, votes, loan requests; scheduled/
-│
+│   ├── backend/        Express 4 + Socket.io, TypeScript run under tsx.
+│   │                   Fare engine, equity dispatcher, booking state machine,
+│   │                   append-only ledger, in-memory repository layer.
+│   ├── admin-web/      Next.js 15 App Router. Cooperative administrator portal:
+│   │                   dashboard, live dispatch, bookings, workers, customers,
+│   │                   KYC verification, finance, fund, disputes, analytics,
+│   │                   settings. Offline-precached.
+│   ├── customer/       Expo Router app for customers. Browse, quote, book now or
+│   │                   schedule, pay, track. Metro on 8081.
+│   └── worker/         Expo Router app for members. Onboarding and KYC, go online,
+│                       receive and accept offers, run a job, earnings, cooperative
+│                       voting and loan requests. Metro on 8082.
 ├── packages/
-│   ├── shared/                     ships TypeScript SOURCE — no build step, no dist
-│   │   └── src/
-│   │       ├── types/              14 domain type modules
-│   │       ├── schemas/            matching zod schemas, `satisfies z.ZodType<T>` each
-│   │       ├── events.ts           the Socket.io contract, typed both ends
-│   │       ├── equity.ts           computeEquityScore — one definition, three consumers
-│   │       ├── constants.ts        90/5/5, 18% GST, dispatch weights, fund goal
-│   │       ├── catalogue.ts        10 trades -> 49 sub-categories
-│   │       ├── service-items/      289 priced items (fixed, fault, unit, retainer)
-│   │       └── seed/               deterministic dataset, per-collection RNG seeds
-│   │
-│   └── ui-native/                  primitives shared by BOTH mobile apps
-│       ├── src/                    Screen, Text, PrimaryButton, FormField, Avatar,
-│       │                           Checkbox, SearchField, Skeleton, FarePanel
-│       ├── src/i18n/               en.json + hi.json, ~1,080 strings each
-│       └── tokens.js               design tokens + the shared Tailwind preset
-│
-├── brand/                          source-of-truth artwork; every icon derives from
-│                                   sahayo-emblem.png
-├── docs/                           demo-script.md, demo-checklist.md
-├── docker-compose.yml              postgres/postgis:16-3.4 + redis:7, health-checked
-├── pnpm-workspace.yaml             nodeLinker: hoisted + the React 19.2.3 override
-└── turbo.json                      dev, typecheck, lint, build
+│   ├── shared/         Domain types and matching Zod schemas, the Socket.io event
+│   │                   contract, the equity maths, the fare and split constants,
+│   │                   and the deterministic seed. Ships source, not a build.
+│   └── ui-native/      React Native primitives used by both mobile apps, the
+│                       shared Tailwind preset and design tokens, and the
+│                       English/Hindi i18n resources.
+├── docs/
+│   ├── engineering-decisions.md   Why the pins, invariants and rules are what
+│   │                              they are. Read before changing them.
+│   ├── demo-script.md             Full presenter walkthrough.
+│   └── demo-checklist.md          Five-minute pre-flight.
+├── brand/              Source artwork. Every app icon derives from the emblem.
+├── docker-compose.yml  Postgres + PostGIS and Redis, for the persistence work.
+├── pnpm-workspace.yaml Workspace globs, the hoisted node linker, React override.
+└── turbo.json          dev, build, test, typecheck, lint task graph.
 ```
 
-### Two mobile apps, not one — a deliberate decision
+---
 
-There is no single mobile app and no role picker. `apps/customer` and
-`apps/worker` are independent Expo apps with independent `app.json` files.
+## Tech stack
 
-**The reason is permissions.** The worker app needs background location and push
-notifications; the customer app must not ask for either. Separate Expo configs
-mean separate native permission manifests, so the customer app *cannot* request
-a permission it has no business requesting — it is structurally incapable of it,
-not merely coded not to.
+| Layer | Technology | Version | Why |
+| --- | --- | --- | --- |
+| Mobile apps | Expo SDK + Expo Router | 57.0.22 | File-based routing; two independent apps, separate permission manifests |
+| | React Native | 0.86.3 | Pinned by Expo SDK 57 |
+| | NativeWind | 4.2.6 | Tailwind classes on native |
+| Admin portal | Next.js (App Router) | 15.5.4 | Static generation, which is what makes offline precaching work |
+| | React / React DOM | 19.2.3 | Single instance across the workspace |
+| | Tailwind CSS | 3.4.17 | Design tokens as `hsl(var(--token))` |
+| | shadcn/ui + Radix | 2.10.0 | Headless primitives under a fixed visual language |
+| | Recharts | 3.10.1 | Revenue, fund growth, zone demand |
+| | MapLibre GL + react-map-gl | 6.9.0 / 8.1.3 | OpenStreetMap raster tiles, no API key, no watermark |
+| | TanStack Table | 8.21.3 | Headless tables |
+| Backend | Node.js + Express | 4.22.2 | Small, well-understood REST surface |
+| | Socket.io | 4.8.3 | Offer race, live location, dispatch feed |
+| | tsx | 4.19.2 | Runs TypeScript directly — no build step in the dev loop |
+| Shared | Zod | 3.25.76 | One schema validating both client and server |
+| | Zustand | 5.0.15 | Admin portal store, mobile app stores |
+| | i18next + react-i18next | 26.4.2 / 17.0.13 | English and Hindi |
+| Data (today) | Deterministic in-memory store | — | Seeded from `packages/shared/src/seed` |
+| Data (provisioned) | PostgreSQL + PostGIS | 16 / 3.4 | Geospatial candidate queries |
+| | Redis | 7 | Offer locks, socket adapter |
+| Tooling | pnpm workspaces | 12.3.4 | `nodeLinker: hoisted`, required by Metro |
+| | Turborepo | 2.x | Task graph across six packages |
+| | TypeScript | 5.9.3 | Strict, no `any` |
+| | ESLint (flat config) | 9.x | Includes the import boundary rule below |
 
-| | customer | worker |
+### Pinned versions — deliberate, not neglect
+
+Several dependencies are held one or two majors behind current, because they are
+mutually dependent and each pin was chosen against a specific failure. NativeWind
+v4 requires Tailwind **v3**, so Tailwind stays on 3.4 in every package including
+the web portal — and shadcn 2.10.0 is the last CLI that emits Tailwind-v3 colour
+values, since 3.x and 4.x emit `oklch()` which fails silently against a v3 config.
+Next 15.5.4 pairs with that shadcn; Next 16 does not. React is forced to a single
+19.2.3 instance workspace-wide, because two copies bound to different `react-dom`
+instances broke the portal's prerender.
+
+The full reasoning, including the exact error each pin prevents, is in
+[`docs/engineering-decisions.md`](docs/engineering-decisions.md). Please read it
+before upgrading anything.
+
+---
+
+## Prerequisites
+
+| | Requirement | Notes |
 | --- | --- | --- |
-| Metro port | 8081 | 8082 |
-| Android package | `in.sahayo.customer` | `in.sahayo.worker` |
-| Display name | **Sahayo** | **Sahayo Partner** |
-| Icon ground | `#FBF9F3` cream | `#A9CBD8` teal |
-| Location | foreground only | foreground **and** background |
-| Notifications | — | `POST_NOTIFICATIONS` |
-
-The two icons are colour-coded by **hue, not lightness**, because both phones sit
-on the table during the demo and must be distinguishable at a glance.
+| Node.js | >= 20 | Declared in root `package.json` `engines`. Developed on 24.16.0 |
+| pnpm | 12.3.4 | Pinned via `packageManager`; install with Corepack, below |
+| Git | any recent | |
+| Android phone or emulator | Expo Go (SDK 57) | Two devices for the full demo: one customer, one member |
+| Android platform-tools | optional | Only for `adb reverse`, the USB route in step 6 |
+| Docker Desktop | **optional** | The prototype's backend is in-memory and needs no database. Compose is provisioned for the persistence work only |
 
 ---
 
-## Design system
+## Setup
 
-The admin portal's visual language is written into `src/styles/tokens.css` and
-`tailwind.config.ts` — enforced by the build rather than by convention. Nine
-colour tokens, no tenth. Cream canvas, white cards, and warm-ink shadows rather
-than cold grey. Two typefaces with strictly separated jobs: **Outfit** for
-headings and display numbers, **Plus Jakarta Sans** for body, tables and
-controls. Weight 700 is banned product-wide — neither webfont ships a 700 face,
-and `fontWeight.bold` is remapped to 600 so a stray `font-bold` degrades instead
-of breaking the look. No dark mode, no glassmorphism, no decorative gradients, no
-emoji. Every figure is monospace and `tnum`, so a live number does not jitter.
+Commands are PowerShell. Every script named here exists in the relevant
+`package.json`.
 
-Copy is plain and human: *"Workers were paid ₹4,20,000 this week"*, never
-*"disbursement volume"*. Every button label is a verb naming its effect, and the
-toast that follows uses the same word.
+### 1. Clone and enable pnpm
+
+```powershell
+git clone https://github.com/aayush-778/sahayo.git
+cd sahayo
+corepack enable
+```
+
+### 2. Install
+
+```powershell
+pnpm install
+```
+
+Then confirm the node linker took. This **must** print `hoisted` — Metro cannot
+resolve modules through pnpm's default symlinked layout:
+
+```powershell
+pnpm config get node-linker
+```
+
+### 3. Environment templates
+
+Each template sits next to the app that reads it, because that is where each
+toolchain looks for it. The root `.env` is read by Docker Compose only.
+
+```powershell
+Copy-Item apps/backend/.env.example  apps/backend/.env
+Copy-Item apps/admin-web/.env.example apps/admin-web/.env.local
+Copy-Item apps/customer/.env.example apps/customer/.env
+Copy-Item apps/worker/.env.example   apps/worker/.env
+```
+
+Every value has a working local default, so the stack runs with no edits. Two
+things are worth knowing:
+
+- `EXPO_PUBLIC_API_URL` is an **origin**, not a base path — `http://host:4000`,
+  not `http://host:4000/api/v1`. The mobile apps append the prefix themselves,
+  and the same origin is what Socket.io connects to.
+- `EXPO_PUBLIC_*` values are inlined into the JS bundle at build time. After
+  editing a mobile `.env`, Metro must be restarted with `-c` or the old value
+  stays baked in.
+
+### 4. Start the backend
+
+```powershell
+pnpm dev:backend
+```
+
+It prints the API root and every LAN address it is reachable on. Verify:
+
+```powershell
+curl http://localhost:4000/api/v1/health     # -> {"ok":true}
+```
+
+### 5. Start the admin portal and the two mobile apps
+
+Use one terminal each. Metro's interactive keystrokes (`a`, `i`, `r`) do not
+survive Turbo's multiplexed output, so `pnpm dev` is for bringing everything up
+at once rather than for day-to-day work.
+
+```powershell
+pnpm dev:admin        # http://localhost:3000
+pnpm dev:customer     # Metro on 8081
+pnpm dev:worker       # Metro on 8082
+```
+
+Scan each Metro QR code with Expo Go.
+
+### 6. Point the phones at the backend
+
+The apps default to `http://localhost:4000`, which on a phone means the *phone*.
+Pick one route.
+
+**USB — what the demo uses.** Immune to the AP isolation most venue Wi-Fi has,
+because no network is involved:
+
+```powershell
+pnpm demo:tunnel
+```
+
+That runs `adb reverse tcp:4000 tcp:4000` on every attached device, so
+`localhost:4000` on the phone becomes this laptop. No `.env` change needed. It
+does **not** survive an unplug, a knocked cable or a reboot — re-run it after any
+of those. A phone that has lost the tunnel shows a grey offline strip.
+
+**Wi-Fi.** Put the LAN address the backend printed into each mobile `.env`, then
+restart Metro with a cleared cache:
+
+```powershell
+# apps/customer/.env and apps/worker/.env
+# EXPO_PUBLIC_API_URL=http://192.168.1.20:4000
+pnpm --filter @sahayo/customer exec expo start --port 8081 -c
+pnpm --filter @sahayo/worker   exec expo start --port 8082 -c
+```
+
+> **Expo Go caveat.** Foreground location works. The worker app's **background**
+> location does not — Expo Go ships a fixed native manifest and cannot carry this
+> app's permissions. Use `npx expo run:android` or an EAS development build for
+> that one feature. Everything else runs in Expo Go.
+
+### 7. Reset the demo data
+
+```powershell
+pnpm demo:reset       # restores the seed byte-for-byte; prints the fund balance
+pnpm demo:request     # inject a customer booking request
+pnpm demo:walk        # simulate a member moving along a route
+```
+
+Run `demo:reset` with both apps closed. The full presenter walkthrough is
+[`docs/demo-script.md`](docs/demo-script.md); the five-minute pre-flight is
+[`docs/demo-checklist.md`](docs/demo-checklist.md).
+
+### 8. Optional — Postgres and Redis
+
+Nothing reads these yet. Provisioned so the persistence work has somewhere to land.
+
+```powershell
+Copy-Item .env.example .env
+docker compose up -d
+```
+
+### Quality gates
+
+```powershell
+pnpm typecheck    # tsc --noEmit across all 6 packages
+pnpm lint         # eslint across all 6 packages
+pnpm test         # node:test; only @sahayo/backend defines tests today
+pnpm build        # only @sahayo/admin-web has a build step
+```
+
+> Do not run `pnpm build` while `pnpm dev:admin` is running — both write
+> `apps/admin-web/.next` and the dev server's output is corrupted. To verify a
+> build beside a running dev server, send it elsewhere and undo the `tsconfig.json`
+> include Next adds on every build:
+>
+> ```powershell
+> cd apps/admin-web
+> $env:NEXT_DIST_DIR=".next-verify"; npx next build
+> Remove-Item -Recurse -Force .next-verify; git checkout -- tsconfig.json
+> ```
 
 ---
 
-## Team and acknowledgements
+## Ports
 
-| | |
-| --- | --- |
-| **Problem Statement ID** | SIH26089 |
-| **Ministry** | Ministry of Cooperation, Government of India |
-| **Event** | Smart India Hackathon 2026 |
-| **Team name** | Innovex |
-| **Institution** | IIT Patna |
+| Port | Service | Command |
+| --- | --- | --- |
+| 3000 | Admin portal (Next.js) | `pnpm dev:admin` |
+| 4000 | Backend REST + Socket.io | `pnpm dev:backend` |
+| 8081 | Customer app (Metro) | `pnpm dev:customer` |
+| 8082 | Worker app (Metro) | `pnpm dev:worker` |
+| 5432 | PostgreSQL + PostGIS | `docker compose up -d` (optional) |
+| 6379 | Redis | `docker compose up -d` (optional) |
+
+The two mobile apps use different Metro ports because they are separate Expo
+applications, not two builds of one app. The worker app declares background
+location and notification permissions; the customer app declares neither, and
+separate native manifests mean it *cannot* request a permission it has no
+business requesting.
+
+---
+
+## Localisation
+
+Both mobile apps ship English and Hindi, roughly 1,080 strings each, with every
+user-facing string routed through i18next from the first screen. Resources live in
+[`packages/ui-native/src/i18n/locales`](packages/ui-native/src/i18n/locales) so
+the two apps share one translation surface. Device locale is detected via
+`expo-localization` and the choice is overridable in-app.
+
+Currency is formatted at the render edge only, from integer paise, through one
+shared formatter — so a rupee figure is never assembled twice with two different
+rounding rules.
+
+---
+
+## Prototype scope and roadmap
+
+What runs today, stated plainly.
+
+**Working end to end.** Booking from catalogue browse through quote, dispatch,
+offer race, the full job lifecycle, settlement and the three-way split. Live
+location and offer delivery over Socket.io. KYC submission and administrator
+review with UIDAI-compliant Aadhaar handling. The append-only ledger with
+reversals and refunds. Cooperative proposals, ballots and quorum. The
+administrator portal across all twelve pages, precached for offline use.
+
+**Prototype boundaries.**
+
+- **The backend is in-memory.** A deterministic seed, not a database. This is
+  deliberate for a demo — a dataset that drifts with the wall clock re-buckets
+  overnight and changes the shape of every chart between rehearsal and judging.
+  The repository layer is the swap point.
+- **Candidate search uses a Haversine distance filter in application code.** With
+  PostGIS this becomes `ST_DWithin` against a GiST index, which is what makes it
+  hold at city scale.
+- **Scheduled bookings** broadcast and can be accepted, with overlap conflicts
+  detected and confirmed. Reminder notifications and reassignment on a late
+  cancellation are not built.
+- **Payments are recorded, not collected.** Settlement posts real ledger rows; no
+  gateway is integrated. Environment slots exist, unwired.
+- **There is no authentication yet, and the code says so.** `POST /auth/login`
+  looks a phone number up and returns who it belongs to; it issues no token and
+  checks no OTP. The demo OTP is verified client-side, and the Socket.io handshake
+  trusts the `userId` and `role` it is handed. Real authentication — OTP delivery,
+  JWT issuance, and a handshake that verifies rather than trusts — is its own
+  piece of work; the environment slots are declared and left blank in
+  `apps/backend/.env.example`.
+- **Weather in the fare engine is a fixed value**, so a surge multiplier cannot
+  change mid-judging. The live provider is written and commented out.
+- **No push notifications.** The worker app rings in the foreground via
+  `expo-audio`; background delivery needs a development build.
+
+---
 
 
+## Acknowledgements
 
-### Acknowledgements
-
-- **Ministry of Cooperation** for the problem statement, and the *Sahkar se
-  Samriddhi* framing that the fund mechanic is built around.
-- **OpenStreetMap contributors** — the street maps use OSM raster tiles under the
+- **Ministry of Cooperation**, for the problem statement.
+- **OpenStreetMap contributors** — map tiles under the
   [ODbL](https://www.openstreetmap.org/copyright).
-- **UIDAI Circular 14 of 2025**, which shaped the Aadhaar handling throughout.
-- **MapLibre**, **Expo**, **Next.js**, **shadcn/ui**, **Recharts** and
-  **TanStack** — all open source, all load-bearing here.
+- **UIDAI Circular 14 of 2025**, which set the Aadhaar handling rules this
+  codebase is built around: the number is never persisted, never hashed, never
+  put in a URL or a log; it is masked by default, revealed only against a stated
+  purpose, for 30 seconds, after the audit row is already written.
 
 ---
 
 ## License
 
-No `LICENSE` file is committed yet. Add one before publishing — MIT or Apache-2.0
-are the conventional choices for a hackathon submission — and a license badge can
-then go at the top of this file.
-
-<div align="center">
-
-**Sahayo** — *sahayo* means *to help*.
-Built for the Ministry of Cooperation, Smart India Hackathon 2026.
-
-</div>
+[MIT](LICENSE) © 2026 Team Innovex
