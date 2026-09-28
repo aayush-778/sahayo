@@ -1,6 +1,12 @@
 node_modules/
 .pnpm-store/
 
+# pnpm is the only package manager here — nodeLinker: hoisted in
+# pnpm-workspace.yaml is load-bearing for Metro. An npm or yarn lockfile at the
+# root is always an accident and resolves a different dependency graph.
+package-lock.json
+yarn.lock
+
 # builds
 dist/
 build/
@@ -29,6 +35,10 @@ web-build/
 .env.*
 !.env.example
 
+# test coverage
+coverage/
+*.lcov
+
 # logs
 *.log
 npm-debug.log*
@@ -42,6 +52,10 @@ yarn-error.log*
 
 # Claude Code personal (non-shared) settings
 .claude/settings.local.json
+
+# Agent working notes — repository conventions for an AI assistant, not part of
+# the submitted product. See README for the human-facing equivalent.
+CLAUDE.md
 
 # export scratch dirs (expo export --output-dir)
 dist-*/
