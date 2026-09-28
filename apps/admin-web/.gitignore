@@ -45,3 +45,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local design/planning scratch kept out of the repo: build-plan prompts and
+# reference screenshots. Not part of the product.
+*prompt*.md
+*build-plan*.md
+WhatsApp Image*

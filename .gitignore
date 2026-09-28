@@ -6,6 +6,8 @@ node_modules/
 # root is always an accident and resolves a different dependency graph.
 package-lock.json
 yarn.lock
+bun.lockb
+npm-shrinkwrap.json
 
 # builds
 dist/
@@ -23,6 +25,7 @@ out/
 android/
 ios/
 *.jks
+*.keystore
 *.p8
 *.p12
 *.key
@@ -42,20 +45,27 @@ coverage/
 # logs
 *.log
 npm-debug.log*
+pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
 # editor / os
 .DS_Store
+Thumbs.db
+desktop.ini
 .vscode/
 .idea/
+*.swp
 
-# Claude Code personal (non-shared) settings
-.claude/settings.local.json
-
-# Agent working notes — repository conventions for an AI assistant, not part of
-# the submitted product. See README for the human-facing equivalent.
+# Local agent/assistant scratch. The engineering rationale that used to live in
+# a root CLAUDE.md is now docs/engineering-decisions.md, which IS tracked.
+.claude/
 CLAUDE.md
+**/CLAUDE.md
+AGENTS.md
+.cursorrules
+.cursor/
+.windsurfrules
 
 # export scratch dirs (expo export --output-dir)
 dist-*/
