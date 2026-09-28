@@ -5,7 +5,7 @@
  * Tailwind 3.4 consumes them as `hsl(var(--token))`, so the variable must hold
  * only the three components. A v4-style colour function here nests inside that
  * wrapper and yields invalid CSS, which browsers drop silently. See the admin
- * portal section of CLAUDE.md for the grep that catches it.
+ * portal section of docs/engineering-decisions.md for the grep that catches it.
  *
  * No component may contain a hardcoded hex value. This file is the only place
  * a colour is written down.

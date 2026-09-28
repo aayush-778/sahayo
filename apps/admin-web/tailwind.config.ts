@@ -3,7 +3,7 @@ import tailwindcssAnimate from 'tailwindcss-animate';
 
 /**
  * Tailwind v3 classic config, pinned to 3.4.x monorepo-wide so the mobile apps
- * can run NativeWind v4 on the same major. See CLAUDE.md "Pinned versions".
+ * can run NativeWind v4 on the same major. See docs/engineering-decisions.md "Pinned versions".
  *
  * Every colour here resolves to a custom property declared in
  * src/styles/tokens.css. Nothing in this file is a literal colour, and no

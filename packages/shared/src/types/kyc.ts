@@ -5,7 +5,7 @@ import type { Id, IsoDateTime } from './common';
  *
  * UIDAI Circular 14 of 2025 governs how the Aadhaar case is handled, and the
  * rules are absolute — see `KycSubmission.aadhaarRef` below and the compliance
- * section of CLAUDE.md.
+ * section of docs/engineering-decisions.md.
  */
 export const KycDocumentType = {
   AADHAAR: 'AADHAAR',

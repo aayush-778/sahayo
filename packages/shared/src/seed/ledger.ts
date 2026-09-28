@@ -110,7 +110,7 @@ function traceId(rng: ReturnType<typeof createRng>): string {
  *
  * `SEEDED_REVERSAL_COUNT` reversing entries are appended at the end, each
  * pointing at an earlier row through `reversalOf`. The originals are untouched:
- * a correction is a new row, always. See the ledger rule in CLAUDE.md.
+ * a correction is a new row, always. See the ledger rule in docs/engineering-decisions.md.
  */
 export function buildLedger(bookings: AdminBooking[], workers: AdminWorker[]): LedgerEntry[] {
   const rng = createRng(SEEDS.ledger);

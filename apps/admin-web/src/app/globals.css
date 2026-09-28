@@ -16,7 +16,7 @@
  * colour in the app.
  *
  * There is no `.dark` block. Dark mode is out of scope permanently — see
- * CLAUDE.md "Admin portal design system".
+ * docs/engineering-decisions.md "Admin portal design system".
  */
 @layer base {
   :root {

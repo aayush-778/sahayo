@@ -12,7 +12,7 @@ import { brandColors, workerColors } from '../tokens';
  * controls, and text held to 7:1 contrast instead of 4.5:1.
  *
  * WHY A CONTEXT RATHER THAN DIFFERENT TOKEN VALUES. Both apps compile one
- * Tailwind preset through tailwind.config.js files that CLAUDE.md requires to
+ * Tailwind preset through tailwind.config.js files that docs/engineering-decisions.md requires to
  * stay byte-identical, so changing the `brand-*` values would recolour both
  * apps at once. Instead the preset carries two named palettes, `brand-*` and
  * `worker-*`, and every primitive asks this context which to use.

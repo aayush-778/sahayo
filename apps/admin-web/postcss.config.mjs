@@ -1,4 +1,4 @@
-/** Tailwind v3 classic pipeline. See CLAUDE.md "Pinned versions". */
+/** Tailwind v3 classic pipeline. See docs/engineering-decisions.md "Pinned versions". */
 const config = {
   plugins: {
     tailwindcss: {},

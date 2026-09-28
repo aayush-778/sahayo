@@ -13,7 +13,7 @@ const config = getDefaultConfig(projectRoot);
 config.watchFolders = [workspaceRoot];
 
 // 2. Resolve from the app's own node_modules first, then the hoisted root.
-//    Requires nodeLinker: hoisted in pnpm-workspace.yaml — see CLAUDE.md.
+//    Requires nodeLinker: hoisted in pnpm-workspace.yaml — see docs/engineering-decisions.md.
 config.resolver.nodeModulesPaths = [
   path.resolve(projectRoot, 'node_modules'),
   path.resolve(workspaceRoot, 'node_modules'),

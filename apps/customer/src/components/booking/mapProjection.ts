@@ -11,7 +11,7 @@ import type { GeoPoint } from '@sahayo/shared';
  * that rendered the streets underneath them, not by eyeballing an offset.
  *
  * WHY A STATIC IMAGE AND NOT A MAP LIBRARY. Mapbox and MapLibre both need a
- * custom dev build, which CLAUDE.md rules out mid-phase — a config plugin
+ * custom dev build, which docs/engineering-decisions.md rules out mid-phase — a config plugin
  * rewriting the native manifest for a library we will not really use until
  * Phase 5 is exactly the risk it warns about. react-native-maps needs a
  * Google key with a billing account attached. And every live map is a network

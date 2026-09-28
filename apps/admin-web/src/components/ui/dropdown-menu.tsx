@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
  *
  * shadcn 2.10's registry serves Tailwind-v4 colour values (a v4 colour
  * function, `ring-3`, `color-mix()`) which fail silently against this app's
- * Tailwind 3.4 config — see the admin portal section of CLAUDE.md. Writing the
+ * Tailwind 3.4 config — see the admin portal section of docs/engineering-decisions.md. Writing the
  * wrapper ourselves means the styling is expressed in Sahayo tokens from the
  * start, with no emitted CSS to convert afterwards.
  */

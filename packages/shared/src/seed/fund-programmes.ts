@@ -16,7 +16,7 @@ import { ProposalStatus } from '../index';
  * amount the members approved. Nothing else in the seed spends from the fund.
  *
  * Copy is written the way a member would say it, never in finance-department
- * language. The banned vocabulary for the fund pages is listed in CLAUDE.md.
+ * language. The banned vocabulary for the fund pages is listed in docs/engineering-decisions.md.
  */
 export interface FundProgramme {
   key: string;

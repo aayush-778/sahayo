@@ -3,7 +3,7 @@
  *
  * Both mobile apps consume this so the token set cannot drift between them —
  * `apps/customer/tailwind.config.js` and `apps/worker/tailwind.config.js` are
- * required by CLAUDE.md to stay byte-identical, and a preset is what makes
+ * required by docs/engineering-decisions.md to stay byte-identical, and a preset is what makes
  * that a one-line file rather than a palette copied twice.
  *
  * Colour values live in ./tokens.js, which TypeScript also reads. Do not
